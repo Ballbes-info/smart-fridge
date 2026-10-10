@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Регистрация — SmartFridge{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Создание аккаунта</h1>
+
+<div class="form-card">
+  {% if errors %}
+    <div class="flashes">
+      {% for error in errors %}
+        <div class="flash flash-error">{{ error }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <form method="post" autocomplete="on">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+    <label class="field">
+      <span>Email</span>
+      <input
+        type="email"
+        name="email"
+        value="{{ email }}"
+        autocomplete="email"
+        placeholder="you@example.com"
+        autofocus
+        required
+      >
+    </label>
+
+    <label class="field">
+      <span>Пароль — минимум 8 символов</span>
+      <input type="password" name="password" autocomplete="new-password" required>
+    </label>
+
+    <label class="field">
+      <span>Повторите пароль</span>
+      <input type="password" name="password2" autocomplete="new-password" required>
+    </label>
+
+    <button type="submit" class="btn btn-primary btn-block">Зарегистрироваться</button>
+  </form>
+
+  <p class="form-footer">Уже есть аккаунт? <a href="{{ url_for('login') }}">Войти</a></p>
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}SmartFridge — умный помощник для холодильника{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <h1>Умный помощник для вашего холодильника</h1>
+  <p class="lead">
+    SmartFridge следит за продуктами, подсказывает, что пора приготовить,
+    и помогает не выбрасывать еду впустую.
+  </p>
+  <div class="hero-actions">
+    {% if current_user %}
+      <a class="btn btn-primary" href="{{ url_for('profile') }}">Перейти в профиль</a>
+    {% else %}
+      <a class="btn btn-primary" href="{{ url_for('register') }}">Создать аккаунт</a>
+      <a class="btn" href="{{ url_for('login') }}">Войти</a>
+    {% endif %}
+  </div>
+</section>
+
+<section class="features">
+  <div class="card">
+    <h2>Учёт продуктов</h2>
+    <p>Добавляйте продукты и отслеживайте сроки хранения.</p>
+  </div>
+  <div class="card">
+    <h2>Рецепты</h2>
+    <p>Подборка блюд из того, что уже есть в холодильнике.</p>
+  </div>
+  <div class="card">
+    <h2>Уведомления</h2>
+    <p>Напоминания о продуктах, которые скоро испортятся.</p>
+  </div>
+</section>
+{% endblock %}

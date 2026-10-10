@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Профиль — SmartFridge{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Профиль</h1>
+
+<div class="form-card profile-card">
+  <dl>
+    <dt>Email</dt>
+    <dd>{{ user.email }}</dd>
+
+    <dt>Аккаунт создан</dt>
+    <dd>{{ user.created_at.replace("T", " ") }} UTC</dd>
+  </dl>
+
+  <p class="form-footer">
+    Здесь скоро появятся список продуктов, сроки годности и рецепты.
+  </p>
+</div>
+{% endblock %}

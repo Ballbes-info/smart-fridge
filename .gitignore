@@ -12,6 +12,9 @@ ENV/
 .env.local
 .env.*.local
 
+# Сгенерированный ключ подписи сессий
+.secret_key
+
 # База данных
 *.db
 *.sqlite
@@ -23,6 +26,7 @@ instance/
 
 # Логи
 *.log
+*.err
 logs/
 
 # Редакторы
