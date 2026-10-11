@@ -3,19 +3,105 @@
 {% block title %}Профиль — SmartFridge{% endblock %}
 
 {% block content %}
-<h1 class="page-title">Профиль</h1>
+<section class="profile-page">
+  <div class="profile-heading">
+    <div>
+      <span class="eyebrow">Личный кабинет</span>
+      <h1>Мой профиль</h1>
+      <p>Информация об аккаунте и ваши возможности SmartFridge.</p>
+    </div>
 
-<div class="form-card profile-card">
-  <dl>
-    <dt>Email</dt>
-    <dd>{{ user.email }}</dd>
+    <div class="profile-status">
+      <span class="status-dot"></span>
+      Аккаунт создан
+    </div>
+  </div>
 
-    <dt>Аккаунт создан</dt>
-    <dd>{{ user.created_at.replace("T", " ") }} UTC</dd>
-  </dl>
+  <div class="profile-grid">
+    <section class="profile-card profile-main-card">
+      <div class="profile-avatar" aria-hidden="true">
+        {{ user.email[0]|upper }}
+      </div>
 
-  <p class="form-footer">
-    Здесь скоро появятся список продуктов, сроки годности и рецепты.
-  </p>
-</div>
+      <div class="profile-user-heading">
+        <h2>{{ user.email }}</h2>
+        <p>Пользователь SmartFridge</p>
+      </div>
+
+      <div class="profile-divider"></div>
+
+      <dl class="profile-details">
+        <div>
+          <dt>Электронная почта</dt>
+          <dd>{{ user.email }}</dd>
+        </div>
+
+        <div>
+          <dt>Дата регистрации</dt>
+          <dd>{{ user.created_at.replace("T", " ") }} UTC</dd>
+        </div>
+
+        <div>
+          <dt>Подтверждение почты</dt>
+          <dd>
+            {% if user.is_verified %}
+              <span class="inline-status inline-status-success">
+                <span class="status-dot"></span>
+                Подтверждена
+              </span>
+            {% else %}
+              <span class="inline-status inline-status-warning">
+                Не подтверждена
+              </span>
+              <a href="{{ url_for('verify') }}">Подтвердить</a>
+            {% endif %}
+          </dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="profile-card profile-features-card">
+      <span class="eyebrow">Ваш SmartFridge</span>
+      <h2>Всё для свежести и порядка</h2>
+      <p>
+        Здесь будут собраны основные инструменты для управления
+        продуктами и планирования приготовления еды.
+      </p>
+
+      <div class="profile-feature-list">
+        <div class="profile-feature">
+          <span class="profile-feature-icon" aria-hidden="true">01</span>
+          <div>
+            <strong>Мои продукты</strong>
+            <p>Учёт запасов и сроков годности</p>
+          </div>
+          <span class="feature-state">Скоро</span>
+        </div>
+
+        <div class="profile-feature">
+          <span class="profile-feature-icon" aria-hidden="true">02</span>
+          <div>
+            <strong>Рецепты</strong>
+            <p>Идеи из продуктов, которые есть дома</p>
+          </div>
+          <span class="feature-state">Скоро</span>
+        </div>
+
+        <div class="profile-feature">
+          <span class="profile-feature-icon" aria-hidden="true">03</span>
+          <div>
+            <strong>Список покупок</strong>
+            <p>Всё необходимое в одном месте</p>
+          </div>
+          <span class="feature-state">Скоро</span>
+        </div>
+      </div>
+
+      <a class="btn btn-secondary profile-home-link"
+         href="{{ url_for('index') }}">
+        На главную <span aria-hidden="true">→</span>
+      </a>
+    </section>
+  </div>
+</section>
 {% endblock %}

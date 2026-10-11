@@ -3,33 +3,66 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta name="theme-color" content="#f5f5ef">
+  <meta name="description" content="SmartFridge — умный помощник для управления продуктами, контроля свежести и подбора рецептов.">
+
   <title>{% block title %}SmartFridge{% endblock %}</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
+
 <body>
   <header class="site-header">
-    <a class="logo" href="{{ url_for('index') }}">SmartFridge</a>
-    <nav class="nav">
-      <a href="{{ url_for('index') }}">Главная</a>
-      {% if current_user %}
-        <a href="{{ url_for('profile') }}">Профиль</a>
-        <form action="{{ url_for('logout') }}" method="post" class="inline-form">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-          <button type="submit" class="link-button">Выйти</button>
-        </form>
-      {% else %}
-        <a href="{{ url_for('login') }}">Вход</a>
-        <a class="btn btn-primary" href="{{ url_for('register') }}">Регистрация</a>
-      {% endif %}
-    </nav>
+    <div class="header-inner">
+      <a class="logo" href="{{ url_for('index') }}" aria-label="SmartFridge — главная">
+        <span class="logo-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" fill="none">
+            <rect x="5" y="3" width="22" height="26" rx="6" stroke="currentColor" stroke-width="2"/>
+            <path d="M5 14H27" stroke="currentColor" stroke-width="2"/>
+            <path d="M11 8V10M11 19V24" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <span>Smart<span class="logo-accent">Fridge</span></span>
+      </a>
+
+      <nav class="nav" aria-label="Основная навигация">
+        <a class="nav-link" href="{{ url_for('index') }}">Главная</a>
+
+        {% if current_user %}
+          {% if current_user.is_verified %}
+            <a class="nav-link" href="{{ url_for('profile') }}">Профиль</a>
+          {% else %}
+            <a class="nav-link" href="{{ url_for('verify') }}">Подтверждение</a>
+          {% endif %}
+
+          <form action="{{ url_for('logout') }}" method="post" class="inline-form">
+            <button type="submit" class="link-button">Выйти</button>
+          </form>
+        {% else %}
+          <a class="nav-link" href="{{ url_for('login') }}">Войти</a>
+          <a class="btn btn-primary nav-cta" href="{{ url_for('register') }}">
+            Начать работу
+            <span aria-hidden="true">↗</span>
+          </a>
+        {% endif %}
+      </nav>
+    </div>
   </header>
 
   <main class="container">
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
-        <div class="flashes">
+        <div class="flashes" role="status" aria-live="polite">
           {% for category, message in messages %}
-            <div class="flash flash-{{ category }}">{{ message }}</div>
+            <div class="flash flash-{{ category }}">
+              <span class="flash-indicator" aria-hidden="true"></span>
+              <span>{{ message }}</span>
+            </div>
           {% endfor %}
         </div>
       {% endif %}
@@ -39,7 +72,11 @@
   </main>
 
   <footer class="site-footer">
-    <p>SmartFridge — умный помощник для вашего холодильника.</p>
+    <div class="footer-inner">
+      <a class="footer-brand" href="{{ url_for('index') }}">SmartFridge</a>
+      <p>Меньше забытых продуктов. Больше вкусных идей.</p>
+      <span class="footer-copy">Умный подход к свежести.</span>
+    </div>
   </footer>
 </body>
 </html>
