@@ -1,106 +1,53 @@
 {% extends "base.html" %}
-
 {% block title %}Профиль — SmartFridge{% endblock %}
 
 {% block content %}
 <section class="profile-page">
   <div class="profile-heading">
     <div>
-      <span class="eyebrow">Личный кабинет</span>
-      <h1>Мой профиль</h1>
-      <p>Информация об аккаунте и ваши возможности SmartFridge.</p>
-    </div>
-
-    <div class="profile-status">
-      <span class="status-dot"></span>
-      Аккаунт создан
+      <p class="section-tag"><i></i> ЛИЧНЫЙ КАБИНЕТ</p>
+      <h1>ВАШЕ<br><em>ПРОСТРАНСТВО.</em></h1>
+      <p>Управление аккаунтом SmartFridge.</p>
     </div>
   </div>
 
   <div class="profile-grid">
-    <section class="profile-card profile-main-card">
-      <div class="profile-avatar" aria-hidden="true">
-        {{ user.email[0]|upper }}
-      </div>
-
-      <div class="profile-user-heading">
-        <h2>{{ user.email }}</h2>
-        <p>Пользователь SmartFridge</p>
-      </div>
-
-      <div class="profile-divider"></div>
+    <section class="profile-card">
+      <h2>Данные пользователя</h2>
 
       <dl class="profile-details">
         <div>
           <dt>Электронная почта</dt>
-          <dd>{{ user.email }}</dd>
+          <dd>{{ current_user.email }}</dd>
         </div>
 
         <div>
-          <dt>Дата регистрации</dt>
-          <dd>{{ user.created_at.replace("T", " ") }} UTC</dd>
-        </div>
-
-        <div>
-          <dt>Подтверждение почты</dt>
+          <dt>Статус почты</dt>
           <dd>
-            {% if user.is_verified %}
-              <span class="inline-status inline-status-success">
-                <span class="status-dot"></span>
-                Подтверждена
-              </span>
+            {% if current_user.is_verified %}
+              <span class="status-pill status-ok">Подтверждена</span>
             {% else %}
-              <span class="inline-status inline-status-warning">
-                Не подтверждена
-              </span>
-              <a href="{{ url_for('verify') }}">Подтвердить</a>
+              <span class="status-pill status-pending">Не подтверждена</span>
             {% endif %}
           </dd>
         </div>
       </dl>
+
+      {% if not current_user.is_verified %}
+        <a class="btn btn-primary action-wide" href="{{ url_for('verify') }}">
+          Подтвердить почту
+        </a>
+      {% endif %}
     </section>
 
-    <section class="profile-card profile-features-card">
-      <span class="eyebrow">Ваш SmartFridge</span>
-      <h2>Всё для свежести и порядка</h2>
+    <section class="profile-card profile-info-card">
+      <h2>Система хранения</h2>
       <p>
-        Здесь будут собраны основные инструменты для управления
-        продуктами и планирования приготовления еды.
+        SmartFridge задуман как единая система для учёта продуктов,
+        контроля свежести и планирования блюд.
       </p>
-
-      <div class="profile-feature-list">
-        <div class="profile-feature">
-          <span class="profile-feature-icon" aria-hidden="true">01</span>
-          <div>
-            <strong>Мои продукты</strong>
-            <p>Учёт запасов и сроков годности</p>
-          </div>
-          <span class="feature-state">Скоро</span>
-        </div>
-
-        <div class="profile-feature">
-          <span class="profile-feature-icon" aria-hidden="true">02</span>
-          <div>
-            <strong>Рецепты</strong>
-            <p>Идеи из продуктов, которые есть дома</p>
-          </div>
-          <span class="feature-state">Скоро</span>
-        </div>
-
-        <div class="profile-feature">
-          <span class="profile-feature-icon" aria-hidden="true">03</span>
-          <div>
-            <strong>Список покупок</strong>
-            <p>Всё необходимое в одном месте</p>
-          </div>
-          <span class="feature-state">Скоро</span>
-        </div>
-      </div>
-
-      <a class="btn btn-secondary profile-home-link"
-         href="{{ url_for('index') }}">
-        На главную <span aria-hidden="true">→</span>
-      </a>
+      <div class="profile-info-line"><span>СОСТОЯНИЕ ПРОЕКТА</span><strong>РАЗВИТИЕ</strong></div>
+      <a class="btn btn-secondary" href="{{ url_for('index') }}">О проекте</a>
     </section>
   </div>
 </section>

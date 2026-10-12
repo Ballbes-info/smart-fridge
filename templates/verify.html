@@ -1,78 +1,39 @@
 {% extends "base.html" %}
-
 {% block title %}Подтверждение почты — SmartFridge{% endblock %}
 
 {% block content %}
-<section class="auth-layout auth-layout-centered">
-  <div class="auth-card verification-card">
-    <div class="verification-icon" aria-hidden="true">
-      <svg viewBox="0 0 48 48" fill="none">
-        <rect x="5" y="10" width="38" height="28" rx="6"
-              stroke="currentColor" stroke-width="2"/>
-        <path d="M8 14L24 26L40 14"
-              stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M17 31L21 35L31 25"
-              stroke="currentColor" stroke-width="2.5"
-              stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </div>
+<section class="auth-page auth-page-single">
+  <div class="auth-aside">
+    <p class="section-tag"><i></i> ПОДТВЕРЖДЕНИЕ ПОЧТЫ</p>
+    <h1>ПРОВЕРЬТЕ<br><em>ПОЧТУ.</em></h1>
+    <p>Подтверждение адреса электронной почты необходимо для завершения регистрации.</p>
+  </div>
 
-    <span class="eyebrow">Последний шаг</span>
-    <h1>Подтвердите почту</h1>
-    <p class="verification-description">
-      Мы отправили код подтверждения на адрес
-      <strong>{{ email }}</strong>.
-      Введите его ниже, чтобы продолжить.
+  <div class="auth-card">
+    <h2>Остался один шаг</h2>
+    <p class="auth-description">
+      Откройте письмо от SmartFridge и перейдите по ссылке подтверждения.
+      Если письмо не пришло, можно запросить его повторно.
     </p>
 
-    {% if errors %}
-      <div class="form-errors" role="alert">
-        {% if errors is string %}
-          {{ errors }}
-        {% else %}
-          {% for error in errors %}
-            <p>{{ error }}</p>
-          {% endfor %}
-        {% endif %}
-      </div>
-    {% endif %}
+    <form method="post" action="{{ url_for('resend') }}" class="industrial-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
-    <form method="post" class="form">
-      <div class="field">
-        <label for="code">Код подтверждения</label>
-        <input
-          id="code"
-          type="text"
-          name="code"
-          inputmode="numeric"
-          autocomplete="one-time-code"
-          pattern="[0-9]{6}"
-          minlength="6"
-          maxlength="6"
-          placeholder="000000"
-          class="verification-code"
-          required
-        >
-        <span class="field-hint">Введите шестизначный код из письма.</span>
-      </div>
+      <label class="field">
+        <span>Электронная почта</span>
+        <input type="email" name="email" autocomplete="email"
+               value="{{ current_user.email if current_user else '' }}"
+               placeholder="name@example.com" required>
+      </label>
 
-      <button class="btn btn-primary auth-submit" type="submit">
-        Подтвердить почту <span aria-hidden="true">→</span>
+      <button class="btn btn-primary action-wide" type="submit">
+        Отправить письмо повторно
       </button>
     </form>
 
-    <div class="verification-resend">
-      <p>Не получили письмо? Проверьте папку «Спам».</p>
-
-      <form method="post" action="{{ url_for('resend') }}">
-        <button type="submit" class="text-action">
-          Отправить код повторно
-        </button>
-      </form>
+    <div class="auth-bottom">
+      <a href="{{ url_for('index') }}">← Вернуться на главную</a>
     </div>
-
-    <p class="form-hint">Срок действия кода — 15 минут.</p>
   </div>
 </section>
 {% endblock %}

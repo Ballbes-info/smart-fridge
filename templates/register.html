@@ -1,128 +1,48 @@
 {% extends "base.html" %}
-
 {% block title %}Регистрация — SmartFridge{% endblock %}
 
 {% block content %}
-<section class="auth-layout">
-  <div class="auth-intro">
-    <span class="eyebrow">Начните пользоваться</span>
-    <h1>Свежие продукты.<br>Умные решения.</h1>
-    <p>
-      Создайте аккаунт SmartFridge, чтобы в будущем хранить список
-      продуктов, контролировать сроки годности и подбирать рецепты.
-    </p>
-
-    <div class="auth-benefits">
-      <div class="auth-benefit">
-        <span class="benefit-number">01</span>
-        <div>
-          <strong>Порядок в продуктах</strong>
-          <p>Знайте, что уже есть дома.</p>
-        </div>
-      </div>
-
-      <div class="auth-benefit">
-        <span class="benefit-number">02</span>
-        <div>
-          <strong>Контроль свежести</strong>
-          <p>Не забывайте о сроках годности.</p>
-        </div>
-      </div>
-
-      <div class="auth-benefit">
-        <span class="benefit-number">03</span>
-        <div>
-          <strong>Идеи для готовки</strong>
-          <p>Находите блюда из имеющихся продуктов.</p>
-        </div>
-      </div>
-    </div>
+<section class="auth-page">
+  <div class="auth-aside">
+    <p class="section-tag"><i></i> НОВЫЙ АККАУНТ</p>
+    <h1>НАЧНИТЕ<br><em>С ПОРЯДКА.</em></h1>
+    <p>Создайте аккаунт, чтобы подготовиться к работе с системой SmartFridge.</p>
   </div>
 
   <div class="auth-card">
-    <div class="auth-card-heading">
-      <span class="eyebrow">Новый аккаунт</span>
-      <h2>Присоединяйтесь</h2>
-      <p>Заполните данные для создания аккаунта.</p>
-    </div>
+    <h2>Регистрация</h2>
+    <p class="auth-description">Заполните данные и подтвердите электронную почту.</p>
 
-    {% if errors %}
-      <div class="form-errors" role="alert">
-        {% if errors is string %}
-          {{ errors }}
-        {% else %}
-          {% for error in errors %}
-            <p>{{ error }}</p>
-          {% endfor %}
-        {% endif %}
-      </div>
-    {% endif %}
+    <form method="post" action="{{ url_for('register') }}" class="industrial-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
-    <form method="post" class="form">
-      <div class="field">
-        <label for="name">Ваше имя</label>
-        <input
-          id="name"
-          type="text"
-          name="name"
-          value="{{ name|default('', true) }}"
-          autocomplete="name"
-          placeholder="Как к вам обращаться"
-          required
-        >
-      </div>
+      <label class="field">
+        <span>Имя</span>
+        <input type="text" name="name" autocomplete="name"
+               placeholder="Как к вам обращаться">
+      </label>
 
-      <div class="field">
-        <label for="email">Электронная почта</label>
-        <input
-          id="email"
-          type="email"
-          name="email"
-          value="{{ email|default('', true) }}"
-          autocomplete="email"
-          placeholder="you@example.com"
-          required
-        >
-      </div>
+      <label class="field">
+        <span>Электронная почта</span>
+        <input type="email" name="email" autocomplete="email"
+               placeholder="name@example.com" required>
+      </label>
 
-      <div class="field">
-        <label for="password">Пароль</label>
-        <input
-          id="password"
-          type="password"
-          name="password"
-          autocomplete="new-password"
-          placeholder="Придумайте пароль"
-          required
-        >
-      </div>
+      <label class="field">
+        <span>Пароль</span>
+        <input type="password" name="password" autocomplete="new-password"
+               placeholder="Придумайте пароль" required minlength="8">
+      </label>
 
-      <div class="field">
-        <label for="password2">Повторите пароль</label>
-        <input
-          id="password2"
-          type="password"
-          name="password2"
-          autocomplete="new-password"
-          placeholder="Введите пароль ещё раз"
-          required
-        >
-      </div>
-
-      <button class="btn btn-primary auth-submit" type="submit">
-        Создать аккаунт <span aria-hidden="true">→</span>
+      <button class="btn btn-primary action-wide" type="submit">
+        Создать аккаунт
       </button>
-
-      <p class="form-hint">
-        Создавая аккаунт, вы сможете пользоваться персональными
-        возможностями SmartFridge.
-      </p>
     </form>
 
-    <p class="auth-switch">
-      Уже зарегистрированы?
+    <div class="auth-bottom">
+      <span>Уже зарегистрированы?</span>
       <a href="{{ url_for('login') }}">Войти</a>
-    </p>
+    </div>
   </div>
 </section>
 {% endblock %}
