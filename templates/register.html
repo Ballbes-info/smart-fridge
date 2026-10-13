@@ -13,25 +13,39 @@
     <h2>Регистрация</h2>
     <p class="auth-description">Заполните данные и подтвердите электронную почту.</p>
 
-    <form method="post" action="{{ url_for('register') }}" class="industrial-form">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    {% if errors %}
+      <div class="form-errors">
+        {% for error in errors %}
+          <p>{{ error }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
 
+    <form method="post" action="{{ url_for('register') }}" class="industrial-form">
       <label class="field">
         <span>Имя</span>
         <input type="text" name="name" autocomplete="name"
-               placeholder="Как к вам обращаться">
+               value="{{ name|default('', true) }}"
+               placeholder="Как к вам обращаться" required>
       </label>
 
       <label class="field">
         <span>Электронная почта</span>
         <input type="email" name="email" autocomplete="email"
+               value="{{ email|default('', true) }}"
                placeholder="name@example.com" required>
       </label>
 
       <label class="field">
         <span>Пароль</span>
         <input type="password" name="password" autocomplete="new-password"
-               placeholder="Придумайте пароль" required minlength="8">
+               placeholder="Минимум 8 символов" required minlength="8">
+      </label>
+
+      <label class="field">
+        <span>Повторите пароль</span>
+        <input type="password" name="password2" autocomplete="new-password"
+               placeholder="Повторите пароль" required minlength="8">
       </label>
 
       <button class="btn btn-primary action-wide" type="submit">

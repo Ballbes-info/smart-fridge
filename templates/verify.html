@@ -2,33 +2,50 @@
 {% block title %}Подтверждение почты — SmartFridge{% endblock %}
 
 {% block content %}
-<section class="auth-page auth-page-single">
+<section class="auth-page">
   <div class="auth-aside">
     <p class="section-tag"><i></i> ПОДТВЕРЖДЕНИЕ ПОЧТЫ</p>
     <h1>ПРОВЕРЬТЕ<br><em>ПОЧТУ.</em></h1>
-    <p>Подтверждение адреса электронной почты необходимо для завершения регистрации.</p>
+    <p>Мы отправили шестизначный код на вашу электронную почту.</p>
   </div>
 
   <div class="auth-card">
-    <h2>Остался один шаг</h2>
+    <h2>Введите код</h2>
     <p class="auth-description">
-      Откройте письмо от SmartFridge и перейдите по ссылке подтверждения.
-      Если письмо не пришло, можно запросить его повторно.
+      Мы отправили код на <strong>{{ email }}</strong>.
+      Введите его ниже. Код действует 15 минут.
     </p>
 
-    <form method="post" action="{{ url_for('resend') }}" class="industrial-form">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    {% if errors %}
+      <div class="form-errors">
+        {% for error in errors %}
+          <p>{{ error }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
 
+    <form method="post" class="industrial-form">
       <label class="field">
-        <span>Электронная почта</span>
-        <input type="email" name="email" autocomplete="email"
-               value="{{ current_user.email if current_user else '' }}"
-               placeholder="name@example.com" required>
+        <span>Код из письма</span>
+        <input
+          type="text"
+          name="code"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          maxlength="6"
+          placeholder="000000"
+          autofocus
+          required
+        >
       </label>
 
       <button class="btn btn-primary action-wide" type="submit">
-        Отправить письмо повторно
+        Подтвердить
       </button>
+    </form>
+
+    <form method="post" action="{{ url_for('resend') }}" class="industrial-form">
+      <button class="text-action" type="submit">Отправить код повторно</button>
     </form>
 
     <div class="auth-bottom">

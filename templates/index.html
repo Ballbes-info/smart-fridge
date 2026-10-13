@@ -22,21 +22,44 @@
             <a class="btn btn-primary" href="{{ url_for('register') }}">Начать работу</a>
           {% endif %}
 
-          <a class="btn btn-secondary" href="#system">Как это работает</a>
+
         </div>
       </div>
 
-      <div class="home-hero__object" aria-label="Схематичное изображение холодильного модуля">
-        <div class="object-grid"></div>
-        <div class="object-back"></div>
-
-        <div class="cabinet">
-          <div class="cabinet-top"><i></i></div>
-          <div class="cabinet-shelf shelf-a"><b></b><b></b><b></b></div>
-          <div class="cabinet-shelf shelf-b"><b></b><b></b><b></b><b></b></div>
-          <div class="cabinet-shelf shelf-c"><b></b><b></b><b></b></div>
-          <div class="cabinet-bottom"></div>
+      <div class="home-hero__object" aria-label="Макет интерфейса умного холодильника">
+        <div class="device-window">
+          <div class="device-topbar">
+            <div class="device-brand"><span class="device-brand-mark">S</span><span>SMARTFRIDGE<small>HOME SYSTEM</small></span></div>
+            <div class="device-status"><i></i> Система активна <span>●</span></div>
+          </div>
+          <div class="device-greeting">
+            <div><span class="device-kicker">ВАШ ХОЛОДИЛЬНИК</span><h2>Всё под контролем.</h2><p>Среда, 14 октября <span>·</span> Обзор запасов</p></div>
+            <div class="device-temp"><span>⌁</span><div><strong>+4°</strong><small>Температура</small></div></div>
+          </div>
+          <div class="device-stats">
+            <div><span class="stat-symbol">▦</span><small>В наличии</small><strong>24 <i>продукта</i></strong></div>
+            <div><span class="stat-symbol stat-warm">◷</span><small>Скоро истекает</small><strong>03 <i>продукта</i></strong></div>
+            <div><span class="stat-symbol">✳</span><small>Можно приготовить</small><strong>12 <i>идей</i></strong></div>
+          </div>
+          <div class="device-content">
+            <div class="device-products">
+              <div class="device-section-head"><strong>Свежесть продуктов</strong><span>Все продукты ↗</span></div>
+              <div class="product-row"><span class="food-icon food-milk">▰</span><span class="food-info"><strong>Молоко</strong><small>Молочные продукты</small></span><span class="freshness freshness-soon">1 день</span></div>
+              <div class="product-row"><span class="food-icon food-greens">✿</span><span class="food-info"><strong>Шпинат</strong><small>Овощи и зелень</small></span><span class="freshness freshness-soon">2 дня</span></div>
+              <div class="product-row"><span class="food-icon food-cheese">▰</span><span class="food-info"><strong>Сыр</strong><small>Молочные продукты</small></span><span class="freshness">8 дней</span></div>
+            </div>
+            <div class="device-recipe">
+              <div class="recipe-art"><span>✳</span><i></i><b></b></div>
+              <span class="device-kicker">ИДЕЯ НА СЕГОДНЯ</span>
+              <strong>Омлет с зеленью</strong>
+              <small>15 минут · 4 ингредиента</small>
+              <div class="recipe-meter"><span></span></div>
+              <small class="recipe-match">Можно приготовить из того, что уже есть</small>
+            </div>
+          </div>
+          <div class="device-bottom"><span><i></i> Данные обновлены</span><span>Умный дом <b>↗</b></span></div>
         </div>
+        <div class="object-caption"><span class="caption-dot"></span> Пример интерфейса SmartFridge <span class="caption-line"></span></div>
       </div>
     </div>
   </section>
@@ -72,22 +95,5 @@
     </p>
   </section>
 
-  <section class="cta-panel">
-    <div class="cta-panel__content">
-      <h2>Наведём порядок</h2>
-      <p>Создайте аккаунт, чтобы начать работу с SmartFridge.</p>
-
-      <div class="cta-panel__actions">
-        {% if current_user and current_user.is_verified %}
-          <a class="cta-panel__button" href="{{ url_for('profile') }}">Открыть профиль</a>
-        {% elif current_user %}
-          <a class="cta-panel__button" href="{{ url_for('verify') }}">Подтвердить аккаунт</a>
-        {% else %}
-          <a class="cta-panel__button" href="{{ url_for('register') }}">Создать аккаунт</a>
-          <a class="cta-panel__login" href="{{ url_for('login') }}">Уже есть аккаунт? Войти</a>
-        {% endif %}
-      </div>
-    </div>
-  </section>
 </div>
 {% endblock %}
