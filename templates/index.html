@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "display.html" import display %}
 {% block title %}SmartFridge — свежий взгляд на привычное{% endblock %}
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
@@ -7,7 +8,6 @@
 <div class="home-page">
   <section class="home-hero" aria-labelledby="hero-title">
     <div class="home-hero__copy">
-      <p class="section-tag"><i></i> ТЕХНОЛОГИИ ДЛЯ ПОВСЕДНЕВНОГО</p>
       <h1 id="hero-title">Свежий взгляд<br>на <em>привычное.</em></h1>
       <p class="home-hero__description">Меньше забытых продуктов.<br>Больше идей для ужина. Знакомьтесь —<br class="desktop-break"> ваш умный помощник SmartFridge.</p>
       <div class="home-hero__actions">
@@ -22,19 +22,7 @@
       </div>
       <div class="hero-platforms">{{ icon('fridge') }} На холодильнике <span></span> {{ icon('phone') }} В вашем телефоне</div>
     </div>
-    <div class="fridge-art" aria-hidden="true">
-      <div class="fridge-halo"></div>
-      <div class="fridge-shadow"></div>
-      <div class="fridge-object">
-        <div class="fridge-door fridge-door-top"><span class="fridge-handle"></span></div>
-        <div class="fridge-door fridge-door-bottom">
-          <div class="fridge-display"><span></span><i></i><b></b></div>
-          <span class="fridge-handle"></span>
-        </div>
-      </div>
-      <span class="fridge-orbit fridge-orbit-one"></span>
-      <span class="fridge-orbit fridge-orbit-two"></span>
-    </div>
+    {{ display() }}
   </section>
 
   <section class="home-about" aria-labelledby="about-title">
@@ -51,5 +39,21 @@
     <div class="daily-main"><p class="home-label">НА КАЖДЫЙ ДЕНЬ</p><h2 id="daily-title">Что сегодня<br><em>на ужин?</em></h2><p>Иногда для нового блюда уже всё есть. Идеи рецептов на основе ваших продуктов помогают выбрать, что приготовить, и обойтись без ещё одного похода в магазин.</p></div>
     <div class="daily-mobile"><span class="daily-mobile-line" aria-hidden="true"></span><h3>Дома и с собой</h3><p>На кухне удобно посмотреть на дисплей холодильника. За покупками — открыть телефон. Один привычный способ держать продукты под контролем.</p><a class="daily-link" href="{{ url_for('profile') if current_user and current_user.is_verified else url_for('verify') if current_user else url_for('register') }}">{{ 'Мой профиль' if current_user and current_user.is_verified else 'Подтвердить почту' if current_user else 'Создать аккаунт' }} {{ icon('arrow') }}</a></div>
   </section>
+  <section class="home-rhythm" aria-labelledby="rhythm-title">
+    <div class="rhythm-copy"><p class="home-label">ВАШ ПОВСЕДНЕВНЫЙ РИТМ</p><h2 id="rhythm-title">Всё начинается<br>с одного касания.</h2><p>На кухне и за её пределами — привычные дела становятся чуть проще.</p></div>
+    <div class="rhythm-demo" role="group" aria-label="Выберите момент дня">
+      <input class="rhythm-radio" type="radio" name="daily-rhythm" id="rhythm-home" checked>
+      <input class="rhythm-radio" type="radio" name="daily-rhythm" id="rhythm-shop">
+      <input class="rhythm-radio" type="radio" name="daily-rhythm" id="rhythm-dinner">
+      <div class="rhythm-switch"><label for="rhythm-home">Дома</label><label for="rhythm-shop">В магазине</label><label for="rhythm-dinner">За ужином</label></div>
+      <div class="rhythm-scenes">
+        <div class="rhythm-scene rhythm-scene-home"><span class="rhythm-symbol">{{ icon('grid') }}</span><h3>Вспоминать не нужно.</h3><p>Посмотрите, что осталось в холодильнике, и решите, что взять на завтрак.</p></div>
+        <div class="rhythm-scene rhythm-scene-shop"><span class="rhythm-symbol">{{ icon('phone') }}</span><h3>Список уже с вами.</h3><p>Проверьте запасы с телефона, прежде чем положить в корзину ещё одну упаковку.</p></div>
+        <div class="rhythm-scene rhythm-scene-dinner"><span class="rhythm-symbol">{{ icon('leaf') }}</span><h3>Осталось выбрать блюдо.</h3><p>Начните с продуктов, которые есть дома. Возможно, для ужина уже всё готово.</p></div>
+      </div>
+      <span class="rhythm-hint">Выберите момент дня</span>
+    </div>
+  </section>
+
 </div>
 {% endblock %}

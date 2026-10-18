@@ -1,171 +1,4 @@
-/* Главная: декоративный холодильник и текстовые секции. */
-.fridge-art {
-  position: relative;
-  isolation: isolate;
-  display: grid;
-  place-items: center;
-  min-height: 540px;
-  width: 100%;
-}
-.fridge-halo {
-  position: absolute;
-  inset: 20px -5px;
-  border-radius: 50%;
-  background: radial-gradient(ellipse, #e0ebd4 0%, #e9f0e1 40%, #f4f7f200 71%);
-}
-.fridge-object {
-  position: relative;
-  z-index: 2;
-  width: 248px;
-  height: 440px;
-  border-radius: 23px 26px 21px 20px;
-  background: #b4c1b1;
-  transform: perspective(1000px) rotateY(-15deg) rotateZ(5deg);
-  box-shadow:
-    14px 16px 25px -18px #2f4d3750,
-    inset -9px 0 7px #9eae9c70;
-  padding: 4px 12px 10px 4px;
-  animation: fridge-drift 9s ease-in-out infinite;
-}
-.fridge-object::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border: 1px solid #bac9b4;
-  border-radius: inherit;
-  background: linear-gradient(
-    105deg,
-    #ffffff50,
-    transparent 30%,
-    transparent 80%,
-    #6c886c1a
-  );
-  pointer-events: none;
-  z-index: 4;
-}
-.fridge-object::after {
-  content: "";
-  position: absolute;
-  bottom: -5px;
-  left: 24px;
-  right: 24px;
-  height: 7px;
-  border-radius: 0 0 5px 5px;
-  background: #7e927b;
-  z-index: -1;
-}
-.fridge-door {
-  position: relative;
-  background: linear-gradient(112deg, #f9fbf6 0%, #e4ebdd 48%, #d1dcc9 100%);
-  border: 1px solid #f8fbf1;
-  border-right-color: #c9d4c2;
-  box-shadow:
-    inset 2px 0 8px #ffffff70,
-    0 2px 2px #71816d40;
-}
-.fridge-door-top {
-  height: 132px;
-  border-radius: 20px 17px 8px 8px;
-  margin-bottom: 5px;
-}
-.fridge-door-bottom {
-  height: 285px;
-  border-radius: 8px 8px 17px 17px;
-}
-.fridge-handle {
-  position: absolute;
-  top: 32px;
-  left: 15px;
-  width: 5px;
-  height: 46px;
-  border-radius: 4px;
-  background: linear-gradient(90deg, #a6b79b, #f6faee 60%, #b8c7ac);
-  box-shadow: 3px 1px 4px #6b826d25;
-}
-.fridge-door-bottom .fridge-handle {
-  top: 35px;
-  height: 77px;
-}
-.fridge-display {
-  position: absolute;
-  top: 30px;
-  right: 26px;
-  width: 130px;
-  height: 155px;
-  overflow: hidden;
-  border: 4px solid #c1cfb7;
-  border-radius: 10px;
-  background: linear-gradient(145deg, #284c3e, #1b302c);
-  box-shadow:
-    0 0 0 1px #ffffff65,
-    inset 0 0 14px #163022;
-}
-.fridge-display::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(120deg, #ffffff13, transparent 60%);
-  z-index: 2;
-}
-.fridge-display > span {
-  position: absolute;
-  width: 48px;
-  height: 48px;
-  left: 14px;
-  top: 18px;
-  border-radius: 50%;
-  background: #a4c67a;
-  opacity: 0.75;
-  filter: blur(12px);
-}
-.fridge-display > i {
-  position: absolute;
-  width: 65px;
-  height: 5px;
-  left: 17px;
-  bottom: 44px;
-  border-radius: 5px;
-  background: #a7c295;
-  filter: blur(2px);
-  opacity: 0.4;
-}
-.fridge-display > b {
-  position: absolute;
-  width: 43px;
-  height: 5px;
-  left: 17px;
-  bottom: 29px;
-  border-radius: 5px;
-  background: #abc492;
-  filter: blur(2px);
-  opacity: 0.25;
-}
-.fridge-shadow {
-  position: absolute;
-  bottom: 29px;
-  left: 19%;
-  right: 13%;
-  height: 31px;
-  border-radius: 50%;
-  background: #607a4826;
-  filter: blur(15px);
-  transform: rotate(5deg);
-}
-.fridge-orbit {
-  position: absolute;
-  z-index: 0;
-  width: 390px;
-  height: 390px;
-  border: 1px solid #d4e0ca;
-  border-radius: 50%;
-  transform: rotate(-22deg) scaleX(1.05);
-}
-.fridge-orbit-two {
-  width: 465px;
-  height: 260px;
-  border-color: #dce6d1;
-  transform: rotate(-37deg);
-}
+/* Текстовые секции главной */
 .home-about {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -289,28 +122,7 @@
 .daily-link:hover .icon {
   transform: translateX(4px);
 }
-@keyframes fridge-drift {
-  0%,
-  100% {
-    transform: perspective(1000px) rotateY(-15deg) rotateZ(5deg) translateY(0);
-  }
-  50% {
-    transform: perspective(1000px) rotateY(-12deg) rotateZ(4deg)
-      translateY(-7px);
-  }
-}
 @media (max-width: 1050px) {
-  .fridge-art {
-    min-height: 500px;
-  }
-  .fridge-orbit {
-    width: 280px;
-    height: 300px;
-  }
-  .fridge-orbit-two {
-    width: 300px;
-    height: 200px;
-  }
   .home-about {
     gap: 40px;
   }
@@ -323,53 +135,6 @@
   }
 }
 @media (max-width: 760px) {
-  .fridge-art {
-    min-height: 390px;
-    max-width: 480px;
-    justify-self: center;
-    margin-top: -12px;
-  }
-  .fridge-object {
-    width: 195px;
-    height: 347px;
-    padding-right: 10px;
-  }
-  .fridge-door-top {
-    height: 103px;
-  }
-  .fridge-door-bottom {
-    height: 226px;
-  }
-  .fridge-display {
-    width: 105px;
-    height: 126px;
-    top: 25px;
-    right: 20px;
-    border-width: 3px;
-  }
-  .fridge-handle {
-    left: 12px;
-    width: 4px;
-    height: 34px;
-    top: 26px;
-  }
-  .fridge-door-bottom .fridge-handle {
-    top: 30px;
-    height: 60px;
-  }
-  .fridge-orbit {
-    width: 295px;
-    height: 310px;
-  }
-  .fridge-orbit-two {
-    width: 330px;
-    height: 205px;
-  }
-  .fridge-shadow {
-    bottom: 5px;
-    left: 17%;
-    right: 14%;
-  }
   .home-about {
     grid-template-columns: 1fr;
     gap: 24px;
@@ -422,15 +187,6 @@
   }
 }
 @media (max-width: 400px) {
-  .fridge-orbit {
-    width: 250px;
-    height: 290px;
-    transform: scaleX(1.05);
-  }
-  .fridge-orbit-two {
-    width: 250px;
-    height: 160px;
-  }
   .home-freshness {
     padding: 26px 20px;
   }
@@ -438,8 +194,156 @@
     font-size: 27px;
   }
 }
+
+.home-rhythm {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: start;
+  gap: 90px;
+  padding: 42px 0 56px;
+  border-top: 1px solid var(--line);
+}
+.rhythm-copy h2 {
+  font-size: 32px;
+  line-height: 1.15;
+  font-weight: 550;
+  margin-bottom: 18px;
+}
+.rhythm-copy > p:last-child {
+  font-size: 14px;
+  line-height: 1.85;
+  max-width: 330px;
+}
+.rhythm-demo {
+  position: relative;
+  min-width: 0;
+  padding-top: 2px;
+}
+.rhythm-radio {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.rhythm-switch {
+  display: flex;
+  gap: 22px;
+  border-bottom: 1px solid var(--line);
+}
+.rhythm-switch label {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+  font-size: 12px;
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    border-color 0.2s;
+}
+.rhythm-switch label:hover {
+  color: var(--green);
+}
+#rhythm-home:checked ~ .rhythm-switch label[for="rhythm-home"],
+#rhythm-shop:checked ~ .rhythm-switch label[for="rhythm-shop"] {
+  border-color: #759353;
+  color: var(--ink);
+}
+#rhythm-dinner:checked ~ .rhythm-switch label[for="rhythm-dinner"] {
+  border-color: #759353;
+  color: var(--ink);
+}
+#rhythm-home:focus-visible ~ .rhythm-switch label[for="rhythm-home"],
+#rhythm-shop:focus-visible ~ .rhythm-switch label[for="rhythm-shop"],
+#rhythm-dinner:focus-visible ~ .rhythm-switch label[for="rhythm-dinner"] {
+  outline: 3px solid #658854;
+  outline-offset: 3px;
+}
+.rhythm-scenes {
+  min-height: 210px;
+  padding-top: 25px;
+}
+.rhythm-scene {
+  display: none;
+  animation: scene-in 0.35s ease-out both;
+}
+#rhythm-home:checked ~ .rhythm-scenes .rhythm-scene-home,
+#rhythm-shop:checked ~ .rhythm-scenes .rhythm-scene-shop,
+#rhythm-dinner:checked ~ .rhythm-scenes .rhythm-scene-dinner {
+  display: block;
+}
+.rhythm-symbol {
+  display: block;
+  color: var(--green);
+  margin-bottom: 19px;
+}
+.rhythm-symbol .icon {
+  width: 24px;
+  height: 24px;
+}
+.rhythm-scene h3 {
+  font-size: 23px;
+  font-weight: 550;
+  letter-spacing: -0.5px;
+  margin-bottom: 12px;
+}
+.rhythm-scene p {
+  max-width: 350px;
+  font-size: 13px;
+  line-height: 1.85;
+}
+.rhythm-hint {
+  font-size: 10px;
+  color: var(--muted);
+}
+@keyframes scene-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (max-width: 1050px) {
+  .home-rhythm {
+    gap: 45px;
+  }
+}
+@media (max-width: 760px) {
+  .home-rhythm {
+    grid-template-columns: 1fr;
+    gap: 25px;
+    padding: 32px 0 38px;
+  }
+  .rhythm-copy h2 {
+    font-size: 29px;
+  }
+  .rhythm-switch {
+    gap: 25px;
+  }
+  .rhythm-scenes {
+    min-height: 205px;
+  }
+}
+@media (max-width: 360px) {
+  .rhythm-switch {
+    gap: 19px;
+  }
+  .rhythm-switch label {
+    font-size: 11px;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
-  .fridge-object {
+  .rhythm-scene {
     animation: none;
   }
 }

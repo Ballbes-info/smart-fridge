@@ -1,0 +1,195 @@
+/* Страницы аккаунта */
+.auth-page {
+  gap: 90px;
+  padding-top: 48px;
+  padding-bottom: 56px;
+}
+.auth-aside {
+  display: block;
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  min-height: 0;
+  color: var(--ink);
+  overflow: visible;
+}
+.auth-aside::before,
+.auth-aside::after {
+  display: none;
+}
+.auth-aside .section-tag {
+  color: var(--green);
+  letter-spacing: 1.3px;
+}
+.auth-aside .section-tag i {
+  background: #719454;
+  box-shadow: 0 0 0 4px #e3ecd9;
+}
+.auth-aside h1 {
+  font-size: clamp(38px, 4.3vw, 56px);
+  line-height: 1.08;
+  margin: 24px 0;
+  letter-spacing: -0.055em;
+  max-width: 460px;
+}
+.auth-aside h1 em {
+  color: var(--green);
+}
+.auth-aside > p:not(.section-tag) {
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.8;
+  max-width: 340px;
+}
+.auth-card {
+  background: #ffffff70;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 30px;
+  max-width: 430px;
+  box-shadow: 0 10px 30px #23463104;
+}
+.auth-card h2 {
+  font-size: 29px;
+}
+.auth-card .auth-description {
+  font-size: 13px;
+}
+.auth-card .btn-primary {
+  display: flex;
+  justify-content: space-between;
+}
+.auth-card .btn-primary .icon {
+  width: 19px;
+  height: 19px;
+}
+.auth-bottom {
+  margin-top: 16px;
+  font-size: 12px;
+  gap: 7px;
+}
+.auth-card .field > span {
+  font-size: 12px;
+}
+.auth-card .field input {
+  border-radius: 9px;
+}
+.auth-card .btn {
+  border-radius: 10px;
+}
+.auth-card .field input[name="code"] {
+  padding-left: 25px;
+}
+.profile-page {
+  padding-top: 45px;
+}
+.profile-heading h1 {
+  font-size: clamp(38px, 4.5vw, 57px);
+}
+.profile-grid {
+  grid-template-columns: 1.2fr 1fr;
+  gap: 60px;
+  padding-top: 28px;
+  border-top: 1px solid var(--line);
+}
+.profile-card {
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+.profile-card h2 {
+  font-size: 23px;
+}
+.profile-details > div:first-child {
+  border-top: 0;
+}
+.profile-card-icon {
+  margin-bottom: 20px;
+}
+.profile-info-card {
+  border-left: 2px solid #a6bd8c;
+  padding: 0 0 0 30px;
+}
+.profile-info-card .profile-card-icon {
+  color: #759353;
+}
+.profile-info-card p {
+  max-width: 340px;
+}
+.profile-info-card .btn {
+  font-size: 13px;
+  border-radius: 10px;
+  margin-top: 20px;
+  min-height: 48px;
+}
+.profile-details .profile-name {
+  font-size: 16px;
+}
+@media (max-width: 1050px) {
+  .auth-page {
+    gap: 45px;
+  }
+  .auth-card {
+    padding: 25px;
+  }
+  .auth-aside h1 {
+    font-size: 44px;
+  }
+  .profile-grid {
+    gap: 35px;
+  }
+}
+@media (max-width: 760px) {
+  .auth-page {
+    gap: 26px;
+    padding-top: 30px;
+    padding-bottom: 40px;
+  }
+  .auth-aside {
+    padding: 0;
+  }
+  .auth-aside h1 {
+    font-size: 36px;
+    max-width: 450px;
+    margin: 18px 0 15px;
+  }
+  .auth-aside > p:not(.section-tag) {
+    font-size: 14px;
+    max-width: 450px;
+  }
+  .auth-card {
+    max-width: 500px;
+    padding: 25px;
+  }
+  .auth-card h2 {
+    font-size: 27px;
+  }
+  .profile-page {
+    padding-top: 30px;
+  }
+  .profile-grid {
+    grid-template-columns: 1fr;
+    gap: 35px;
+  }
+  .profile-info-card {
+    padding-left: 22px;
+  }
+  .profile-heading h1 {
+    font-size: 38px;
+  }
+}
+@media (max-width: 360px) {
+  .auth-card {
+    padding: 21px 18px;
+  }
+  .auth-aside h1 {
+    font-size: 32px;
+  }
+  .auth-card h2 {
+    font-size: 25px;
+  }
+  .profile-heading h1 {
+    font-size: 34px;
+  }
+}

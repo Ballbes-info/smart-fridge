@@ -1,14 +1,14 @@
 {% extends "base.html" %}
+{% from "display.html" import display %}
 {% block title %}Регистрация — SmartFridge{% endblock %}
 
 {% block content %}
 <section class="auth-page">
   <div class="auth-aside">
-    <div class="auth-motif" aria-hidden="true">{{ icon('scan') }}</div>
     <p class="section-tag"><i></i> НОВЫЙ АККАУНТ</p>
     <h1>Всё начинается <em>с порядка.</em></h1>
-    <p>Создайте аккаунт, чтобы подготовиться к работе с системой SmartFridge.</p>
-    <div class="auth-aside-foot">{{ icon('fridge') }} Продумано для дома. Всегда под рукой.</div>
+    <p>Ваш дисплей, ваши продукты и доступ с телефона — начните с аккаунта SmartFridge.</p>
+    {{ display('display-compact') }}
   </div>
 
   <div class="auth-card">
@@ -51,7 +51,7 @@
       </label>
 
       <button class="btn btn-primary action-wide" type="submit">
-        Создать аккаунт
+        <span>Создать аккаунт</span> {{ icon('arrow') }}
       </button>
     </form>
 

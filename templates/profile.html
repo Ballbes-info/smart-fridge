@@ -18,6 +18,10 @@
 
       <dl class="profile-details">
         <div>
+          <dt>Имя</dt>
+          <dd class="profile-name">{{ current_user.name }}</dd>
+        </div>
+        <div>
           <dt>Электронная почта</dt>
           <dd>{{ current_user.email }}</dd>
         </div>
@@ -42,13 +46,12 @@
     </section>
 
     <section class="profile-card profile-info-card">
-      <div class="profile-card-icon">{{ icon('fridge') }}</div>
-      <h2>Ваш будущий помощник</h2>
+      <div class="profile-card-icon">{{ icon('phone') }}</div>
+      <h2>Ваш SmartFridge</h2>
       <p>
-        SmartFridge задуман как единая система для учёта продуктов,
-        контроля свежести и планирования блюд.
+        Дисплей на кухне и доступ с телефона. Продукты, сроки хранения
+        и идеи для ужина в одной системе.
       </p>
-      <div class="profile-info-line"><span>СОСТОЯНИЕ ПРОЕКТА</span><strong>РАЗВИТИЕ</strong></div>
       <a class="btn btn-secondary" href="{{ url_for('index') }}">О проекте</a>
     </section>
   </div>

@@ -1,0 +1,394 @@
+/* Дисплей SmartFridge */
+.display-art {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  align-content: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 460px;
+  padding: 38px 18px;
+}
+.display-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse,
+    #dce9cf 0%,
+    #e9f0e150 50%,
+    transparent 72%
+  );
+}
+.display-device {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  aspect-ratio: 1.47;
+  border: 1px solid #63746b;
+  border-radius: 23px;
+  padding: 17px 15px 21px;
+  background: linear-gradient(125deg, #3d4e45, #1e2c26 45%, #293b32);
+  box-shadow:
+    7px 11px 0 -5px #70826a,
+    13px 29px 36px -17px #233d3a45,
+    inset 1px 1px 0 #ffffff25;
+  transform: perspective(1100px) rotateY(-9deg) rotateZ(3deg);
+  animation: display-float 9s ease-in-out infinite;
+}
+.display-camera {
+  position: absolute;
+  top: 6px;
+  left: calc(50% - 2px);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #151f1b;
+  box-shadow: inset 0 0 0 1px #71827760;
+}
+.display-screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 9px;
+  overflow: hidden;
+  padding: 16px 19px 18px;
+  background: #f2f6ec;
+}
+.display-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 24px;
+  padding-bottom: 13px;
+  border-bottom: 1px solid #dce4d5;
+}
+.display-mark {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 17px;
+  color: #537249;
+}
+.display-mark i {
+  width: 3px;
+  height: 10px;
+  background: currentColor;
+}
+.display-mark i:nth-child(2) {
+  height: 17px;
+}
+.display-mark i:nth-child(3) {
+  height: 7px;
+}
+.display-online {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #8fab66;
+  box-shadow: 0 0 0 4px #e5ecd9;
+}
+.display-layout {
+  display: grid;
+  grid-template-columns: 29px 1fr;
+  grid-template-rows: minmax(0, 1fr);
+  gap: 20px;
+  padding-top: 18px;
+  height: calc(100% - 24px);
+}
+.display-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+  padding-top: 6px;
+  color: #95a18a;
+  border-right: 1px solid #dde5d5;
+  padding-right: 15px;
+}
+.display-nav .icon {
+  width: 17px;
+  height: 17px;
+}
+.display-nav .icon:first-child {
+  color: #466c37;
+}
+.display-overview {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  grid-template-rows: minmax(0, 1fr) 28px;
+  min-height: 0;
+  gap: 14px 20px;
+  min-width: 0;
+}
+.display-temperature {
+  position: relative;
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  max-height: 143px;
+  min-height: 0;
+  min-width: 0;
+  aspect-ratio: 1;
+  align-self: center;
+  justify-self: start;
+}
+.display-temperature > svg {
+  width: 100%;
+  height: 100%;
+}
+.display-temperature > span {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: clamp(25px, 3vw, 41px);
+  letter-spacing: -2px;
+  font-weight: 400;
+  color: #365638;
+}
+.display-temperature small {
+  font-size: 0.6em;
+  margin-top: -0.35em;
+}
+.display-summary {
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+.display-summary span,
+.display-summary i,
+.display-summary b {
+  display: block;
+  height: 5px;
+  border-radius: 3px;
+  background: #d4dfc7;
+  width: 65%;
+}
+.display-summary span {
+  width: 82%;
+  height: 8px;
+  background: #8aa76a;
+}
+.display-summary b {
+  width: 48%;
+}
+.display-leaf {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 9px;
+  color: #759353;
+}
+.display-leaf .icon {
+  width: 24px;
+  height: 24px;
+}
+.display-leaf span {
+  width: 42px;
+  height: 4px;
+  background: #d3dfc3;
+  border-radius: 3px;
+}
+.display-wave {
+  align-self: end;
+  padding-bottom: 4px;
+}
+.display-wave svg {
+  width: 100%;
+  height: auto;
+}
+.display-wave-path {
+  stroke-dasharray: 340;
+  stroke-dashoffset: 340;
+  animation: display-line 3s ease-out 0.4s forwards;
+}
+.display-indicator {
+  position: absolute;
+  width: 12px;
+  height: 2px;
+  left: calc(50% - 6px);
+  bottom: 9px;
+  background: #9fb886;
+  border-radius: 2px;
+}
+.display-ground {
+  position: absolute;
+  bottom: 26px;
+  left: 12%;
+  right: 6%;
+  height: 24px;
+  border-radius: 50%;
+  background: #6880521c;
+  filter: blur(15px);
+}
+.display-compact {
+  min-height: 0;
+  max-width: 300px;
+  padding: 24px 12px 17px;
+  margin: 24px 0 0;
+}
+.display-compact .display-device {
+  padding: 12px 10px 14px;
+  border-radius: 15px;
+  animation-duration: 11s;
+}
+.display-compact .display-screen {
+  padding: 11px 12px;
+  border-radius: 5px;
+}
+.display-compact .display-layout {
+  gap: 12px;
+  padding-top: 12px;
+  grid-template-columns: 22px 1fr;
+}
+.display-compact .display-nav {
+  gap: 17px;
+  padding-right: 10px;
+}
+.display-compact .display-nav .icon {
+  width: 13px;
+  height: 13px;
+}
+.display-compact .display-overview {
+  gap: 8px 12px;
+}
+.display-compact .display-temperature > span {
+  font-size: 27px;
+}
+.display-compact .display-leaf .icon {
+  width: 18px;
+  height: 18px;
+}
+.display-compact .display-leaf span {
+  width: 24px;
+}
+.display-compact .display-summary {
+  gap: 8px;
+}
+.display-compact .display-summary span {
+  height: 5px;
+}
+.display-compact .display-summary i,
+.display-compact .display-summary b {
+  height: 3px;
+}
+.display-compact .display-camera {
+  top: 4px;
+  width: 3px;
+  height: 3px;
+}
+.display-compact .display-indicator {
+  bottom: 6px;
+}
+@keyframes display-float {
+  0%,
+  100% {
+    transform: perspective(1100px) rotateY(-9deg) rotateZ(3deg) translateY(0);
+  }
+  50% {
+    transform: perspective(1100px) rotateY(-7deg) rotateZ(2deg) translateY(-7px);
+  }
+}
+@keyframes display-line {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@media (max-width: 1050px) {
+  .display-art {
+    min-height: 360px;
+    padding: 30px 14px;
+  }
+  .display-layout {
+    gap: 12px;
+  }
+  .display-screen {
+    padding: 14px;
+  }
+  .display-nav {
+    gap: 18px;
+  }
+  .display-overview {
+    gap: 10px 12px;
+  }
+  .display-compact {
+    min-height: 0;
+    padding: 22px 12px 16px;
+  }
+}
+@media (max-width: 760px) {
+  .display-art {
+    min-height: 0;
+    max-width: 500px;
+    padding: 25px 14px 38px;
+    justify-self: center;
+  }
+  .display-ground {
+    bottom: 7px;
+  }
+  .display-temperature > span {
+    font-size: 35px;
+  }
+  .display-compact {
+    display: none;
+  }
+}
+@media (max-width: 400px) {
+  .display-device {
+    padding: 12px 10px 16px;
+    border-radius: 16px;
+  }
+  .display-screen {
+    padding: 11px;
+    border-radius: 6px;
+  }
+  .display-layout {
+    grid-template-columns: 23px 1fr;
+    gap: 12px;
+    padding-top: 12px;
+  }
+  .display-overview {
+    gap: 5px 12px;
+  }
+  .display-nav {
+    padding-right: 10px;
+    gap: 17px;
+  }
+  .display-nav .icon {
+    width: 14px;
+    height: 14px;
+  }
+  .display-temperature > span {
+    font-size: 29px;
+  }
+  .display-leaf .icon {
+    width: 18px;
+    height: 18px;
+  }
+  .display-leaf span {
+    width: 25px;
+  }
+  .display-leaf {
+    padding-bottom: 5px;
+  }
+  .display-indicator {
+    bottom: 7px;
+  }
+  .display-camera {
+    top: 4px;
+    width: 3px;
+    height: 3px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .display-device,
+  .display-wave-path {
+    animation: none;
+  }
+  .display-wave-path {
+    stroke-dashoffset: 0;
+  }
+}

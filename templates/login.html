@@ -1,14 +1,14 @@
 {% extends "base.html" %}
+{% from "display.html" import display %}
 {% block title %}Вход — SmartFridge{% endblock %}
 
 {% block content %}
 <section class="auth-page">
   <div class="auth-aside">
-    <div class="auth-motif" aria-hidden="true">{{ icon('leaf') }}</div>
     <p class="section-tag"><i></i> ВХОД В АККАУНТ</p>
     <h1>Хорошо, что вы <em>вернулись.</em></h1>
     <p>Ваши продукты, сроки хранения и идеи для ужина — снова под рукой.</p>
-    <div class="auth-aside-foot">{{ icon('fridge') }} Продумано для дома. Всегда под рукой.</div>
+    {{ display('display-compact') }}
   </div>
 
   <div class="auth-card">
@@ -23,7 +23,7 @@
       </div>
     {% endif %}
 
-    <form method="post" action="{{ url_for('login') }}" class="industrial-form">
+    <form method="post" action="{{ url_for('login', next=next_url) }}" class="industrial-form">
       <label class="field">
         <span>Электронная почта</span>
         <input type="email" name="email" autocomplete="email"
@@ -37,7 +37,7 @@
       </label>
 
       <button class="btn btn-primary action-wide" type="submit">
-        Войти в аккаунт
+        <span>Войти в аккаунт</span> {{ icon('arrow') }}
       </button>
     </form>
 

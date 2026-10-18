@@ -1,14 +1,14 @@
 {% extends "base.html" %}
+{% from "display.html" import display %}
 {% block title %}Подтверждение почты — SmartFridge{% endblock %}
 
 {% block content %}
 <section class="auth-page">
   <div class="auth-aside">
-    <div class="auth-motif" aria-hidden="true">{{ icon('mail') }}</div>
     <p class="section-tag"><i></i> ПОДТВЕРЖДЕНИЕ ПОЧТЫ</p>
     <h1>Ещё один шаг.<br><em>И вы дома.</em></h1>
     <p>Мы отправили шестизначный код на вашу электронную почту.</p>
-    <div class="auth-aside-foot">{{ icon('fridge') }} Продумано для дома. Всегда под рукой.</div>
+    {{ display('display-compact') }}
   </div>
 
   <div class="auth-card">
@@ -44,7 +44,7 @@
       </label>
 
       <button class="btn btn-primary action-wide" type="submit">
-        Подтвердить
+        <span>Подтвердить</span> {{ icon('arrow') }}
       </button>
     </form>
 
