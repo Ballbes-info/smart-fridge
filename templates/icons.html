@@ -1,0 +1,17 @@
+{% macro icon(name, class='') -%}
+<svg class="icon {{ class }}" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+{% if name == 'scan' %}<path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3M3 16v3a2 2 0 0 0 2 2h3m8 0h3a2 2 0 0 0 2-2v-3M3 12h18M8 8v1m4-2v2m4-1v1M8 15v2m4-2v3m4-3v2"/>
+{% elif name == 'arrow' %}<path d="M4 12h16m-6-6 6 6-6 6"/>
+{% elif name == 'leaf' %}<path d="M20 4C9 2 3 7 5 14c2 7 15 5 15-10Z M4 21 15 10"/>
+{% elif name == 'clock' %}<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>
+{% elif name == 'grid' %}<rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/>
+{% elif name == 'spark' %}<path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5L12 3Z"/>
+{% elif name == 'phone' %}<rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10 5h4m-3 14h2"/>
+{% elif name == 'mail' %}<rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/>
+{% elif name == 'lock' %}<rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2"/>
+{% elif name == 'check' %}<path d="m5 12 4 4L19 6"/>
+{% elif name == 'user' %}<circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>
+{% elif name == 'fridge' %}<rect x="5" y="2" width="14" height="20" rx="3"/><path d="M5 10h14M8 6v1m0 7v3"/>
+{% endif %}
+</svg>
+{%- endmacro %}

@@ -1,60 +1,54 @@
+{% from 'icons.html' import icon %}
 <!doctype html>
 <html lang="ru">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f2f0e7">
+  <meta name="theme-color" content="#f4f7f2">
+  <meta name="description" content="SmartFridge — умный подход к продуктам: контроль свежести, идеи блюд и порядок в холодильнике.">
   <title>{% block title %}SmartFridge{% endblock %}</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   {% block head %}{% endblock %}
 </head>
 <body>
+  <a class="skip-link" href="#main-content">Перейти к содержимому</a>
   <header class="site-header">
     <div class="header-inner">
       <a class="brand" href="{{ url_for('index') }}" aria-label="SmartFridge — главная">
-        <img class="brand-logo" src="{{ url_for('static', filename='logo.png') }}" alt="Логотип SmartFridge">
-        <span>SMART<span class="brand-light">FRIDGE</span></span>
+        <img class="brand-logo" src="{{ url_for('static', filename='logo.png') }}" alt="" width="40" height="40">
+        <span>smart<span class="brand-light">fridge</span><span class="brand-period">.</span></span>
       </a>
-
       <nav class="nav" aria-label="Основная навигация">
-        <a href="{{ url_for('index') }}">Главная</a>
-
+        <a class="nav-home" href="{{ url_for('index') }}" {% if request.endpoint == 'index' %}aria-current="page"{% endif %}>О проекте</a>
         {% if current_user %}
           {% if current_user.is_verified %}
-            <a href="{{ url_for('profile') }}">Профиль</a>
+            <a class="nav-cta" href="{{ url_for('profile') }}" {% if request.endpoint == 'profile' %}aria-current="page"{% endif %}>Мой профиль {{ icon('user') }}</a>
           {% else %}
-            <a href="{{ url_for('verify') }}">Подтвердить почту</a>
+            <a class="nav-cta" href="{{ url_for('verify') }}">Подтвердить почту</a>
           {% endif %}
-
-          <form action="{{ url_for('logout') }}" method="post" class="inline-form">
-            <button class="nav-text-button" type="submit">Выйти</button>
-          </form>
+          <form action="{{ url_for('logout') }}" method="post" class="inline-form"><button class="nav-text-button" type="submit">Выйти</button></form>
         {% else %}
-          <a href="{{ url_for('login') }}">Войти</a>
-          <a class="nav-cta" href="{{ url_for('register') }}">Создать аккаунт</a>
+          <a href="{{ url_for('login') }}" {% if request.endpoint == 'login' %}aria-current="page"{% endif %}>Войти</a>
+          <a class="nav-cta" href="{{ url_for('register') }}">Создать аккаунт {{ icon('arrow') }}</a>
         {% endif %}
       </nav>
     </div>
   </header>
-
-  <main>
+  <main id="main-content" tabindex="-1">
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         <div class="flashes" role="status" aria-live="polite">
-          {% for category, message in messages %}
-            <div class="flash flash-{{ category }}">{{ message }}</div>
-          {% endfor %}
+          {% for category, message in messages %}<div class="flash flash-{{ category }}">{{ message }}</div>{% endfor %}
         </div>
       {% endif %}
     {% endwith %}
-
     {% block content %}{% endblock %}
   </main>
-
   <footer class="site-footer">
     <div class="footer-inner">
-      <span class="footer-brand">SmartFridge</span>
-      <p>Меньше забытых продуктов. Больше порядка.</p>
+      <span class="footer-brand">smartfridge<span>.</span></span>
+      <p>Забота о продуктах. В ритме вашей жизни.</p>
       <span class="footer-copy">&copy; 2026 SmartFridge</span>
     </div>
   </footer>

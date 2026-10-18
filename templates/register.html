@@ -4,9 +4,11 @@
 {% block content %}
 <section class="auth-page">
   <div class="auth-aside">
+    <div class="auth-motif" aria-hidden="true">{{ icon('scan') }}</div>
     <p class="section-tag"><i></i> НОВЫЙ АККАУНТ</p>
-    <h1>НАЧНИТЕ<br><em>С ПОРЯДКА.</em></h1>
+    <h1>Всё начинается <em>с порядка.</em></h1>
     <p>Создайте аккаунт, чтобы подготовиться к работе с системой SmartFridge.</p>
+    <div class="auth-aside-foot">{{ icon('fridge') }} Продумано для дома. Всегда под рукой.</div>
   </div>
 
   <div class="auth-card">
@@ -14,7 +16,7 @@
     <p class="auth-description">Заполните данные и подтвердите электронную почту.</p>
 
     {% if errors %}
-      <div class="form-errors">
+      <div class="form-errors" role="alert">
         {% for error in errors %}
           <p>{{ error }}</p>
         {% endfor %}

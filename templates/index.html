@@ -1,99 +1,53 @@
 {% extends "base.html" %}
-{% block title %}SmartFridge — система управления продуктами{% endblock %}
-
+{% block title %}SmartFridge — свежий взгляд на привычное{% endblock %}
 {% block content %}
 <div class="home-page">
-  <section class="home-hero">
-    <div class="home-hero__layout">
-      <div class="home-hero__copy">
-        <h1>Холодильник<br>под <em>контролем</em></h1>
-
-        <p class="home-hero__description">
-          SmartFridge — умная система, которая помогает понимать,
-          что хранится дома, за чем нужно следить и что можно приготовить.
-        </p>
-
-        <div class="home-hero__actions">
-          {% if current_user and current_user.is_verified %}
-            <a class="btn btn-primary" href="{{ url_for('profile') }}">Перейти в профиль</a>
-          {% elif current_user %}
-            <a class="btn btn-primary" href="{{ url_for('verify') }}">Подтвердить аккаунт</a>
-          {% else %}
-            <a class="btn btn-primary" href="{{ url_for('register') }}">Начать работу</a>
-          {% endif %}
-
-
-        </div>
+  <section class="home-hero" aria-labelledby="hero-title">
+    <div class="home-hero__copy">
+      <p class="section-tag"><i></i> ТЕХНОЛОГИИ ДЛЯ ПОВСЕДНЕВНОГО</p>
+      <h1 id="hero-title">Свежий взгляд<br>на <em>привычное.</em></h1>
+      <p class="home-hero__description">Меньше забытых продуктов.<br>Больше идей для ужина. Знакомьтесь —<br class="desktop-break"> ваш умный помощник SmartFridge.</p>
+      <div class="home-hero__actions">
+        {% if current_user and current_user.is_verified %}
+          <a class="btn btn-primary" href="{{ url_for('profile') }}">Мой профиль {{ icon('arrow') }}</a>
+        {% elif current_user %}
+          <a class="btn btn-primary" href="{{ url_for('verify') }}">Подтвердить почту {{ icon('arrow') }}</a>
+        {% else %}
+          <a class="btn btn-primary" href="{{ url_for('login') }}">Войти в SmartFridge {{ icon('arrow') }}</a>
+          <a class="hero-secondary" href="{{ url_for('register') }}">Создать аккаунт</a>
+        {% endif %}
       </div>
-
-      <div class="home-hero__object" aria-label="Макет интерфейса умного холодильника">
-        <div class="device-window">
-          <div class="device-topbar">
-            <div class="device-brand"><span class="device-brand-mark">S</span><span>SMARTFRIDGE<small>HOME SYSTEM</small></span></div>
-            <div class="device-status"><i></i> Система активна <span>●</span></div>
-          </div>
-          <div class="device-greeting">
-            <div><span class="device-kicker">ВАШ ХОЛОДИЛЬНИК</span><h2>Всё под контролем.</h2><p>Среда, 14 октября <span>·</span> Обзор запасов</p></div>
-            <div class="device-temp"><span>⌁</span><div><strong>+4°</strong><small>Температура</small></div></div>
-          </div>
-          <div class="device-stats">
-            <div><span class="stat-symbol">▦</span><small>В наличии</small><strong>24 <i>продукта</i></strong></div>
-            <div><span class="stat-symbol stat-warm">◷</span><small>Скоро истекает</small><strong>03 <i>продукта</i></strong></div>
-            <div><span class="stat-symbol">✳</span><small>Можно приготовить</small><strong>12 <i>идей</i></strong></div>
-          </div>
-          <div class="device-content">
-            <div class="device-products">
-              <div class="device-section-head"><strong>Свежесть продуктов</strong><span>Все продукты ↗</span></div>
-              <div class="product-row"><span class="food-icon food-milk">▰</span><span class="food-info"><strong>Молоко</strong><small>Молочные продукты</small></span><span class="freshness freshness-soon">1 день</span></div>
-              <div class="product-row"><span class="food-icon food-greens">✿</span><span class="food-info"><strong>Шпинат</strong><small>Овощи и зелень</small></span><span class="freshness freshness-soon">2 дня</span></div>
-              <div class="product-row"><span class="food-icon food-cheese">▰</span><span class="food-info"><strong>Сыр</strong><small>Молочные продукты</small></span><span class="freshness">8 дней</span></div>
-            </div>
-            <div class="device-recipe">
-              <div class="recipe-art"><span>✳</span><i></i><b></b></div>
-              <span class="device-kicker">ИДЕЯ НА СЕГОДНЯ</span>
-              <strong>Омлет с зеленью</strong>
-              <small>15 минут · 4 ингредиента</small>
-              <div class="recipe-meter"><span></span></div>
-              <small class="recipe-match">Можно приготовить из того, что уже есть</small>
-            </div>
-          </div>
-          <div class="device-bottom"><span><i></i> Данные обновлены</span><span>Умный дом <b>↗</b></span></div>
+      <div class="hero-platforms">{{ icon('fridge') }} На холодильнике <span></span> {{ icon('phone') }} В вашем телефоне</div>
+    </div>
+    <div class="home-hero__object">
+      <div class="orbit orbit-one" aria-hidden="true"></div><div class="orbit orbit-two" aria-hidden="true"></div>
+      <div class="floating-label">{{ icon('scan') }} Умный подход к продуктам</div>
+      <div class="device-window" role="img" aria-label="Концепция интерфейса: список продуктов, сроки свежести и идея блюда. Демонстрационные данные.">
+        <div class="device-topbar"><span class="device-brand"><span class="mini-mark"><i></i><i></i><i></i></span> smartfridge.</span><span class="device-demo">КОНЦЕПЦИЯ</span></div>
+        <div class="device-greeting"><div><span class="device-kicker">ДОМА ВСЁ В ПОРЯДКЕ</span><h2>Свежесть в деталях<span>.</span></h2></div><span class="device-temp">+4<span>°C</span></span></div>
+        <div class="device-stats">
+          <div>{{ icon('grid') }}<strong>24</strong><small>продукта</small></div>
+          <div class="stat-soon">{{ icon('clock') }}<strong>03</strong><small>использовать скорее</small></div>
+          <div>{{ icon('spark') }}<strong>12</strong><small>идей для блюд</small></div>
         </div>
-        <div class="object-caption"><span class="caption-dot"></span> Пример интерфейса SmartFridge <span class="caption-line"></span></div>
+        <div class="device-section-head"><h3>Сначала — самое свежее</h3><span>Срок хранения</span></div>
+        <div class="product-row"><span class="food-icon food-milk" aria-hidden="true">🥛</span><span class="food-info"><strong>Молоко</strong><small>Молочные продукты</small></span><span class="freshness freshness-soon">1 день</span></div>
+        <div class="product-row"><span class="food-icon food-greens" aria-hidden="true">🥬</span><span class="food-info"><strong>Шпинат</strong><small>Овощи и зелень</small></span><span class="freshness freshness-soon">2 дня</span></div>
+        <div class="product-row"><span class="food-icon food-cheese" aria-hidden="true">🧀</span><span class="food-info"><strong>Сыр</strong><small>Молочные продукты</small></span><span class="freshness">8 дней</span></div>
+        <div class="device-recipe"><span class="recipe-icon">{{ icon('spark') }}</span><div><span class="device-kicker">ИДЕЯ НА СЕГОДНЯ</span><strong>Омлет с зеленью</strong><small>15 минут · из того, что есть</small></div><span class="recipe-arrow">{{ icon('arrow') }}</span></div>
+        <div class="device-bottom"><span class="mini-mark"><i></i><i></i><i></i></span><span>Меньше лишнего. Больше свежего.</span></div>
       </div>
+      <p class="object-caption"><span></span> Так может выглядеть ваш умный холодильник</p>
     </div>
   </section>
-
-  <section class="features" id="system">
-    <div class="features__heading">
-      <h2>Не просто хранить. Понимать.</h2>
-      <p>
-        Одна система вместо случайных списков и забытых упаковок.
-        SmartFridge связывает продукты, сроки и повседневные решения.
-      </p>
-    </div>
-
+  <section class="features" aria-labelledby="features-title">
+    <div class="features__heading"><p class="section-tag">ПРОСТО. КАЖДЫЙ ДЕНЬ.</p><h2 id="features-title">Маленькие детали.<br>Большая забота.</h2><p>Создаём систему, которая помогает<br>тратить меньше и выбирать осознаннее.</p></div>
     <div class="features__grid">
-      <article class="feature-card">
-        <h3>Видеть, что есть</h3>
-        <p>Список продуктов помогает ориентироваться в запасах и планировать покупки осознаннее.</p>
-      </article>
-
-      <article class="feature-card">
-        <h3>Помнить о свежести</h3>
-        <p>Контроль сроков помогает вовремя заметить продукты, которые стоит использовать в первую очередь.</p>
-      </article>
-
-      <article class="feature-card">
-        <h3>Использовать с умом</h3>
-        <p>Идеи блюд на основе имеющихся продуктов помогают сократить лишние траты и пищевые отходы.</p>
-      </article>
+      <article class="feature-card"><span class="feature-icon">{{ icon('scan') }}</span><span class="feature-number">01 / РАСПОЗНАВАНИЕ</span><h3>Показать. Добавить.</h3><p>Идея проста: поднесите продукт к камере — система распознает его и пополнит список запасов.</p></article>
+      <article class="feature-card"><span class="feature-icon">{{ icon('leaf') }}</span><span class="feature-number">02 / СВЕЖЕСТЬ</span><h3>Успеть к лучшему.</h3><p>Сроки хранения под рукой. Чтобы вовремя использовать продукты, а не вспоминать о них слишком поздно.</p></article>
+      <article class="feature-card"><span class="feature-icon">{{ icon('spark') }}</span><span class="feature-number">03 / ВДОХНОВЕНИЕ</span><h3>Что на ужин?</h3><p>Идеи блюд из того, что уже есть. Меньше спонтанных покупок, больше приятных открытий.</p></article>
     </div>
-
-    <p class="features__note">
-      SmartFridge развивается поэтапно. Состав доступных функций зависит от текущей версии приложения.
-    </p>
+    <p class="features__note">Проект в разработке. Распознавание, контроль свежести и рецепты — планируемые возможности.</p>
   </section>
-
 </div>
 {% endblock %}
