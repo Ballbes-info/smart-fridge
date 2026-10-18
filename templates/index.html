@@ -4,38 +4,52 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
 {% endblock %}
 {% block content %}
-<div class="front-page">
-  <section class="front-intro" aria-labelledby="front-title">
-    <div class="intro-overline"><span>Дисплей на холодильнике.<br>Приложение в телефоне.</span><span class="intro-signature">SmartFridge / для дома</span></div>
-    <h1 id="front-title"><span class="title-first">Свежий</span><span class="title-second">взгляд на</span><em class="title-last">привычное.</em></h1>
-    <div class="intro-bottom">
-      <div class="intro-entry">
+<div class="home-page">
+  <section class="home-hero" aria-labelledby="hero-title">
+    <div class="home-hero__copy">
+      <p class="section-tag"><i></i> ТЕХНОЛОГИИ ДЛЯ ПОВСЕДНЕВНОГО</p>
+      <h1 id="hero-title">Свежий взгляд<br>на <em>привычное.</em></h1>
+      <p class="home-hero__description">Меньше забытых продуктов.<br>Больше идей для ужина. Знакомьтесь —<br class="desktop-break"> ваш умный помощник SmartFridge.</p>
+      <div class="home-hero__actions">
         {% if current_user and current_user.is_verified %}
-          <a class="entry-link" href="{{ url_for('profile') }}">Перейти в профиль <span>{{ icon('arrow') }}</span></a>
+          <a class="btn btn-primary" href="{{ url_for('profile') }}">Мой профиль {{ icon('arrow') }}</a>
         {% elif current_user %}
-          <a class="entry-link" href="{{ url_for('verify') }}">Подтвердить почту <span>{{ icon('arrow') }}</span></a>
+          <a class="btn btn-primary" href="{{ url_for('verify') }}">Подтвердить почту {{ icon('arrow') }}</a>
         {% else %}
-          <a class="entry-link" href="{{ url_for('login') }}">Войти в SmartFridge <span>{{ icon('arrow') }}</span></a>
-          <a class="entry-secondary" href="{{ url_for('register') }}">Создать аккаунт</a>
+          <a class="btn btn-primary" href="{{ url_for('login') }}">Войти в SmartFridge {{ icon('arrow') }}</a>
+          <a class="hero-secondary" href="{{ url_for('register') }}">Создать аккаунт</a>
         {% endif %}
       </div>
-      <p class="intro-description">Меньше забытых продуктов.<br>Больше идей для ужина. SmartFridge помогает понимать, что хранится дома и что можно приготовить.</p>
+      <div class="hero-platforms">{{ icon('fridge') }} На холодильнике <span></span> {{ icon('phone') }} В вашем телефоне</div>
     </div>
-    <a class="intro-scroll" href="#everyday">Ближе к повседневному <span aria-hidden="true">↓</span></a>
+    <div class="fridge-art" aria-hidden="true">
+      <div class="fridge-halo"></div>
+      <div class="fridge-shadow"></div>
+      <div class="fridge-object">
+        <div class="fridge-door fridge-door-top"><span class="fridge-handle"></span></div>
+        <div class="fridge-door fridge-door-bottom">
+          <div class="fridge-display"><span></span><i></i><b></b></div>
+          <span class="fridge-handle"></span>
+        </div>
+      </div>
+      <span class="fridge-orbit fridge-orbit-one"></span>
+      <span class="fridge-orbit fridge-orbit-two"></span>
+    </div>
   </section>
 
-  <section class="everyday-section" id="everyday" aria-labelledby="everyday-title">
-    <p class="margin-note">О ПРОЕКТЕ</p>
-    <div class="everyday-heading"><h2 id="everyday-title">Не просто хранить.<br><em>Понимать.</em></h2><p>Одна система вместо случайных списков и забытых упаковок. На экране холодильника — дома. С телефона — когда вы за покупками.</p></div>
-    <div class="inventory-story"><span class="story-label">ПРОДУКТЫ</span><h3>Видеть,<br>что есть.</h3><p>Список продуктов помогает ориентироваться в запасах и планировать покупки. Чтобы не брать ещё одно молоко, когда дома уже есть два.</p></div>
-    <div class="freshness-story"><span class="story-label">СВЕЖЕСТЬ</span><h3>Не забыть<br><em>о хорошем.</em></h3><p>У каждого продукта свой срок. Контроль свежести помогает вовремя заметить то, что стоит использовать в первую очередь.</p><span class="freshness-rule" aria-hidden="true"></span></div>
+  <section class="home-about" aria-labelledby="about-title">
+    <h2 id="about-title">Не просто хранить.<br><em>Понимать.</em></h2>
+    <div class="home-about-copy"><p>Одна система вместо случайных списков и забытых упаковок. SmartFridge связывает продукты, сроки хранения и повседневные решения.</p><p>Чтобы вы знали, что уже есть дома, успевали использовать любимые продукты и реже покупали лишнее.</p></div>
   </section>
 
-  <section class="dinner-section" aria-labelledby="dinner-title">
-    <div class="dinner-aside"><span class="story-label">ИДЕИ ДЛЯ УЖИНА</span><p>Иногда ответ уже в холодильнике.<br>Рецепты из имеющихся продуктов помогают обойтись без лишних покупок и попробовать что-то новое.</p></div>
-    <h2 id="dinner-title">Что сегодня<br><em>приготовим?</em></h2>
-    <p class="dinner-caption">Из того, что <span>уже есть.</span></p>
+  <section class="home-freshness" aria-labelledby="freshness-title">
+    <div class="freshness-intro"><p class="home-label">ПРОДУКТЫ И СВЕЖЕСТЬ</p><h2 id="freshness-title">Всё на виду.<br>Ничего не забыто.</h2><p>В холодильнике легко потерять из виду даже то, что купили вчера. Список запасов и сроки хранения помогают разобраться без долгих поисков.</p></div>
+    <div class="freshness-notes"><div><h3>Видеть, что есть</h3><p>Планировать покупки проще, когда знаешь свои запасы. Проверить список можно ещё в магазине, с телефона.</p></div><div><h3>Помнить о свежести</h3><p>Продукты, которые стоит использовать в первую очередь, требуют чуть больше внимания. Так меньше хорошей еды отправляется в мусор.</p></div></div>
   </section>
-  <div class="front-end"><p>Ваш холодильник.<br>Чуть больше возможностей.</p><a href="#front-title" class="back-top" aria-label="Вернуться к началу страницы">Наверх <span aria-hidden="true">↑</span></a></div>
+
+  <section class="home-daily" aria-labelledby="daily-title">
+    <div class="daily-main"><p class="home-label">НА КАЖДЫЙ ДЕНЬ</p><h2 id="daily-title">Что сегодня<br><em>на ужин?</em></h2><p>Иногда для нового блюда уже всё есть. Идеи рецептов на основе ваших продуктов помогают выбрать, что приготовить, и обойтись без ещё одного похода в магазин.</p></div>
+    <div class="daily-mobile"><span class="daily-mobile-line" aria-hidden="true"></span><h3>Дома и с собой</h3><p>На кухне удобно посмотреть на дисплей холодильника. За покупками — открыть телефон. Один привычный способ держать продукты под контролем.</p><a class="daily-link" href="{{ url_for('profile') if current_user and current_user.is_verified else url_for('verify') if current_user else url_for('register') }}">{{ 'Мой профиль' if current_user and current_user.is_verified else 'Подтвердить почту' if current_user else 'Создать аккаунт' }} {{ icon('arrow') }}</a></div>
+  </section>
 </div>
 {% endblock %}
