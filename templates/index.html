@@ -30,15 +30,17 @@
     <div class="home-about-copy"><p>Знайте свои запасы, следите за свежестью и выбирайте, что приготовить. Без случайных списков и забытых упаковок.</p><div class="connection-art" aria-hidden="true"><span>{{ icon('grid') }}</span><i></i><b></b><i></i><span>{{ icon('phone') }}</span></div></div>
   </section>
 
+  <div class="home-stories">
   <section class="home-freshness" aria-labelledby="freshness-title">
     <div class="freshness-intro"><p class="home-label">ПРОДУКТЫ И СВЕЖЕСТЬ</p><h2 id="freshness-title">Всё на виду.<br>Ничего не забыто.</h2><p>Сначала — продукты, которые стоит использовать сегодня.</p><div class="freshness-scale" aria-hidden="true"><span></span><span></span><span></span><i></i></div></div>
     <div class="freshness-composition" aria-hidden="true"><div class="freshness-rings"><svg viewBox="0 0 200 200" fill="none"><circle cx="100" cy="100" r="79" stroke="currentColor" stroke-opacity=".15"/><circle cx="100" cy="100" r="62" stroke="currentColor" stroke-opacity=".15"/><circle class="freshness-track" cx="100" cy="100" r="79" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="330 497"/><circle cx="100" cy="100" r="44" stroke="currentColor" stroke-opacity=".15"/></svg>{{ icon('leaf') }}<span class="freshness-orbit-dot"></span></div><div class="freshness-graphic-lines"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
   </section>
 
   <section class="home-daily" aria-labelledby="daily-title">
-    <div class="daily-main"><p class="home-label">НА КАЖДЫЙ ДЕНЬ</p><h2 id="daily-title">Что сегодня<br><em>на ужин?</em></h2><p>Начните с того, что уже есть. Рецепты помогут обойтись без лишних покупок.</p></div>
+    <div class="daily-main"><p class="home-label">НА КАЖДЫЙ ДЕНЬ</p><h2 id="daily-title">Что сегодня<br><em>на ужин?</em></h2><p>Начните с того, что уже есть. Рецепты помогут обойтись без лишних покупок.</p><div class="dinner-detail" aria-hidden="true"><span class="dinner-plate">{{ icon('leaf') }}</span><span class="dinner-detail-lines"><i></i><i></i><i></i></span></div></div>
     <div class="daily-mobile"><span class="daily-mobile-line" aria-hidden="true"></span><h3>Дома и с собой</h3><p>На кухне — дисплей. В магазине — телефон. Ваши запасы всегда под рукой.</p><a class="daily-link" href="{{ url_for('profile') if current_user and current_user.is_verified else url_for('verify') if current_user else url_for('register') }}">{{ 'Мой профиль' if current_user and current_user.is_verified else 'Подтвердить почту' if current_user else 'Создать аккаунт' }} {{ icon('arrow') }}</a></div>
   </section>
+  </div>
   <section class="home-rhythm" aria-labelledby="rhythm-title">
     <div class="rhythm-copy"><p class="home-label">ВАШ ПОВСЕДНЕВНЫЙ РИТМ</p><h2 id="rhythm-title">Всё начинается<br>с одного касания.</h2><div class="rhythm-art" aria-hidden="true"><span class="rhythm-art-orbit"></span><span class="rhythm-art-orbit"></span><span class="rhythm-art-center">{{ icon('scan') }}</span><i></i></div></div>
     <div class="rhythm-demo" role="group" aria-label="Выберите момент дня">

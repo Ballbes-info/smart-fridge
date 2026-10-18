@@ -51,7 +51,7 @@
     <div class="header-inner">
       <a class="brand" href="{{ url_for('index') }}" aria-label="SmartFridge — главная">
         <img class="brand-logo" src="{{ url_for('static', filename='logo.png') }}" alt="" width="40" height="40">
-        <span>smart<span class="brand-light">fridge</span><span class="brand-period">.</span></span>
+        <span>SmartFridge</span>
       </a>
       <nav class="nav" aria-label="Основная навигация">
         <a class="nav-home" href="{{ url_for('index') }}" {% if request.endpoint == 'index' %}aria-current="page"{% endif %}>О проекте</a>
@@ -85,7 +85,7 @@
   </main>
   <footer class="site-footer">
     <div class="footer-inner">
-      <span class="footer-brand">smartfridge<span>.</span></span>
+      <span class="footer-brand">SmartFridge</span>
       <p>Забота о продуктах. В ритме вашей жизни.</p>
       <span class="footer-copy">&copy; 2026 SmartFridge</span>
     </div>

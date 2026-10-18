@@ -392,3 +392,129 @@
     stroke-dashoffset: 0;
   }
 }
+
+/* Небольшие детали интерфейса и корпуса */
+.display-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.display-tools > i {
+  display: block;
+  width: 9px;
+  height: 3px;
+  border-radius: 1px;
+  background: #bdcbb1;
+}
+.display-tools .display-online {
+  margin-left: 6px;
+}
+.display-summary strong {
+  display: block;
+  color: #3b5835;
+  font-size: 26px;
+  line-height: 1.2;
+  font-weight: 500;
+  letter-spacing: -0.8px;
+}
+.display-summary small {
+  display: block;
+  color: #7b8b70;
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 0.1px;
+  margin-top: 3px;
+}
+.display-summary span {
+  height: 4px;
+  width: 75%;
+}
+.display-summary i {
+  height: 3px;
+  width: 52%;
+}
+.display-nav .icon:first-child {
+  outline: 5px solid #e0e9d6;
+  background: #e0e9d6;
+  border-radius: 2px;
+}
+.display-leaf > i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #9bb37b;
+  margin-left: auto;
+}
+.display-speaker {
+  position: absolute;
+  right: 23px;
+  bottom: 8px;
+  width: 24px;
+  height: 3px;
+  background: repeating-linear-gradient(
+    90deg,
+    #859b7620 0 2px,
+    transparent 2px 4px
+  );
+}
+.display-screen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    125deg,
+    #ffffff0a 20%,
+    #ffffff24 40%,
+    transparent 60%
+  );
+}
+.display-compact .display-summary {
+  gap: 5px;
+}
+.display-compact .display-summary strong {
+  font-size: 19px;
+}
+.display-compact .display-summary small {
+  font-size: 6px;
+  margin-top: 2px;
+}
+.display-compact .display-tools {
+  gap: 5px;
+}
+.display-compact .display-tools > i {
+  width: 6px;
+  height: 2px;
+}
+.display-compact .display-speaker {
+  right: 15px;
+  bottom: 5px;
+  width: 16px;
+}
+[data-theme="dark"] .display-summary strong {
+  color: #d3e6be;
+}
+[data-theme="dark"] .display-summary small {
+  color: #9db38b;
+}
+[data-theme="dark"] .display-tools > i {
+  background: #6d845b;
+}
+[data-theme="dark"] .display-nav .icon:first-child {
+  background: #3b5030;
+  outline-color: #3b5030;
+}
+@media (max-width: 400px) {
+  .display-summary strong {
+    font-size: 21px;
+  }
+  .display-summary small {
+    font-size: 8px;
+  }
+  .display-summary {
+    gap: 6px;
+  }
+  .display-speaker {
+    bottom: 6px;
+  }
+}
