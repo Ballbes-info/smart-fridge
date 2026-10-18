@@ -1,53 +1,83 @@
 {% extends "base.html" %}
-{% block title %}SmartFridge — свежий взгляд на привычное{% endblock %}
+{% block title %}SmartFridge — ваш холодильник под рукой{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+{% endblock %}
 {% block content %}
-<div class="home-page">
-  <section class="home-hero" aria-labelledby="hero-title">
-    <div class="home-hero__copy">
-      <p class="section-tag"><i></i> ТЕХНОЛОГИИ ДЛЯ ПОВСЕДНЕВНОГО</p>
-      <h1 id="hero-title">Свежий взгляд<br>на <em>привычное.</em></h1>
-      <p class="home-hero__description">Меньше забытых продуктов.<br>Больше идей для ужина. Знакомьтесь —<br class="desktop-break"> ваш умный помощник SmartFridge.</p>
-      <div class="home-hero__actions">
+<div class="welcome">
+  <section class="welcome-intro" aria-labelledby="welcome-title">
+    <div class="welcome-copy">
+      <p class="welcome-label"><span></span> SmartFridge</p>
+      <h1 id="welcome-title">Знаете,<br>что <span>у вас дома.</span></h1>
+      <p class="welcome-description">Что осталось в холодильнике, что пора использовать и что приготовить на ужин — всё в одном месте.</p>
+      <div class="welcome-actions">
         {% if current_user and current_user.is_verified %}
-          <a class="btn btn-primary" href="{{ url_for('profile') }}">Мой профиль {{ icon('arrow') }}</a>
+          <a class="btn btn-primary" href="{{ url_for('profile') }}">Открыть профиль {{ icon('arrow') }}</a>
         {% elif current_user %}
           <a class="btn btn-primary" href="{{ url_for('verify') }}">Подтвердить почту {{ icon('arrow') }}</a>
         {% else %}
-          <a class="btn btn-primary" href="{{ url_for('login') }}">Войти в SmartFridge {{ icon('arrow') }}</a>
-          <a class="hero-secondary" href="{{ url_for('register') }}">Создать аккаунт</a>
+          <a class="btn btn-primary" href="{{ url_for('login') }}">Войти {{ icon('arrow') }}</a>
+          <a class="welcome-register" href="{{ url_for('register') }}">Создать аккаунт</a>
         {% endif %}
       </div>
-      <div class="hero-platforms">{{ icon('fridge') }} На холодильнике <span></span> {{ icon('phone') }} В вашем телефоне</div>
-    </div>
-    <div class="home-hero__object">
-      <div class="orbit orbit-one" aria-hidden="true"></div><div class="orbit orbit-two" aria-hidden="true"></div>
-      <div class="floating-label">{{ icon('scan') }} Умный подход к продуктам</div>
-      <div class="device-window" role="img" aria-label="Концепция интерфейса: список продуктов, сроки свежести и идея блюда. Демонстрационные данные.">
-        <div class="device-topbar"><span class="device-brand"><span class="mini-mark"><i></i><i></i><i></i></span> smartfridge.</span><span class="device-demo">КОНЦЕПЦИЯ</span></div>
-        <div class="device-greeting"><div><span class="device-kicker">ДОМА ВСЁ В ПОРЯДКЕ</span><h2>Свежесть в деталях<span>.</span></h2></div><span class="device-temp">+4<span>°C</span></span></div>
-        <div class="device-stats">
-          <div>{{ icon('grid') }}<strong>24</strong><small>продукта</small></div>
-          <div class="stat-soon">{{ icon('clock') }}<strong>03</strong><small>использовать скорее</small></div>
-          <div>{{ icon('spark') }}<strong>12</strong><small>идей для блюд</small></div>
-        </div>
-        <div class="device-section-head"><h3>Сначала — самое свежее</h3><span>Срок хранения</span></div>
-        <div class="product-row"><span class="food-icon food-milk" aria-hidden="true">🥛</span><span class="food-info"><strong>Молоко</strong><small>Молочные продукты</small></span><span class="freshness freshness-soon">1 день</span></div>
-        <div class="product-row"><span class="food-icon food-greens" aria-hidden="true">🥬</span><span class="food-info"><strong>Шпинат</strong><small>Овощи и зелень</small></span><span class="freshness freshness-soon">2 дня</span></div>
-        <div class="product-row"><span class="food-icon food-cheese" aria-hidden="true">🧀</span><span class="food-info"><strong>Сыр</strong><small>Молочные продукты</small></span><span class="freshness">8 дней</span></div>
-        <div class="device-recipe"><span class="recipe-icon">{{ icon('spark') }}</span><div><span class="device-kicker">ИДЕЯ НА СЕГОДНЯ</span><strong>Омлет с зеленью</strong><small>15 минут · из того, что есть</small></div><span class="recipe-arrow">{{ icon('arrow') }}</span></div>
-        <div class="device-bottom"><span class="mini-mark"><i></i><i></i><i></i></span><span>Меньше лишнего. Больше свежего.</span></div>
+      <div class="welcome-devices">
+        <span>{{ icon('fridge') }} Дисплей на холодильнике</span>
+        <span>{{ icon('phone') }} Ваш телефон</span>
       </div>
-      <p class="object-caption"><span></span> Так может выглядеть ваш умный холодильник</p>
     </div>
+
+    <figure class="fridge-scene" aria-label="Иллюстрация холодильника с продуктами">
+      <div class="scene-heading"><span>smartfridge.</span>{{ icon('scan') }}</div>
+      <svg class="fridge-drawing" viewBox="0 0 420 460" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="cabinet" x1="85" y1="20" x2="340" y2="440" gradientUnits="userSpaceOnUse"><stop stop-color="#698577"/><stop offset="1" stop-color="#365449"/></linearGradient>
+          <linearGradient id="inside" x1="105" y1="90" x2="305" y2="400" gradientUnits="userSpaceOnUse"><stop stop-color="#1b332c"/><stop offset="1" stop-color="#263f34"/></linearGradient>
+          <linearGradient id="glass" x1="120" y1="180" x2="302" y2="210" gradientUnits="userSpaceOnUse"><stop stop-color="#b9d5b3" stop-opacity=".5"/><stop offset="1" stop-color="#b9d5b3" stop-opacity=".1"/></linearGradient>
+        </defs>
+        <ellipse cx="212" cy="433" rx="143" ry="14" fill="#10251f" opacity=".5"/>
+        <rect x="88" y="18" width="250" height="410" rx="31" fill="url(#cabinet)" stroke="#8ba58c" stroke-opacity=".5"/>
+        <rect x="100" y="30" width="226" height="385" rx="22" fill="url(#inside)" stroke="#a5b99b" stroke-opacity=".2"/>
+        <path d="M115 102H311" stroke="#98b18f" stroke-opacity=".45"/>
+        <rect x="116" y="46" width="193" height="40" rx="11" fill="#304e40"/>
+        <path d="M135 58v15m7-19v23m7-15v9" stroke="#d7f58c" stroke-width="4"/>
+        <circle cx="291" cy="66" r="4" fill="#d7f58c"/>
+        <path d="M117 207H309M117 305H309" stroke="#a7c29d" stroke-opacity=".45" stroke-width="3"/>
+        <path d="M117 211H309v8H117zM117 309H309v8H117z" fill="url(#glass)"/>
+        <!-- Верхняя полка -->
+        <path d="m135 142 12-19h31l12 19v59h-55z" fill="#e4ebd8"/>
+        <path d="M147 123v-10h30v10m-30 0 13 19h30" stroke="#99b290" stroke-width="2"/>
+        <path d="M135 142h25v59h-25z" fill="#c0d0ad"/>
+        <rect x="169" y="155" width="12" height="27" rx="6" fill="#6d9061"/>
+        <rect x="207" y="153" width="42" height="48" rx="9" fill="#a3b689"/><rect x="204" y="147" width="48" height="10" rx="4" fill="#d3dfbf"/>
+        <path d="M216 171h24m-24 7h17" stroke="#486846" stroke-width="2" stroke-linecap="round"/>
+        <rect x="267" y="166" width="26" height="35" rx="6" fill="#b9c9a2"/><rect x="266" y="162" width="28" height="7" rx="3" fill="#e3e9d2"/>
+        <!-- Средняя полка -->
+        <path d="M132 273c-9-25 6-36 16-25-4-29 18-34 24-11 6-24 28-20 24 2 15-11 25 4 11 20l-24 40h-37z" fill="#71965b"/>
+        <path d="m164 294 7-50m-5 25-17-12m19 0 17-13" stroke="#a5bf7a" stroke-width="2" stroke-linecap="round"/>
+        <path d="M132 281h66l-6 19h-53z" fill="#c0cba7" fill-opacity=".8"/>
+        <ellipse cx="250" cy="291" rx="37" ry="10" fill="#59764a"/>
+        <circle cx="234" cy="280" r="16" fill="#d6ae70"/><circle cx="266" cy="282" r="17" fill="#bc8c59"/><circle cx="251" cy="262" r="17" fill="#e6be7a"/>
+        <path d="m248 249 4-5 6 6" stroke="#7c9055" stroke-width="3" stroke-linecap="round"/>
+        <!-- Ящик -->
+        <rect x="121" y="328" width="184" height="66" rx="11" fill="#9ab68e" fill-opacity=".12" stroke="#9ab68e" stroke-opacity=".3"/>
+        <path d="M182 341h62" stroke="#a7c29d" stroke-opacity=".6" stroke-width="3" stroke-linecap="round"/>
+        <path d="M142 367h43m-43 8h28" stroke="#739469" stroke-width="3" stroke-linecap="round"/>
+        <rect x="203" y="362" width="82" height="17" rx="6" fill="#748e65" fill-opacity=".35"/>
+        <path d="M106 44v350" stroke="#d7f58c" stroke-opacity=".22" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <div class="scene-scan" aria-hidden="true"></div>
+      <figcaption><span class="scene-caption-mark"></span> Продукты на своих местах.</figcaption>
+    </figure>
   </section>
-  <section class="features" aria-labelledby="features-title">
-    <div class="features__heading"><p class="section-tag">ПРОСТО. КАЖДЫЙ ДЕНЬ.</p><h2 id="features-title">Маленькие детали.<br>Большая забота.</h2><p>Создаём систему, которая помогает<br>тратить меньше и выбирать осознаннее.</p></div>
-    <div class="features__grid">
-      <article class="feature-card"><span class="feature-icon">{{ icon('scan') }}</span><span class="feature-number">01 / РАСПОЗНАВАНИЕ</span><h3>Показать. Добавить.</h3><p>Идея проста: поднесите продукт к камере — система распознает его и пополнит список запасов.</p></article>
-      <article class="feature-card"><span class="feature-icon">{{ icon('leaf') }}</span><span class="feature-number">02 / СВЕЖЕСТЬ</span><h3>Успеть к лучшему.</h3><p>Сроки хранения под рукой. Чтобы вовремя использовать продукты, а не вспоминать о них слишком поздно.</p></article>
-      <article class="feature-card"><span class="feature-icon">{{ icon('spark') }}</span><span class="feature-number">03 / ВДОХНОВЕНИЕ</span><h3>Что на ужин?</h3><p>Идеи блюд из того, что уже есть. Меньше спонтанных покупок, больше приятных открытий.</p></article>
-    </div>
-    <p class="features__note">Проект в разработке. Распознавание, контроль свежести и рецепты — планируемые возможности.</p>
+
+  <section class="welcome-about" aria-labelledby="about-title">
+    <div class="welcome-about-title"><span class="welcome-eyebrow">О ПРОЕКТЕ</span><h2 id="about-title">Порядок начинается<br>с холодильника.</h2></div>
+    <div class="welcome-about-copy"><p>SmartFridge — проект дисплея для холодильника и связанного с ним приложения. Мы собираем в одной системе учёт продуктов, сроки хранения и подбор рецептов.</p><p>Дома — на экране холодильника. В магазине — с телефона.</p></div>
+  </section>
+  <section class="welcome-details" aria-label="Основные направления проекта">
+    <article><span class="detail-icon">{{ icon('grid') }}</span><div><h3>Продукты</h3><p>Список запасов вместо догадок у полки в магазине.</p></div></article>
+    <article><span class="detail-icon">{{ icon('clock') }}</span><div><h3>Сроки хранения</h3><p>Внимание к тому, что стоит использовать в первую очередь.</p></div></article>
+    <article><span class="detail-icon">{{ icon('leaf') }}</span><div><h3>Рецепты</h3><p>Ответ на «что приготовить?» из того, что уже есть дома.</p></div></article>
   </section>
 </div>
 {% endblock %}
