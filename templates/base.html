@@ -6,14 +6,46 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f4f7f2">
   <meta name="description" content="SmartFridge — умный подход к продуктам: контроль свежести, идеи блюд и порядок в холодильнике.">
+  <script>
+    (function () {
+      var preference = null;
+      try { preference = localStorage.getItem('smartfridge-theme'); } catch (error) {}
+      if (preference !== 'light' && preference !== 'dark') preference = null;
+      var system = window.matchMedia('(prefers-color-scheme: dark)');
+      function apply(theme) {
+        document.documentElement.dataset.theme = theme;
+        document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#121c18' : '#f4f7f2';
+        var button = document.getElementById('theme-toggle');
+        if (button) {
+          var label = theme === 'dark' ? 'Включить светлую тему' : 'Включить тёмную тему';
+          button.setAttribute('aria-label', label);
+          button.setAttribute('title', label);
+          button.setAttribute('aria-pressed', String(theme === 'dark'));
+        }
+      }
+      apply(preference || (system.matches ? 'dark' : 'light'));
+      document.addEventListener('DOMContentLoaded', function () {
+        apply(document.documentElement.dataset.theme);
+        document.getElementById('theme-toggle').addEventListener('click', function () {
+          preference = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+          try { localStorage.setItem('smartfridge-theme', preference); } catch (error) {}
+          apply(preference);
+        });
+      });
+      system.addEventListener('change', function (event) {
+        if (!preference) apply(event.matches ? 'dark' : 'light');
+      });
+    })();
+  </script>
   <title>{% block title %}SmartFridge{% endblock %}</title>
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/display.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
   {% block head %}{% endblock %}
 </head>
-<body>
+<body{% if current_user %} class="is-authenticated"{% endif %}>
   <a class="skip-link" href="#main-content">Перейти к содержимому</a>
   <header class="site-header">
     <div class="header-inner">
@@ -32,8 +64,12 @@
           <form action="{{ url_for('logout') }}" method="post" class="inline-form"><button class="nav-text-button" type="submit">Выйти</button></form>
         {% else %}
           <a href="{{ url_for('login') }}" {% if request.endpoint == 'login' %}aria-current="page"{% endif %}>Войти</a>
-          <a class="nav-cta" href="{{ url_for('register') }}">Создать аккаунт {{ icon('arrow') }}</a>
+          <a class="nav-cta nav-register" href="{{ url_for('register') }}">Регистрация</a>
         {% endif %}
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Переключить тему" aria-pressed="false">
+          <svg class="theme-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 13.2A8.5 8.5 0 0 1 10.8 3.5a8.5 8.5 0 1 0 9.7 9.7Z"/></svg>
+          <svg class="theme-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg>
+        </button>
       </nav>
     </div>
   </header>

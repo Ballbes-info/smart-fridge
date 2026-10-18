@@ -9,15 +9,15 @@
   <section class="home-hero" aria-labelledby="hero-title">
     <div class="home-hero__copy">
       <h1 id="hero-title">Свежий взгляд<br>на <em>привычное.</em></h1>
-      <p class="home-hero__description">Меньше забытых продуктов.<br>Больше идей для ужина. Знакомьтесь —<br class="desktop-break"> ваш умный помощник SmartFridge.</p>
+      <p class="home-hero__description">Продукты, свежесть и идеи для ужина.<br>На дисплее и в вашем телефоне.</p>
       <div class="home-hero__actions">
         {% if current_user and current_user.is_verified %}
-          <a class="btn btn-primary" href="{{ url_for('profile') }}">Мой профиль {{ icon('arrow') }}</a>
+          <a class="btn btn-primary" href="{{ url_for('profile') }}">Мой профиль <span class="button-arrow">{{ icon('arrow') }}</span></a>
         {% elif current_user %}
-          <a class="btn btn-primary" href="{{ url_for('verify') }}">Подтвердить почту {{ icon('arrow') }}</a>
+          <a class="btn btn-primary" href="{{ url_for('verify') }}">Подтвердить почту <span class="button-arrow">{{ icon('arrow') }}</span></a>
         {% else %}
-          <a class="btn btn-primary" href="{{ url_for('login') }}">Войти в SmartFridge {{ icon('arrow') }}</a>
-          <a class="hero-secondary" href="{{ url_for('register') }}">Создать аккаунт</a>
+          <a class="btn btn-primary" href="{{ url_for('login') }}">Войти <span class="button-arrow">{{ icon('arrow') }}</span></a>
+          <a class="hero-secondary" href="{{ url_for('register') }}">Создать аккаунт {{ icon('arrow') }}</a>
         {% endif %}
       </div>
       <div class="hero-platforms">{{ icon('fridge') }} На холодильнике <span></span> {{ icon('phone') }} В вашем телефоне</div>
@@ -27,29 +27,29 @@
 
   <section class="home-about" aria-labelledby="about-title">
     <h2 id="about-title">Не просто хранить.<br><em>Понимать.</em></h2>
-    <div class="home-about-copy"><p>Одна система вместо случайных списков и забытых упаковок. SmartFridge связывает продукты, сроки хранения и повседневные решения.</p><p>Чтобы вы знали, что уже есть дома, успевали использовать любимые продукты и реже покупали лишнее.</p></div>
+    <div class="home-about-copy"><p>Знайте свои запасы, следите за свежестью и выбирайте, что приготовить. Без случайных списков и забытых упаковок.</p><div class="connection-art" aria-hidden="true"><span>{{ icon('grid') }}</span><i></i><b></b><i></i><span>{{ icon('phone') }}</span></div></div>
   </section>
 
   <section class="home-freshness" aria-labelledby="freshness-title">
-    <div class="freshness-intro"><p class="home-label">ПРОДУКТЫ И СВЕЖЕСТЬ</p><h2 id="freshness-title">Всё на виду.<br>Ничего не забыто.</h2><p>В холодильнике легко потерять из виду даже то, что купили вчера. Список запасов и сроки хранения помогают разобраться без долгих поисков.</p></div>
-    <div class="freshness-notes"><div><h3>Видеть, что есть</h3><p>Планировать покупки проще, когда знаешь свои запасы. Проверить список можно ещё в магазине, с телефона.</p></div><div><h3>Помнить о свежести</h3><p>Продукты, которые стоит использовать в первую очередь, требуют чуть больше внимания. Так меньше хорошей еды отправляется в мусор.</p></div></div>
+    <div class="freshness-intro"><p class="home-label">ПРОДУКТЫ И СВЕЖЕСТЬ</p><h2 id="freshness-title">Всё на виду.<br>Ничего не забыто.</h2><p>Сначала — продукты, которые стоит использовать сегодня.</p><div class="freshness-scale" aria-hidden="true"><span></span><span></span><span></span><i></i></div></div>
+    <div class="freshness-composition" aria-hidden="true"><div class="freshness-rings"><svg viewBox="0 0 200 200" fill="none"><circle cx="100" cy="100" r="79" stroke="currentColor" stroke-opacity=".15"/><circle cx="100" cy="100" r="62" stroke="currentColor" stroke-opacity=".15"/><circle class="freshness-track" cx="100" cy="100" r="79" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="330 497"/><circle cx="100" cy="100" r="44" stroke="currentColor" stroke-opacity=".15"/></svg>{{ icon('leaf') }}<span class="freshness-orbit-dot"></span></div><div class="freshness-graphic-lines"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
   </section>
 
   <section class="home-daily" aria-labelledby="daily-title">
-    <div class="daily-main"><p class="home-label">НА КАЖДЫЙ ДЕНЬ</p><h2 id="daily-title">Что сегодня<br><em>на ужин?</em></h2><p>Иногда для нового блюда уже всё есть. Идеи рецептов на основе ваших продуктов помогают выбрать, что приготовить, и обойтись без ещё одного похода в магазин.</p></div>
-    <div class="daily-mobile"><span class="daily-mobile-line" aria-hidden="true"></span><h3>Дома и с собой</h3><p>На кухне удобно посмотреть на дисплей холодильника. За покупками — открыть телефон. Один привычный способ держать продукты под контролем.</p><a class="daily-link" href="{{ url_for('profile') if current_user and current_user.is_verified else url_for('verify') if current_user else url_for('register') }}">{{ 'Мой профиль' if current_user and current_user.is_verified else 'Подтвердить почту' if current_user else 'Создать аккаунт' }} {{ icon('arrow') }}</a></div>
+    <div class="daily-main"><p class="home-label">НА КАЖДЫЙ ДЕНЬ</p><h2 id="daily-title">Что сегодня<br><em>на ужин?</em></h2><p>Начните с того, что уже есть. Рецепты помогут обойтись без лишних покупок.</p></div>
+    <div class="daily-mobile"><span class="daily-mobile-line" aria-hidden="true"></span><h3>Дома и с собой</h3><p>На кухне — дисплей. В магазине — телефон. Ваши запасы всегда под рукой.</p><a class="daily-link" href="{{ url_for('profile') if current_user and current_user.is_verified else url_for('verify') if current_user else url_for('register') }}">{{ 'Мой профиль' if current_user and current_user.is_verified else 'Подтвердить почту' if current_user else 'Создать аккаунт' }} {{ icon('arrow') }}</a></div>
   </section>
   <section class="home-rhythm" aria-labelledby="rhythm-title">
-    <div class="rhythm-copy"><p class="home-label">ВАШ ПОВСЕДНЕВНЫЙ РИТМ</p><h2 id="rhythm-title">Всё начинается<br>с одного касания.</h2><p>На кухне и за её пределами — привычные дела становятся чуть проще.</p></div>
+    <div class="rhythm-copy"><p class="home-label">ВАШ ПОВСЕДНЕВНЫЙ РИТМ</p><h2 id="rhythm-title">Всё начинается<br>с одного касания.</h2><div class="rhythm-art" aria-hidden="true"><span class="rhythm-art-orbit"></span><span class="rhythm-art-orbit"></span><span class="rhythm-art-center">{{ icon('scan') }}</span><i></i></div></div>
     <div class="rhythm-demo" role="group" aria-label="Выберите момент дня">
       <input class="rhythm-radio" type="radio" name="daily-rhythm" id="rhythm-home" checked>
       <input class="rhythm-radio" type="radio" name="daily-rhythm" id="rhythm-shop">
       <input class="rhythm-radio" type="radio" name="daily-rhythm" id="rhythm-dinner">
       <div class="rhythm-switch"><label for="rhythm-home">Дома</label><label for="rhythm-shop">В магазине</label><label for="rhythm-dinner">За ужином</label></div>
       <div class="rhythm-scenes">
-        <div class="rhythm-scene rhythm-scene-home"><span class="rhythm-symbol">{{ icon('grid') }}</span><h3>Вспоминать не нужно.</h3><p>Посмотрите, что осталось в холодильнике, и решите, что взять на завтрак.</p></div>
-        <div class="rhythm-scene rhythm-scene-shop"><span class="rhythm-symbol">{{ icon('phone') }}</span><h3>Список уже с вами.</h3><p>Проверьте запасы с телефона, прежде чем положить в корзину ещё одну упаковку.</p></div>
-        <div class="rhythm-scene rhythm-scene-dinner"><span class="rhythm-symbol">{{ icon('leaf') }}</span><h3>Осталось выбрать блюдо.</h3><p>Начните с продуктов, которые есть дома. Возможно, для ужина уже всё готово.</p></div>
+        <div class="rhythm-scene rhythm-scene-home"><span class="rhythm-symbol">{{ icon('grid') }}</span><h3>Вспоминать не нужно.</h3><p>Всё для завтрака — перед глазами.</p></div>
+        <div class="rhythm-scene rhythm-scene-shop"><span class="rhythm-symbol">{{ icon('phone') }}</span><h3>Список уже с вами.</h3><p>Проверьте запасы до покупки.</p></div>
+        <div class="rhythm-scene rhythm-scene-dinner"><span class="rhythm-symbol">{{ icon('leaf') }}</span><h3>Осталось выбрать блюдо.</h3><p>Выберите блюдо из ваших продуктов.</p></div>
       </div>
       <span class="rhythm-hint">Выберите момент дня</span>
     </div>

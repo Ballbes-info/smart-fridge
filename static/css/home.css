@@ -33,8 +33,8 @@
   grid-template-columns: 1.1fr 1fr;
   gap: 100px;
   padding: 42px 38px;
-  background: #e8efe2;
-  border-left: 2px solid #92ac74;
+  background: var(--accent-surface);
+  border-left: 2px solid var(--control-border);
 }
 .freshness-intro h2 {
   font-size: 34px;
@@ -344,6 +344,322 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .rhythm-scene {
+    animation: none;
+  }
+}
+
+/* Графические акценты */
+.home-about {
+  padding-bottom: 40px;
+}
+.connection-art {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 280px;
+  margin-top: 25px;
+  color: var(--green);
+}
+.connection-art > span {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--control-border);
+  border-radius: 50%;
+}
+.connection-art .icon {
+  width: 18px;
+  height: 18px;
+}
+.connection-art > i {
+  flex: 1;
+  border-top: 1px dashed var(--control-border);
+}
+.connection-art > b {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #99b870;
+  box-shadow: 0 0 0 5px var(--mint);
+  animation: signal-breathe 4s ease-in-out infinite;
+}
+.home-freshness {
+  grid-template-columns: 1.1fr 1fr;
+  align-items: center;
+  padding-top: 30px;
+  padding-bottom: 30px;
+}
+.freshness-intro > p:last-child {
+  max-width: 320px;
+}
+.freshness-intro > p:not(.home-label) {
+  font-size: 14px;
+  line-height: 1.85;
+  max-width: 330px;
+}
+.freshness-scale {
+  position: relative;
+  display: flex;
+  gap: 5px;
+  max-width: 260px;
+  margin-top: 25px;
+}
+.freshness-scale > span {
+  height: 3px;
+  flex: 1;
+  background: #9ab778;
+}
+.freshness-scale > span:nth-child(2) {
+  background: #bdc390;
+}
+.freshness-scale > span:nth-child(3) {
+  background: #ccb58a;
+}
+.freshness-scale > i {
+  position: absolute;
+  top: -3px;
+  left: 22%;
+  width: 9px;
+  height: 9px;
+  border: 2px solid var(--accent-surface);
+  border-radius: 50%;
+  background: var(--green);
+}
+.freshness-composition {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  min-height: 210px;
+  color: var(--green);
+}
+.freshness-rings {
+  position: relative;
+  flex: 0 0 200px;
+  height: 200px;
+}
+.freshness-rings > svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-80deg);
+}
+.freshness-rings > .icon {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 34px;
+  height: 34px;
+  transform: none;
+  stroke-width: 1.2;
+}
+.freshness-orbit-dot {
+  position: absolute;
+  top: 18px;
+  left: 96px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 0 5px var(--accent-surface);
+}
+.freshness-graphic-lines {
+  display: flex;
+  gap: 7px;
+  height: 64px;
+  align-items: center;
+  opacity: 0.6;
+}
+.freshness-graphic-lines i {
+  width: 3px;
+  height: 20%;
+  background: currentColor;
+  border-radius: 3px;
+  animation: frequency 5s ease-in-out infinite alternate;
+}
+.freshness-graphic-lines i:nth-child(2),
+.freshness-graphic-lines i:nth-child(6) {
+  height: 45%;
+  animation-delay: -0.7s;
+}
+.freshness-graphic-lines i:nth-child(3),
+.freshness-graphic-lines i:nth-child(5) {
+  height: 70%;
+  animation-delay: -1.4s;
+}
+.freshness-graphic-lines i:nth-child(4) {
+  height: 100%;
+  animation-delay: -2.1s;
+}
+.home-daily {
+  padding-top: 45px;
+  padding-bottom: 45px;
+}
+.rhythm-art {
+  position: relative;
+  width: 200px;
+  height: 110px;
+  margin: 18px 0 0;
+  color: var(--green);
+  overflow: hidden;
+}
+.rhythm-art-orbit {
+  position: absolute;
+  width: 85px;
+  height: 85px;
+  border: 1px solid var(--control-border);
+  border-radius: 50%;
+  left: 9px;
+  top: 10px;
+}
+.rhythm-art-orbit:nth-child(2) {
+  left: 65px;
+}
+.rhythm-art-center {
+  position: absolute;
+  top: 28px;
+  left: 47px;
+  width: 49px;
+  height: 49px;
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+  border: 1px solid var(--control-border);
+  border-radius: 50%;
+  z-index: 1;
+}
+.rhythm-art-center .icon {
+  width: 22px;
+  height: 22px;
+}
+.rhythm-art > i {
+  position: absolute;
+  height: 1px;
+  top: 53px;
+  left: 0;
+  width: 164px;
+  background: linear-gradient(90deg, transparent, var(--green), transparent);
+  opacity: 0.4;
+  animation: scan-accent 6s ease-in-out infinite;
+}
+.rhythm-scenes {
+  min-height: 175px;
+}
+.home-rhythm {
+  padding-bottom: 40px;
+}
+@keyframes signal-breathe {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes frequency {
+  from {
+    transform: scaleY(0.6);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+@keyframes scan-accent {
+  0%,
+  100% {
+    transform: translateY(-28px);
+    opacity: 0;
+  }
+  25%,
+  75% {
+    opacity: 0.4;
+  }
+  90% {
+    transform: translateY(28px);
+    opacity: 0;
+  }
+}
+@media (max-width: 1050px) {
+  .freshness-composition {
+    gap: 5px;
+  }
+  .freshness-graphic-lines {
+    gap: 5px;
+  }
+  .freshness-rings {
+    flex-basis: 165px;
+    height: 165px;
+  }
+  .freshness-orbit-dot {
+    top: 14px;
+    left: 79px;
+  }
+}
+@media (max-width: 760px) {
+  .home-freshness {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+  .freshness-composition {
+    min-height: 190px;
+    justify-content: flex-start;
+    gap: 25px;
+  }
+  .freshness-rings {
+    flex-basis: 180px;
+    height: 180px;
+  }
+  .freshness-orbit-dot {
+    top: 16px;
+    left: 86px;
+  }
+  .home-about {
+    gap: 20px;
+  }
+  .home-daily {
+    padding-top: 32px;
+    padding-bottom: 32px;
+    gap: 25px;
+  }
+  .rhythm-scenes {
+    min-height: 160px;
+  }
+  .rhythm-copy h2 {
+    margin-bottom: 5px;
+  }
+  .rhythm-art {
+    height: 92px;
+    margin-top: 8px;
+  }
+  .home-rhythm {
+    gap: 8px;
+  }
+  .daily-main > p:last-child {
+    max-width: 360px;
+  }
+}
+@media (max-width: 360px) {
+  .freshness-composition {
+    gap: 14px;
+  }
+  .freshness-rings {
+    flex-basis: 155px;
+    height: 155px;
+  }
+  .freshness-orbit-dot {
+    top: 12px;
+    left: 74px;
+  }
+  .freshness-graphic-lines {
+    gap: 4px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .connection-art > b,
+  .freshness-graphic-lines i,
+  .rhythm-art > i {
     animation: none;
   }
 }
