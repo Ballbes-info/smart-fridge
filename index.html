@@ -2703,6 +2703,90 @@ main:focus {
  .landing-device .display-art { min-height: 170px; max-width: 270px; margin: auto; padding: 15px; }
  .landing .landing-section-head { display: block; }
 }
+</style><style>
+.plan-details summary { display: none; }
+.plan-details { flex: 1; }
+@media (max-width: 760px) {
+ .landing { padding-inline: 20px; }
+ .landing .landing-label { font-size: 10px; letter-spacing: .09em; margin-bottom: 14px; }
+ .landing .landing-hero { padding-top: 25px; padding-bottom: 30px; }
+ .landing .landing-hero h1 { font-size: clamp(32px,8.3vw,46px); line-height: 1.08; }
+ .landing .home-hero__description { font-size: 16px; line-height: 1.55; }
+ .landing-device .display-art { min-height: 150px; max-width: 240px; padding: 15px; }
+ .landing-section { padding: 34px 0; }
+ .landing h2 { font-size: 30px; }
+ .landing-section-head { margin-bottom: 22px; }
+ .landing-steps li, .landing-steps li + li { display: grid; grid-template-columns: 28px 1fr; gap: 10px 15px; padding: 22px 0; }
+ .landing-steps li .icon { grid-column: 1; grid-row: 1; width: 25px; height: 25px; margin: 0; }
+ .landing-steps h3 { grid-column: 2; grid-row: 1; font-size: 20px; margin: 0; padding-right: 23px; }
+ .landing-steps p { grid-column: 2; font-size: 14px; line-height: 1.6; }
+ .landing-steps .step-number { position: absolute; right: 0; top: 25px; font-size: 10px; }
+ .landing-audience { gap: 22px; }
+ .audience-copy { font-size: 16px; line-height: 1.65; margin: 0; }
+ .pricing-intro { font-size: 13px; margin-top: 18px; }
+ .billing-control { display: flex; }
+ .billing-control button { flex: 1; min-height: 44px; padding: 10px 6px; }
+ .billing-note { font-size: 11px; line-height: 1.5; }
+ .landing-plans { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; align-items: start; }
+ .landing .landing-plan { padding: 18px 13px; border-radius: 8px; min-height: 242px; }
+ .landing .landing-plan-premium { padding-top: 16px; }
+ .plan-audience { font-size: 11px; margin-bottom: 8px; }
+ .landing-plan h3 { font-size: 18px; min-height: 40px; line-height: 1.15; margin-bottom: 12px; letter-spacing: -.03em; overflow-wrap: anywhere; }
+ .plan-price strong { font-size: 28px; }
+ .plan-price { font-size: 12px; white-space: normal; }
+ .plan-period { font-size: 10px; }
+ .plan-equivalent { font-size: 10px; line-height: 1.5; min-height: 32px; margin-top: 5px; }
+ .plan-details { border-top: 1px solid var(--line); margin-top: 8px; }
+ .plan-details summary { display: flex; justify-content: space-between; align-items: center; min-height: 44px; gap: 8px; font-size: 12px; cursor: pointer; list-style: none; }
+ .plan-details summary::-webkit-details-marker { display: none; }
+ .plan-details summary span { font-size: 19px; color: var(--green); }
+ .plan-details[open] summary span { transform: rotate(45deg); }
+ .landing-plan ul { border-top: 0; padding: 4px 0; }
+ .landing-plan li { font-size: 12px; }
+ .plan-trial { font-size: 11px; line-height: 1.5; margin: 5px 0 0; }
+ .landing-offer { margin-top: 18px; padding: 18px; }
+ .landing-offer strong { font-size: 15px; line-height: 1.4; display: block; }
+ .landing-offer p { font-size: 12px; line-height: 1.65; }
+ .landing-fine { font-size: 11px; line-height: 1.65; }
+ .landing-hardware { gap: 20px; padding-bottom: 0; margin-top: 32px; }
+ .hardware-art { width: 230px; }
+ .hardware-art .display-art { min-height: 180px; padding: 10px; }
+ .landing-hardware h2 { margin-bottom: 18px; }
+ .landing-hardware p { font-size: 14px; line-height: 1.65; }
+ .landing-hardware .hardware-price { font-size: 34px; margin-top: 18px; }
+ .landing-hardware .landing-fine { font-size: 11px; }
+ .landing-contact .btn { display: flex; width: 100%; justify-content: center; }
+ .landing-contact h2 { font-size: 28px; }
+ .site-footer .footer-inner { display: flex; flex-direction: column; align-items: flex-start; gap: 9px; padding: 25px 20px; }
+}
+@media(max-width:350px) { .landing-plans { grid-template-columns: 1fr; } .landing-plan h3 { min-height: 0; } }
+</style><style>
+/* Scale a fixed illustration canvas so its internal grid retains its proportions. */
+@media(max-width:760px) {
+ .landing-device, .hardware-art { width: 264px; max-width: 100%; margin-inline: auto; }
+ .landing-device .display-art, .hardware-art .display-art {
+   width: 480px; max-width: none; height: 360px; min-height: 360px;
+   padding: 30px 18px; margin: 0; zoom: .55;
+ }
+ .landing-device .display-device, .hardware-art .display-device {
+   width: 444px; height: 300px; aspect-ratio: auto; padding: 17px 15px 21px; border-radius: 23px;
+   animation: none; transform: perspective(1100px) rotateY(-9deg) rotateZ(3deg);
+ }
+ .landing-device .display-screen, .hardware-art .display-screen { padding:16px 19px 18px; border-radius:9px; }
+ .landing-device .display-layout, .hardware-art .display-layout { grid-template-columns:29px 1fr;gap:20px;padding-top:18px; }
+ .landing-device .display-overview, .hardware-art .display-overview { gap:14px 20px; }
+ .landing-device .display-nav, .hardware-art .display-nav { gap:22px;padding-right:15px; }
+ .landing-device .display-nav .icon, .hardware-art .display-nav .icon { width:17px;height:17px; }
+ .landing-device .display-temperature > span, .hardware-art .display-temperature > span { font-size:35px; }
+ .landing-device .display-summary, .hardware-art .display-summary { gap:11px; }
+ .landing-device .display-summary strong, .hardware-art .display-summary strong { font-size:26px; }
+ .landing-device .display-summary small, .hardware-art .display-summary small { font-size:9px; }
+ .landing-device .display-camera, .hardware-art .display-camera { top:6px;width:4px;height:4px; }
+ .landing-device .display-indicator, .hardware-art .display-indicator { bottom:10px; }
+ .landing-device .display-speaker, .hardware-art .display-speaker { bottom:9px; }
+ .landing-device .display-leaf .icon, .hardware-art .display-leaf .icon { width:24px;height:24px; }
+ .landing-device .display-leaf span, .hardware-art .display-leaf span { width:35px; }
+}
 </style></head>
 <body>
   <a class="skip-link" href="#main-content">Перейти к содержимому</a>
@@ -2805,13 +2889,13 @@ main:focus {
     <p class="billing-note" id="billing-note" aria-live="polite">При годовой оплате — 12 месяцев по цене 10.</p>
     <div class="landing-plans">
       
-      <article class="landing-plan"><p class="plan-audience">Для одного</p><h3>Базовая</h3><p class="plan-price"><strong data-month="199" data-year="1990">199</strong> ₽<span class="plan-period">/месяц</span></p><p class="plan-equivalent" data-equivalent="166">Оплата за месяц</p><ul><li>Сканирование текста этикетки</li><li>Запасы, сроки и напоминания</li><li>Список покупок и готовые рецепты</li><li>Дневник питания и КБЖУ</li></ul><p class="plan-trial">7 дней бесплатно новым пользователям</p></article>
+      <article class="landing-plan"><p class="plan-audience">Для одного</p><h3>Базовая</h3><p class="plan-price"><strong data-month="199" data-year="1990">199</strong> ₽<span class="plan-period">/месяц</span></p><p class="plan-equivalent" data-equivalent="166">Оплата за месяц</p><details class="plan-details" open><summary>Что входит <span>+</span></summary><ul><li>Сканирование текста этикетки</li><li>Запасы, сроки и напоминания</li><li>Список покупок и готовые рецепты</li><li>Дневник питания и КБЖУ</li></ul></details><p class="plan-trial">7 дней бесплатно новым пользователям</p></article>
       
-      <article class="landing-plan"><p class="plan-audience">До 5 участников</p><h3>Семейная базовая</h3><p class="plan-price"><strong data-month="349" data-year="3490">349</strong> ₽<span class="plan-period">/месяц</span></p><p class="plan-equivalent" data-equivalent="291">Оплата за месяц</p><ul><li>Все базовые возможности</li><li>Общий холодильник и покупки</li><li>Личные профили и дневники</li><li>Доп. место — 49 ₽/мес. или 490 ₽/год</li></ul><p class="plan-trial">7 дней бесплатно новым пользователям</p></article>
+      <article class="landing-plan"><p class="plan-audience">До 5 участников</p><h3>Семейная базовая</h3><p class="plan-price"><strong data-month="349" data-year="3490">349</strong> ₽<span class="plan-period">/месяц</span></p><p class="plan-equivalent" data-equivalent="291">Оплата за месяц</p><details class="plan-details" open><summary>Что входит <span>+</span></summary><ul><li>Все базовые возможности</li><li>Общий холодильник и покупки</li><li>Личные профили и дневники</li><li>Доп. место — 49 ₽/мес. или 490 ₽/год</li></ul></details><p class="plan-trial">7 дней бесплатно новым пользователям</p></article>
       
-      <article class="landing-plan landing-plan-premium"><p class="plan-audience">Для одного</p><h3>Премиум</h3><p class="plan-price"><strong data-month="499" data-year="4990">499</strong> ₽<span class="plan-period">/месяц</span></p><p class="plan-equivalent" data-equivalent="416">Оплата за месяц</p><ul><li>Всё из базовой</li><li>ИИ-распознавание продуктов</li><li>Меню для набора, снижения и поддержания веса</li><li>Анализ дневника, ИИ-чат и голос</li></ul><p class="plan-trial">Без бесплатного периода</p></article>
+      <article class="landing-plan landing-plan-premium"><p class="plan-audience">Для одного</p><h3>Премиум</h3><p class="plan-price"><strong data-month="499" data-year="4990">499</strong> ₽<span class="plan-period">/месяц</span></p><p class="plan-equivalent" data-equivalent="416">Оплата за месяц</p><details class="plan-details" open><summary>Что входит <span>+</span></summary><ul><li>Всё из базовой</li><li>ИИ-распознавание продуктов</li><li>Меню для набора, снижения и поддержания веса</li><li>Анализ дневника, ИИ-чат и голос</li></ul></details><p class="plan-trial">Без бесплатного периода</p></article>
       
-      <article class="landing-plan landing-plan-premium"><p class="plan-audience">До 5 участников</p><h3>Семейная премиум</h3><p class="plan-price"><strong data-month="799" data-year="7990">799</strong> ₽<span class="plan-period">/месяц</span></p><p class="plan-equivalent" data-equivalent="666">Оплата за месяц</p><ul><li>Всё из семейной базы и премиума</li><li>Общие запасы, личные цели питания</li><li>Семейная квота ИИ</li><li>Доп. место — 99 ₽/мес. или 990 ₽/год</li></ul><p class="plan-trial">Без бесплатного периода</p></article>
+      <article class="landing-plan landing-plan-premium"><p class="plan-audience">До 5 участников</p><h3>Семейная премиум</h3><p class="plan-price"><strong data-month="799" data-year="7990">799</strong> ₽<span class="plan-period">/месяц</span></p><p class="plan-equivalent" data-equivalent="666">Оплата за месяц</p><details class="plan-details" open><summary>Что входит <span>+</span></summary><ul><li>Всё из семейной базы и премиума</li><li>Общие запасы, личные цели питания</li><li>Семейная квота ИИ</li><li>Доп. место — 99 ₽/мес. или 990 ₽/год</li></ul></details><p class="plan-trial">Без бесплатного периода</p></article>
       
     </div>
     <div class="landing-offer"><strong>Первая покупка подписки — со скидкой 30%</strong><p>Первый платный месяц: базовая — 139 ₽, семейная базовая — 244 ₽, премиум — 349 ₽, семейная премиум — 559 ₽. Затем обычная цена. Один раз на плательщика; не суммируется с годовой скидкой и не действует на дополнительные места.</p></div>
@@ -2886,5 +2970,11 @@ main:focus {
       <span class="footer-copy">&copy; 2026 SmartFridge</span>
     </div>
   </footer>
-</body>
+<script>
+(() => {
+ const mobile = window.matchMedia('(max-width: 760px)');
+ function sync() { document.querySelectorAll('.plan-details').forEach(item => {item.open = !mobile.matches;}); }
+ sync(); mobile.addEventListener('change', sync);
+})();
+</script></body>
 </html>
