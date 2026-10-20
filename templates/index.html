@@ -1,60 +1,59 @@
 {% extends "base.html" %}
 {% from "display.html" import display %}
-{% block title %}SmartFridge — свежий взгляд на привычное{% endblock %}
-{% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
-{% endblock %}
+{% block title %}SmartFridge — знайте, что есть. Решайте, что приготовить.{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">{% endblock %}
 {% block content %}
-<div class="home-page">
-  <section class="home-hero" aria-labelledby="hero-title">
+<div class="home-page landing">
+  <section class="home-hero landing-hero" aria-labelledby="hero-title">
     <div class="home-hero__copy">
-      <h1 id="hero-title">Свежий взгляд<br>на <em>привычное.</em></h1>
-      <p class="home-hero__description">Продукты, свежесть и идеи для ужина.<br>На дисплее и в вашем телефоне.</p>
-      <div class="home-hero__actions">
-        {% if current_user and current_user.is_verified %}
-          <a class="btn btn-primary" href="{{ url_for('profile') }}">Мой профиль <span class="button-arrow">{{ icon('arrow') }}</span></a>
-        {% elif current_user %}
-          <a class="btn btn-primary" href="{{ url_for('verify') }}">Подтвердить почту <span class="button-arrow">{{ icon('arrow') }}</span></a>
-        {% else %}
-          <a class="btn btn-primary" href="{{ url_for('login') }}">Войти <span class="button-arrow">{{ icon('arrow') }}</span></a>
-          <a class="hero-secondary" href="{{ url_for('register') }}">Создать аккаунт {{ icon('arrow') }}</a>
-        {% endif %}
-      </div>
-      <div class="hero-platforms">{{ icon('fridge') }} На холодильнике <span></span> {{ icon('phone') }} В вашем телефоне</div>
+      <p class="landing-label">SMARTFRIDGE · ВАШИ ПРОДУКТЫ, ВМЕСТЕ</p>
+      <h1 id="hero-title">Знайте, что есть.<br><em>Решайте, что приготовить.</em></h1>
+      <p class="home-hero__description">Запасы, сроки и рецепты для вашей семьи — на телефоне и кухонном дисплее.</p>
+      <div class="home-hero__actions"><a class="btn btn-primary" href="#pricing">Посмотреть тарифы {{ icon('arrow') }}</a><a class="landing-text-link" href="#how">Как это работает ↓</a></div>
+      <p class="landing-proof">Уже работает прототип с регистрацией и личным кабинетом.</p>
+      <p class="landing-status">Сервис в разработке. Ниже — возможности и цены к запуску.</p>
     </div>
-    {{ display() }}
+    <div class="landing-device">{{ display() }}<span class="landing-caption">Концепт дисплея · 7″ · съёмное крепление</span></div>
   </section>
 
-  <section class="home-about" aria-labelledby="about-title">
-    <h2 id="about-title">Не просто хранить.<br><em>Понимать.</em></h2>
-    <div class="home-about-copy"><p>Знайте свои запасы, следите за свежестью и выбирайте, что приготовить. Без случайных списков и забытых упаковок.</p><div class="connection-art" aria-hidden="true"><span>{{ icon('grid') }}</span><i></i><b></b><i></i><span>{{ icon('phone') }}</span></div></div>
+  <section class="landing-section" id="how" aria-labelledby="how-title">
+    <div class="landing-section-head"><p class="landing-label">01 / КАК ЭТО РАБОТАЕТ</p><h2 id="how-title">От покупки<br>до <em>ужина.</em></h2></div>
+    <ol class="landing-steps">
+      <li><span class="step-number">01</span>{{ icon('scan') }}<h3>Добавьте продукты</h3><p>Сфотографируйте этикетку и подтвердите данные. В премиуме ИИ распознает продукт без этикетки.</p></li>
+      <li><span class="step-number">02</span>{{ icon('clock') }}<h3>Проверьте сроки</h3><p>Посмотрите, что использовать первым. Отметьте вскрытие упаковки и расход продукта.</p></li>
+      <li><span class="step-number">03</span>{{ icon('leaf') }}<h3>Выберите блюдо</h3><p>Найдите рецепт из запасов. Недостающие ингредиенты внесите в общий список покупок.</p></li>
+    </ol>
   </section>
 
-  <div class="home-stories">
-  <section class="home-freshness" aria-labelledby="freshness-title">
-    <div class="freshness-intro"><p class="home-label">ПРОДУКТЫ И СВЕЖЕСТЬ</p><h2 id="freshness-title">Всё на виду.<br>Ничего не забыто.</h2><p>Сначала — продукты, которые стоит использовать сегодня.</p><div class="freshness-scale" aria-hidden="true"><span></span><span></span><span></span><i></i></div></div>
-    <div class="freshness-composition" aria-hidden="true"><div class="freshness-rings"><svg viewBox="0 0 200 200" fill="none"><circle cx="100" cy="100" r="79" stroke="currentColor" stroke-opacity=".15"/><circle cx="100" cy="100" r="62" stroke="currentColor" stroke-opacity=".15"/><circle class="freshness-track" cx="100" cy="100" r="79" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="330 497"/><circle cx="100" cy="100" r="44" stroke="currentColor" stroke-opacity=".15"/></svg>{{ icon('leaf') }}<span class="freshness-orbit-dot"></span></div><div class="freshness-graphic-lines"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <section class="landing-audience landing-section" aria-labelledby="audience-title">
+    <div><p class="landing-label">02 / ДЛЯ КОГО</p><h2 id="audience-title">Один холодильник.<br><em>Вся семья в курсе.</em></h2></div>
+    <div><p class="audience-copy">Для семьи, которая закупается на несколько дней: один готовит дома, другой заходит в магазин. Общие запасы и список покупок помогут проверить, что уже есть, а сроки — выбрать продукты для ближайшего ужина.</p><p>До пяти участников в семейной подписке. Общий холодильник, личные дневники питания и свои цели.</p></div>
   </section>
 
-  <section class="home-daily" aria-labelledby="daily-title">
-    <div class="daily-main"><p class="home-label">НА КАЖДЫЙ ДЕНЬ</p><h2 id="daily-title">Что сегодня<br><em>на ужин?</em></h2><p>Начните с того, что уже есть. Рецепты помогут обойтись без лишних покупок.</p><div class="dinner-detail" aria-hidden="true"><span class="dinner-plate">{{ icon('leaf') }}</span><span class="dinner-detail-lines"><i></i><i></i><i></i></span></div></div>
-    <div class="daily-mobile"><span class="daily-mobile-line" aria-hidden="true"></span><h3>Дома и с собой</h3><p>На кухне — дисплей. В магазине — телефон. Ваши запасы всегда под рукой.</p><a class="daily-link" href="{{ url_for('profile') if current_user and current_user.is_verified else url_for('verify') if current_user else url_for('register') }}">{{ 'Мой профиль' if current_user and current_user.is_verified else 'Подтвердить почту' if current_user else 'Создать аккаунт' }} {{ icon('arrow') }}</a></div>
-  </section>
-  </div>
-  <section class="home-rhythm" aria-labelledby="rhythm-title">
-    <div class="rhythm-copy"><p class="home-label">ВАШ ПОВСЕДНЕВНЫЙ РИТМ</p><h2 id="rhythm-title">Всё начинается<br>с одного касания.</h2><div class="rhythm-art" aria-hidden="true"><span class="rhythm-art-orbit"></span><span class="rhythm-art-orbit"></span><span class="rhythm-art-center">{{ icon('scan') }}</span><i></i></div></div>
-    <div class="rhythm-demo" role="group" aria-label="Выберите момент дня">
-      <input class="rhythm-radio" type="radio" name="daily-rhythm" id="rhythm-home" checked>
-      <input class="rhythm-radio" type="radio" name="daily-rhythm" id="rhythm-shop">
-      <input class="rhythm-radio" type="radio" name="daily-rhythm" id="rhythm-dinner">
-      <div class="rhythm-switch"><label for="rhythm-home">Дома</label><label for="rhythm-shop">В магазине</label><label for="rhythm-dinner">За ужином</label></div>
-      <div class="rhythm-scenes">
-        <div class="rhythm-scene rhythm-scene-home"><span class="rhythm-symbol">{{ icon('grid') }}</span><h3>Вспоминать не нужно.</h3><p>Всё для завтрака — перед глазами.</p></div>
-        <div class="rhythm-scene rhythm-scene-shop"><span class="rhythm-symbol">{{ icon('phone') }}</span><h3>Список уже с вами.</h3><p>Проверьте запасы до покупки.</p></div>
-        <div class="rhythm-scene rhythm-scene-dinner"><span class="rhythm-symbol">{{ icon('leaf') }}</span><h3>Осталось выбрать блюдо.</h3><p>Выберите блюдо из ваших продуктов.</p></div>
-      </div>
+  <section class="landing-section" id="pricing" aria-labelledby="pricing-title">
+    <div class="landing-section-head"><div><p class="landing-label">03 / ПОДПИСКИ</p><h2 id="pricing-title">Начните с запасов.<br><em>Добавьте ИИ.</em></h2></div><p class="pricing-intro">Планируемые цены к запуску.<br>Сайт работает и без покупки дисплея.</p></div>
+    <div class="billing-control" role="group" aria-label="Период оплаты"><button type="button" data-billing="month" aria-pressed="true">За месяц</button><button type="button" data-billing="year" aria-pressed="false">За год <span>−17%</span></button></div>
+    <p class="billing-note" id="billing-note" aria-live="polite">При годовой оплате — 12 месяцев по цене 10.</p>
+    <div class="landing-plans">
+      {% for name, audience, month, year, features, premium in [
+        ('Базовая','Для одного',199,1990,['Сканирование текста этикетки','Запасы, сроки и напоминания','Список покупок и готовые рецепты','Дневник питания и КБЖУ'],false),
+        ('Семейная базовая','До 5 участников',349,3490,['Все базовые возможности','Общий холодильник и покупки','Личные профили и дневники','Доп. место — 49 ₽/мес. или 490 ₽/год'],false),
+        ('Премиум','Для одного',499,4990,['Всё из базовой','ИИ-распознавание продуктов','Рецепты и меню под вашу цель','Анализ дневника, ИИ-чат и голос'],true),
+        ('Семейная премиум','До 5 участников',799,7990,['Всё из семейной базы и премиума','Общие запасы, личные цели питания','Семейная квота ИИ','Доп. место — 99 ₽/мес. или 990 ₽/год'],true)
+      ] %}
+      <article class="landing-plan{% if premium %} landing-plan-premium{% endif %}"><p class="plan-audience">{{ audience }}</p><h3>{{ name }}</h3><p class="plan-price"><strong data-month="{{ month }}" data-year="{{ year }}">{{ '{:,}'.format(month).replace(',', ' ') }}</strong> ₽<span class="plan-period">/месяц</span></p><p class="plan-equivalent" data-equivalent="{{ (year / 12)|round|int }}">Оплата за месяц</p><ul>{% for feature in features %}<li>{{ feature }}</li>{% endfor %}</ul><p class="plan-trial">{{ 'Без бесплатного периода' if premium else '7 дней бесплатно новым пользователям' }}</p><span class="plan-launch">К запуску сервиса</span></article>
+      {% endfor %}
     </div>
+    <div class="landing-offer"><strong>Первая покупка подписки — со скидкой 30%</strong><p>Первый платный месяц: базовая — 139 ₽, семейная базовая — 244 ₽, премиум — 349 ₽, семейная премиум — 559 ₽. Затем обычная цена. Один раз на плательщика; не суммируется с годовой скидкой и не действует на дополнительные места.</p></div>
+    <p class="landing-fine">Базовая включает чтение текста этикетки с подтверждением данных. Генеративный ИИ — только в премиуме. Фото, генерация и голос — в пределах квот; их объём определим до запуска. Дневники доступны семье только по выбору владельца.</p>
   </section>
 
+  <section class="landing-hardware landing-section" aria-labelledby="hardware-title">
+    <div class="hardware-art" aria-hidden="true">{{ display('small') }}</div>
+    <div><p class="landing-label">ОТДЕЛЬНО / ДИСПЛЕЙ ДЛЯ КУХНИ</p><h2 id="hardware-title">Ваш холодильник.<br><em>С новым экраном.</em></h2><p>Съёмный сенсорный дисплей 7″ с мини-ПК, камерой, микрофоном и динамиком. Питание и крепление в комплекте. Датчики — отдельно.</p><p class="hardware-price">29 990 ₽</p><p><strong>Семейная база до пяти человек включена без ежемесячной платы.</strong> Команды по сценариям входят в базу.</p><p>Семейный премиум: +449 ₽/месяц или 4 490 ₽/год. Первый платный месяц — 314 ₽ со скидкой 30%.</p><p class="landing-fine">Устройство в разработке. Цена предварительная; срок облачного обслуживания и условия поставки определим до продаж.</p></div>
+  </section>
+
+  <section class="landing-contact landing-section" id="contact" aria-labelledby="contact-title"><p class="landing-label">04 / ОБСУДИМ SMARTFRIDGE</p><h2 id="contact-title">Что вы хотите<br><em>видеть на своей кухне?</em></h2><p>Спросите о проекте, тарифах или устройстве.</p><a class="btn btn-primary" href="mailto:{{ config.get('CONTACT_EMAIL', '') }}?subject=SmartFridge">Написать нам {{ icon('arrow') }}</a></section>
 </div>
+<script src="{{ url_for('static', filename='js/landing.js') }}" defer></script>
 {% endblock %}

@@ -55,6 +55,7 @@ def _load_secret_key() -> str:
 
 app = Flask(__name__)
 app.secret_key = _load_secret_key()
+app.config["CONTACT_EMAIL"] = os.environ.get("CONTACT_EMAIL", "smartfridgebd@gmail.com").strip()
 
 
 # --------------------------------------------------------------------------- #
