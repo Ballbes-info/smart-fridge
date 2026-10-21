@@ -8,21 +8,28 @@
   <h1>Выберите свой<br><em>план на кухню.</em></h1>
   <p class="billing-lead">Для себя или всей семьи. База — учёт продуктов, премиум — ещё и помощь ИИ.</p>
   {% if subscription and subscription.pending_order_id %}<div class="billing-notice">У вас есть незавершённое оформление. <a href="{{ url_for('billing.checkout',order_id=subscription.pending_order_id) }}">Продолжить →</a></div>{% endif %}
+  <div class="billing-toolbar">
+    <fieldset class="billing-period" data-billing-period>
+      <legend>Как часто оплачивать</legend>
+      <div class="billing-period-options">
+        <label><input type="radio" name="billing_interval" value="month" checked><span>Ежемесячно</span></label>
+        <label><input type="radio" name="billing_interval" value="year"><span>Ежегодно <small>−17%</small></span></label>
+      </div>
+    </fieldset>
+    <p class="billing-period-note" data-period-note aria-live="polite">Первый месяц — со скидкой 30%</p>
+  </div>
   <div class="billing-cards">
   {% for key,plan in plans.items() %}
     <article class="billing-card{% if plan.premium %} is-premium{% endif %}">
       <p class="billing-eyebrow">{{ 'Для семьи · 5 человек' if plan.family else 'Для одного человека' }}</p>
       <h2>{{ plan.name }}</h2>
       <p class="billing-price"><span data-price>{{ plan.month }}</span> ₽<small data-unit>/месяц</small></p>
-      <p class="billing-saving" data-saving>Первый месяц — {{ (plan.month * 0.7)|round|int }} ₽</p>
+      <p class="billing-saving" data-saving aria-live="polite">Первый месяц — {{ (plan.month * 0.7)|round|int }} ₽</p>
       {{ features(plan) }}
       <p class="billing-benefit">{{ 'Все возможности базы + ИИ' if plan.premium else 'Можно начать с 7 бесплатных дней' }}</p>
       <form method="post" action="{{ url_for('billing.start') }}" data-plan-form data-month="{{ plan.month }}" data-year="{{ plan.year }}" data-seat="{{ 99 if plan.premium else 49 }}">
         <input type="hidden" name="plan" value="{{ key }}">
-        <fieldset class="billing-period"><legend>Период оплаты</legend>
-          <label><input type="radio" name="interval" value="month" checked><span>Месяц</span></label>
-          <label><input type="radio" name="interval" value="year"><span>Год <small>−17%</small></span></label>
-        </fieldset>
+        <input type="hidden" name="interval" value="month">
         {% if plan.family %}<label class="billing-seat">Доп. места сверх пяти<input type="number" name="extra_seats" value="0" min="0" max="95"></label><p class="billing-small billing-seat-note">+{{ 99 if plan.premium else 49 }} ₽/месяц или {{ 990 if plan.premium else 490 }} ₽/год за место.</p>{% else %}<input type="hidden" name="extra_seats" value="0">{% endif %}
         <button class="btn btn-primary" type="submit">Выбрать план {{ icon('arrow') }}</button>
       </form>
@@ -30,7 +37,6 @@
   {% endfor %}
   </div>
   <div class="billing-notice"><strong>Первая месячная оплата — со скидкой 30%</strong><p>Один раз на аккаунт и карту, только на тариф. Дополнительные места оплачиваются отдельно. При оплате за год — 12 месяцев по цене 10. Скидки не суммируются.</p></div>
-  <p class="billing-small">На следующем шаге — полное описание, выбор карты и условия продления. Проверка карты на 1 ₽ с возвратом нужна только для пробной недели. Семейные функции и ИИ пока в разработке.</p>
 </section>
 <script src="{{ url_for('static',filename='js/subscriptions.js') }}" defer></script>
 {% endblock %}
