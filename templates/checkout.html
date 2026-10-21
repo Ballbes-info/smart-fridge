@@ -1,15 +1,29 @@
 {% extends 'base.html' %}
+{% from 'plan_features.html' import features %}
 {% block title %}Оформление подписки — SmartFridge{% endblock %}
 {% block head %}<link rel="stylesheet" href="{{ url_for('static',filename='css/billing.css') }}">{% endblock %}
 {% block content %}
 <section class="billing-page billing-narrow">
-  <p class="section-tag">ШАГ 3 ИЗ 3 · ТЕСТОВАЯ ОПЛАТА</p>
+  <p class="section-tag">ШАГ 3 ИЗ 3 · ОФОРМЛЕНИЕ</p>
   <h1>{{ billing_plans[order.plan].name }}</h1>
   <p class="billing-lead">{{ 'Годовая' if order.interval == 'year' else 'Месячная' }} подписка{% if billing_plans[order.plan].family %} · {{ 5+order.extra_seats }} участников{% endif %}</p>
-  <p class="billing-test">Тестовая оплата · без реальных списаний.</p>
+  <div class="billing-panel plan-description">
+    <p class="billing-eyebrow">ЧТО ВХОДИТ В ПЛАН</p>
+    {{ features(billing_plans[order.plan], true) }}
+    {% if billing_plans[order.plan].family %}<p>Выбрано мест: {{ 5+order.extra_seats }}. Дополнительное место — {{ (99 if billing_plans[order.plan].premium else 49) * (10 if order.interval=='year' else 1) }} ₽ за {{ 'год' if order.interval=='year' else 'месяц' }}.</p>{% else %}<p>Подписка для одного человека.</p>{% endif %}
+    <p class="billing-small">Дисплей приобретается отдельно. С ним семейная база бесплатна, премиум оплачивается отдельно. Семейные функции и ИИ пока в разработке.</p>
+  </div>
   <div class="billing-panel">
-  {% if order.status == 'ready' and quote %}
-    <p class="billing-eyebrow">КАРТА ПОДТВЕРЖДЕНА · ПРОВЕРОЧНЫЙ РУБЛЬ ВОЗВРАЩЁН</p>
+  {% if order.status == 'ready' and not quote %}
+    <h2>Выберите карту</h2>
+    <p>На следующем шаге появится точная сумма с учётом доступной скидки. Выбор карты ничего не списывает.</p>
+    <form action="{{ url_for('billing.select_card',order_id=order.id) }}" method="post">
+      {% for card in cards %}<label class="billing-choice"><input type="radio" name="card" value="{{ card.alias }}" required{% if loop.first %} checked{% endif %}><span>Демо-карта · •••• {{ card.last4 }}</span></label>{% endfor %}
+      <button class="btn btn-primary" type="submit">Продолжить</button>
+    </form>
+    <form method="post" action="{{ url_for('billing.close',order_id=order.id) }}"><button class="billing-link" type="submit">Выбрать другой тариф</button></form>
+  {% elif order.status == 'ready' and quote %}
+    <p class="billing-eyebrow">УСЛОВИЯ ПОДПИСКИ</p>
     <h2>Проверьте условия</h2>
     <p>Карта •••• {{ order.card_last4 }}</p>
     <dl class="billing-summary">
@@ -23,8 +37,8 @@
     <form action="{{ url_for('billing.confirm',order_id=order.id) }}" method="post">
       <input type="hidden" name="expected_amount" value="{{ quote.amount }}">
       {% if trial_allowed %}
-      <label class="billing-choice"><input type="radio" name="action" value="trial" checked><span><strong>Начать 7 бесплатных дней</strong><br>{{ trial_end|billing_date }} — {{ next_amount|rubles }} за первый {{ 'год' if order.interval=='year' else 'месяц' }}. Далее {{ quote.regular_amount|rubles }} за каждый {{ 'год' if order.interval=='year' else 'месяц' }}.</span></label>
-      <label class="billing-choice"><input type="radio" name="action" value="pay"><span><strong>Оплатить сразу: {{ quote.amount|rubles }}</strong><br>Без пробной недели.</span></label>
+      <label class="billing-choice"><input type="radio" name="action" value="trial" checked><span><strong>Начать 7 бесплатных дней</strong><br>Проверка карты: 1 ₽ с автоматическим возвратом.<br>{{ trial_end|billing_date }} — {{ next_amount|rubles }} за первый {{ 'год' if order.interval=='year' else 'месяц' }}. Далее {{ quote.regular_amount|rubles }} за каждый {{ 'год' if order.interval=='year' else 'месяц' }}.</span></label>
+      <label class="billing-choice"><input type="radio" name="action" value="pay"><span><strong>Оплатить сразу: {{ quote.amount|rubles }}</strong><br>Без пробной недели и проверочного платежа.</span></label>
       {% else %}<input type="hidden" name="action" value="pay"><p>Пробная неделя недоступна для этого аккаунта, карты или тарифа.</p>{% endif %}
       <label class="billing-check"><input type="checkbox" name="auto_consent" value="yes" required><span>Согласен с автоматическим продлением. После первого платного периода — {{ quote.regular_amount|rubles }} каждый {{ 'год' if order.interval=='year' else 'месяц' }}. {% if trial_allowed %}При выборе пробы первое списание {{ trial_end|billing_date }} — {{ next_amount|rubles }}.{% endif %} Следующее продление без пробы — {{ quote.ends_at|billing_date }}. Можно отключить в настройках до даты списания. При неудачной оплате доступ блокируется, данные сохраняются.</span></label>
       <button type="submit" class="btn btn-primary">Подтвердить оформление</button>
@@ -39,7 +53,7 @@
     <h2>{{ order.error or "Оформление не завершено" }}</h2><p>Подписка по этой операции не активирована. При неудачном продлении функции недоступны, но данные сохранены.</p><a class="btn btn-primary" href="{{ url_for('billing.plans') }}">Выбрать тариф</a>
   {% else %}
     <h2>{{ 'Проверка карты' if order.kind=='bind' else 'Проверяем оплату' }}</h2>
-    <p>{% if order.kind=='bind' %}Проверочный платёж 1 ₽ будет возвращён. Затем можно выбрать пробную неделю или оплату.{% else %}Тариф изменится после подтверждения оплаты.{% endif %}</p>
+    <p>{% if order.kind=='bind' %}После подтверждения карты и возврата 1 ₽ пробная неделя начнётся автоматически.{% else %}Тариф изменится после подтверждения оплаты.{% endif %}</p>
     {% if order.confirmation_url %}<a class="btn btn-primary" href="{{ order.confirmation_url }}">Перейти к оплате</a>{% endif %}
     <a class="billing-link" href="{{ url_for('billing.checkout',order_id=order.id) }}">Проверить статус</a>
     <p class="billing-small">Если подтверждение задерживается, не создавайте повторную оплату. Эта операция будет проверена повторно.</p>

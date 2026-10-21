@@ -3,7 +3,7 @@
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Оплата — SmartFridge</title><link rel="stylesheet" href="{{ url_for('static',filename='css/local-payment.css') }}"></head>
 <body>
 <main class="payment-shell">
-  <header class="payment-header"><a href="{{ payment.return_path }}" aria-label="Вернуться в магазин">←</a><span>SmartFridge</span><span class="test-badge">Тестовая оплата</span></header>
+  <header class="payment-header"><a href="{{ payment.return_path }}" aria-label="Вернуться в магазин">←</a><span>SmartFridge</span></header>
   <section class="payment-card">
     <p class="payment-label">{{ 'ПРОВЕРКА КАРТЫ' if payment.kind=='bind' else 'ОПЛАТА ПОДПИСКИ' }}</p>
     <h1>{{ payment.amount|rubles }}</h1>
@@ -33,7 +33,6 @@
     {% endif %}
     {% if payment.phase in ['awaiting_card','awaiting_confirmation'] %}<form method="post"><input type="hidden" name="action" value="cancel"><button class="secondary-link" type="submit">Отменить</button></form>{% endif %}
   </section>
-  <p class="payment-footer">Демо-карты · без реальных списаний</p>
 </main>
 {% if payment.phase=='processing' %}<script>
 (() => {

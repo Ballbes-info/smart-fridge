@@ -97,15 +97,15 @@ class LocalGateway:
             if payload.get('amount',{}).get('currency')!='RUB' or amount<1 or amount!=int(amount):
                 raise PaymentError('Некорректная сумма оплаты.')
             binding='payment_method_data' in payload
-            alias=None if binding else payload.get('payment_method_id')
-            if not binding: _card(alias,order.user_id)
+            alias=payload.get('local_card_alias') if binding else payload.get('payment_method_id')
+            if alias: _card(alias,order.user_id)
             return_path=payload.get('confirmation',{}).get('return_url') or '/checkout/'+order.id
             if not re.fullmatch(r'/checkout/[a-f0-9]{32}',return_path):
                 raise PaymentError('Некорректный адрес возврата.')
             payment=LocalPayment(id='local_'+uuid.uuid4().hex,idempotence_key=key,
                 order_id=order.id,user_id=order.user_id,kind='bind' if binding else 'charge',
                 amount=int(amount),metadata_json=payload['metadata'],return_path=return_path,
-                card_alias=alias,status='pending',phase='awaiting_card' if binding else 'awaiting_confirmation',created_at=time.time())
+                card_alias=alias,status='pending',phase='awaiting_card' if not alias else 'awaiting_confirmation',created_at=time.time())
             if order.kind=='renewal': _resolve(ses,payment)
             ses.add(payment);ses.commit()
             return _view(payment)

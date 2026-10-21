@@ -3,7 +3,6 @@ body { margin:0; background:#f3f5f5; color:#20342d; font:15px/1.5 system-ui,-app
 .payment-shell { width:min(100%,480px); padding:28px 20px; margin:28px auto; }
 .payment-header { display:flex; align-items:center; gap:14px; margin-bottom:24px; font-weight:650; }
 .payment-header a { color:inherit; text-decoration:none; font-size:22px; padding:5px; }
-.test-badge { margin-left:auto; font-size:10px; color:#65766d; font-weight:400; background:#e6ece8; border-radius:4px; padding:5px 7px; }
 .payment-card { background:#fff; border:1px solid #dce5df; border-radius:14px; padding:30px 26px; }
 .payment-label { font-size:10px; letter-spacing:.12em; color:#6a7c71; margin:0; }
 h1 { font-size:42px; letter-spacing:-.045em; font-weight:650; line-height:1.2; margin:10px 0 30px; }
@@ -21,7 +20,6 @@ h2 { font-size:21px; line-height:1.25; margin:0 0 20px; font-weight:600; letter-
 .payment-details>div { display:flex; justify-content:space-between; gap:16px; padding:12px 0; border-bottom:1px solid #edf0ed; font-size:14px; }
 .payment-details dt { color:#697c71; }
 .payment-details dd { margin:0; }
-.payment-footer { text-align:center; color:#7c8982; font-size:11px; margin:20px 0; }
 .result-icon { display:grid; place-items:center; width:54px; height:54px; border-radius:50%; margin:0 0 22px; font-size:30px; }
 .success { color:#315d48; background:#e9f1e7; }
 .failure { color:#a04435; background:#faeeeb; }

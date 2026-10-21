@@ -11,7 +11,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from sqlalchemy import text
 from data import db_session
 from data.billing import Subscription, CardPromotion, BillingOrder
-from services.local_gateway import PaymentError
+from services.local_gateway import PaymentError, demo_cards
 
 PLANS = {
     'basic': {'name': 'Базовая', 'month': 199, 'year': 1990, 'family': False, 'premium': False},
@@ -115,12 +115,26 @@ def new_checkout(user_id, plan, interval, extra, gateway, return_url):
         if sub.pending_order_id:
             return sub.pending_order_id
         order = BillingOrder(id=uuid.uuid4().hex, user_id=user_id, kind='bind', plan=plan,
-            interval=interval, extra_seats=extra, amount=100, regular_amount=0,
-            subscription_revision=sub.revision, created_at=time.time(), status='created')
-        # Always verify a card before this checkout, including switching plans.
+            interval=interval, extra_seats=extra, amount=0, regular_amount=0,
+            subscription_revision=sub.revision, created_at=time.time(), status='ready')
         ses.add(order); sub.pending_order_id = order.id; ses.commit()
         order_id = order.id
-    return start_payment(order_id, gateway, return_url)
+    return order_id
+
+
+def select_card(order_id, user_id, alias, secret):
+    card_data = next((card for card in demo_cards(user_id) if card["alias"] == alias), None)
+    if card_data is None:
+        raise PaymentError("Выберите доступную демо-карту.")
+    key = hmac.new(secret.encode(), ("local:"+alias).encode(), hashlib.sha256).hexdigest()
+    with _locked_session() as ses:
+        order = ses.get(BillingOrder, order_id)
+        if not order or order.user_id != user_id or order.status != "ready" or order.provider_id:
+            raise PaymentError("Выбор карты для этой операции недоступен.")
+        if ses.get(CardPromotion, key) is None:
+            ses.add(CardPromotion(key=key, trial_used=False, first_paid=False, discount_used=False))
+        order.card_key, order.method_id, order.card_last4 = key, alias, card_data["last4"]
+        ses.commit()
 
 
 def start_payment(order_id, gateway, return_url):
@@ -131,11 +145,12 @@ def start_payment(order_id, gateway, return_url):
         if order.created_at < time.time() - 23*3600:
             raise PaymentError('Срок операции истёк. Свяжитесь с поддержкой для проверки платежа.')
         payload = {'amount': {'value': f'{order.amount / 100:.2f}', 'currency': 'RUB'},
-            'capture': True, 'description': 'SmartFridge: проверка карты (1 ₽ с возвратом)' if order.kind == 'bind' else 'SmartFridge: тестовая подписка',
+            'capture': True, 'description': 'SmartFridge: проверка карты (1 ₽ с возвратом)' if order.kind == 'bind' else 'SmartFridge: подписка',
             'metadata': {'order_id': order.id, 'user_id': str(order.user_id)}}
         if order.kind == 'bind':
             payload.update(payment_method_data={'type':'bank_card'}, save_payment_method=True,
-                confirmation={'type':'redirect', 'return_url': return_url(order.id)})
+                confirmation={'type':'redirect', 'return_url': return_url(order.id)},
+                local_card_alias=order.method_id)
         else:
             payload['payment_method_id'] = order.method_id
         obj = gateway.create_payment(payload, 'pay-' + order.kind + '-' + order.id)
@@ -159,6 +174,9 @@ def refresh_order(order_id, gateway, secret, return_url):
     order = get_order(order_id)
     if order is None:
         raise PaymentError('Операция не найдена.')
+    if order.status == 'ready' and order.kind == 'bind' and order.wants_trial and order.refund_id:
+        confirm_checkout(order_id, order.user_id, True, 0, gateway, return_url)
+        return get_order(order_id).status
     if order.status in ('succeeded', 'canceled', 'rejected', 'ready'):
         return order.status
     if not order.provider_id:
@@ -224,7 +242,12 @@ def refresh_order(order_id, gateway, secret, return_url):
         else:
             _apply_payment(ses, saved, sub)
         ses.commit()
-        return saved.status
+        result = saved.status
+        activate_trial = saved.kind == 'bind' and saved.wants_trial and result == 'ready'
+    if activate_trial:
+        confirm_checkout(order_id, order.user_id, True, 0, gateway, return_url)
+        return get_order(order_id).status
+    return result
 
 
 def _apply_payment(ses, order, sub):
@@ -272,8 +295,8 @@ def confirm_checkout(order_id, user_id, wants_trial, expected_amount, gateway, r
             raise PaymentError('Операция не найдена.')
         if order.status == 'succeeded':
             return order.id
-        if order.kind != 'bind' or order.status != 'ready':
-            raise PaymentError('Сначала подтвердите карту.')
+        if order.kind != 'bind' or order.status != 'ready' or not order.card_key:
+            raise PaymentError('Сначала выберите карту.')
         sub = ses.get(Subscription, user_id)
         if sub.pending_order_id != order.id or sub.revision != order.subscription_revision:
             raise PaymentError('Выбранный план уже изменился. Начните оформление заново.')
@@ -283,29 +306,39 @@ def confirm_checkout(order_id, user_id, wants_trial, expected_amount, gateway, r
         if wants_trial:
             if not trial_allowed(sub, card, order.plan):
                 raise PaymentError('Бесплатная неделя уже использована или недоступна для этого тарифа.')
-            sub.plan, sub.interval, sub.extra_seats = order.plan, order.interval, order.extra_seats
-            sub.card_key, sub.method_id, sub.card_last4 = order.card_key, order.method_id, order.card_last4
-            sub.status = 'trialing'; sub.period_start = time.time(); sub.period_end = sub.period_start + 7*86400
-            sub.trial_used = card.trial_used = True
-            if order.interval == 'month' and discount_allowed(sub, card):
-                card.discount_owner = sub.user_id
-            sub.cycle_amount = 0; sub.auto_renew = True; sub.consent_at = time.time()
-            sub.pending_order_id = None; sub.revision += 1
-            order.status = 'succeeded'; order.finished_at = time.time(); order.wants_trial = True
-            ses.commit(); return order.id
-        details = quote(sub, card, order.plan, order.interval, order.extra_seats)
-        # Price may decrease by a kopeck with elapsed time. Never charge more than shown.
-        if details['amount'] > expected_amount:
-            raise PaymentError('Условия скидки изменились. Проверьте новую сумму и подтвердите снова.')
-        order.kind = 'purchase'; order.status = 'created'; order.provider_id = None
-        order.refund_id = None; order.confirmation_url = None
-        order.consent_at = time.time()
-        for key, value in details.items(): setattr(order, key, value)
-        if not card.discount_used:
-            card.reserved_order_id = order.id
-        if order.amount == 0:
-            _apply_payment(ses, order, sub)
-        ses.commit()
+            if not order.refund_id:
+                card.reserved_order_id = order.id
+                order.wants_trial = True
+                order.amount = 100
+                order.status = 'created'
+                order.consent_at = time.time()
+                ses.commit()
+            else:
+                sub.plan, sub.interval, sub.extra_seats = order.plan, order.interval, order.extra_seats
+                sub.card_key, sub.method_id, sub.card_last4 = order.card_key, order.method_id, order.card_last4
+                sub.status = 'trialing'; sub.period_start = time.time(); sub.period_end = sub.period_start + 7*86400
+                sub.trial_used = card.trial_used = True
+                if order.interval == 'month' and discount_allowed(sub, card):
+                    card.discount_owner = sub.user_id
+                sub.cycle_amount = 0; sub.auto_renew = True; sub.consent_at = order.consent_at or time.time()
+                card.reserved_order_id = None
+                sub.pending_order_id = None; sub.revision += 1
+                order.status = 'succeeded'; order.finished_at = time.time(); order.wants_trial = True
+                ses.commit(); return order.id
+        else:
+            details = quote(sub, card, order.plan, order.interval, order.extra_seats)
+            # Price may decrease by a kopeck with elapsed time. Never charge more than shown.
+            if details['amount'] > expected_amount:
+                raise PaymentError('Условия скидки изменились. Проверьте новую сумму и подтвердите снова.')
+            order.kind = 'purchase'; order.status = 'created'; order.provider_id = None
+            order.refund_id = None; order.confirmation_url = None
+            order.consent_at = time.time()
+            for key, value in details.items(): setattr(order, key, value)
+            if not card.discount_used:
+                card.reserved_order_id = order.id
+            if order.amount == 0:
+                _apply_payment(ses, order, sub)
+            ses.commit()
     if get_order(order_id).status != 'succeeded':
         start_payment(order_id, gateway, return_url)
     return order_id

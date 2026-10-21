@@ -1,14 +1,13 @@
 """Authenticated test checkout and subscription settings."""
 import time
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from functools import wraps
-from zoneinfo import ZoneInfo
 from flask import Blueprint, current_app, session, redirect, url_for, request, render_template, flash, jsonify, abort
 import click
 from data import db_session
 from data.user import User
 from services import billing_service as service
-from services.local_gateway import LocalGateway, PaymentError
+from services.local_gateway import LocalGateway, PaymentError, demo_cards
 
 billing = Blueprint('billing', __name__)
 
@@ -47,7 +46,7 @@ def rubles(value):
 
 @billing.app_template_filter('billing_date')
 def billing_date(value):
-    return datetime.fromtimestamp(value, ZoneInfo('Europe/Moscow')).strftime('%d.%m.%Y в %H:%M МСК') if value else '—'
+    return datetime.fromtimestamp(value, timezone(timedelta(hours=3))).strftime('%d.%m.%Y в %H:%M МСК') if value else '—'
 
 
 @billing.app_context_processor
@@ -79,9 +78,6 @@ def settings():
 @billing.route('/subscriptions/start', methods=['POST'])
 @verified
 def start():
-    if request.form.get('bind_consent') != 'yes':
-        flash('Подтвердите проверку и сохранение карты.', 'error')
-        return redirect(url_for('billing.plans'))
     try:
         extra = int(request.form.get('extra_seats','0'))
         api=gateway()
@@ -104,7 +100,17 @@ def checkout(order_id):
             flash(str(exc),'error')
     order,sub,quote,trial_allowed=service.checkout_details(order_id,session['user_id'])
     next_amount = service.first_price(order.plan,order.interval,order.extra_seats) if quote and quote['discounted'] else service.regular_price(order.plan,order.interval,order.extra_seats)
-    return render_template('checkout.html',order=order,quote=quote,trial_allowed=trial_allowed,next_amount=next_amount,trial_end=time.time()+7*86400)
+    return render_template('checkout.html',order=order,quote=quote,trial_allowed=trial_allowed,next_amount=next_amount,trial_end=time.time()+7*86400,cards=demo_cards(session["user_id"]))
+
+
+@billing.route('/checkout/<order_id>/card', methods=['POST'])
+@verified
+def select_card(order_id):
+    try:
+        service.select_card(order_id, session['user_id'], request.form.get('card', ''), card_secret())
+    except PaymentError as exc:
+        flash(str(exc), 'error')
+    return redirect(url_for('billing.checkout', order_id=order_id))
 
 
 @billing.route('/checkout/<order_id>/confirm',methods=['POST'])

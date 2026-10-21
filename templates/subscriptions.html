@@ -1,33 +1,36 @@
 {% extends 'base.html' %}
+{% from 'plan_features.html' import features %}
 {% block title %}Выбор подписки — SmartFridge{% endblock %}
 {% block head %}<link rel="stylesheet" href="{{ url_for('static',filename='css/billing.css') }}">{% endblock %}
 {% block content %}
 <section class="billing-page">
   <p class="section-tag">ШАГ 2 ИЗ 3 · ВЫБОР ПОДПИСКИ</p>
   <h1>Выберите свой<br><em>план на кухню.</em></h1>
-  <p class="billing-lead">База — для запасов и сроков. Премиум — для ИИ, рецептов и питания под вашу цель.</p>
-  <p class="billing-test">Тестовая оплата · без реальных списаний. Семейные функции и ИИ пока в разработке.</p>
-  {% if subscription and subscription.pending_order_id %}<div class="billing-notice">У вас есть незавершённая операция. <a href="{{ url_for('billing.checkout',order_id=subscription.pending_order_id) }}">Продолжить проверку →</a></div>{% endif %}
+  <p class="billing-lead">Для себя или всей семьи. База — учёт продуктов, премиум — ещё и помощь ИИ.</p>
+  {% if subscription and subscription.pending_order_id %}<div class="billing-notice">У вас есть незавершённое оформление. <a href="{{ url_for('billing.checkout',order_id=subscription.pending_order_id) }}">Продолжить →</a></div>{% endif %}
   <div class="billing-cards">
   {% for key,plan in plans.items() %}
     <article class="billing-card{% if plan.premium %} is-premium{% endif %}">
-      <p class="billing-eyebrow">{{ 'До пяти человек' if plan.family else 'Для одного' }}</p>
+      <p class="billing-eyebrow">{{ 'Для семьи · 5 человек' if plan.family else 'Для одного человека' }}</p>
       <h2>{{ plan.name }}</h2>
-      <p class="billing-price">{{ plan.month }} ₽<small>/месяц</small></p>
-      <p>{{ plan.year }} ₽ за год · 12 месяцев по цене 10</p>
-      <ul>{% if plan.premium %}<li>Всё из базы</li><li>ИИ-распознавание продуктов</li><li>Меню для набора, снижения и поддержания веса</li><li>Анализ дневника, ИИ-чат и голос</li>{% else %}<li>Запасы и сроки хранения</li><li>Сканирование текста этикетки</li><li>Список покупок и база рецептов</li><li>Дневник питания и КБЖУ</li>{% endif %}</ul>
-      <p class="billing-benefit">{{ 'Без бесплатного периода' if plan.premium else '7 дней с подтверждённой картой — один раз' }}</p>
-      <form method="post" action="{{ url_for('billing.start') }}">
+      <p class="billing-price"><span data-price>{{ plan.month }}</span> ₽<small data-unit>/месяц</small></p>
+      <p class="billing-saving" data-saving>Первый месяц — {{ (plan.month * 0.7)|round|int }} ₽</p>
+      {{ features(plan) }}
+      <p class="billing-benefit">{{ 'Все возможности базы + ИИ' if plan.premium else 'Можно начать с 7 бесплатных дней' }}</p>
+      <form method="post" action="{{ url_for('billing.start') }}" data-plan-form data-month="{{ plan.month }}" data-year="{{ plan.year }}" data-seat="{{ 99 if plan.premium else 49 }}">
         <input type="hidden" name="plan" value="{{ key }}">
-        <label>Период оплаты<select name="interval"><option value="month">Месяц · {{ plan.month }} ₽</option><option value="year">Год · {{ plan.year }} ₽</option></select></label>
-        {% if plan.family %}<label>Доп. места сверх пяти<input type="number" name="extra_seats" value="0" min="0" max="95"></label><p class="billing-small">Место: {{ 99 if plan.premium else 49 }} ₽/месяц или {{ 990 if plan.premium else 490 }} ₽/год. Пока оформляется только тариф.</p>{% else %}<input type="hidden" name="extra_seats" value="0">{% endif %}
-        <label class="billing-check"><input type="checkbox" name="bind_consent" value="yes" required><span>Подтверждаю тестовый платёж 1 ₽ с возвратом и сохранение демо-карты. Условия подписки проверю на следующем шаге.</span></label>
-        <button class="btn btn-primary" type="submit">Продолжить {{ icon('arrow') }}</button>
+        <fieldset class="billing-period"><legend>Период оплаты</legend>
+          <label><input type="radio" name="interval" value="month" checked><span>Месяц</span></label>
+          <label><input type="radio" name="interval" value="year"><span>Год <small>−17%</small></span></label>
+        </fieldset>
+        {% if plan.family %}<label class="billing-seat">Доп. места сверх пяти<input type="number" name="extra_seats" value="0" min="0" max="95"></label><p class="billing-small billing-seat-note">+{{ 99 if plan.premium else 49 }} ₽/месяц или {{ 990 if plan.premium else 490 }} ₽/год за место.</p>{% else %}<input type="hidden" name="extra_seats" value="0">{% endif %}
+        <button class="btn btn-primary" type="submit">Выбрать план {{ icon('arrow') }}</button>
       </form>
     </article>
   {% endfor %}
   </div>
-  <div class="billing-notice"><strong>Первая месячная оплата — со скидкой 30%</strong><p>139 / 244 / 349 / 559 ₽ для четырёх тарифов соответственно. Один раз на аккаунт и карту; дополнительные места без скидки. Годовая оплата не суммируется со скидкой первой покупки. Окончательная сумма — после проверки карты.</p></div>
-  <p class="billing-small">Без выбранного действующего тарифа функции сервиса недоступны. Данные аккаунта, настройки оплаты и выход остаются доступны. Для оформления используются готовые демо-карты.</p>
+  <div class="billing-notice"><strong>Первая месячная оплата — со скидкой 30%</strong><p>Один раз на аккаунт и карту, только на тариф. Дополнительные места оплачиваются отдельно. При оплате за год — 12 месяцев по цене 10. Скидки не суммируются.</p></div>
+  <p class="billing-small">На следующем шаге — полное описание, выбор карты и условия продления. Проверка карты на 1 ₽ с возвратом нужна только для пробной недели. Семейные функции и ИИ пока в разработке.</p>
 </section>
+<script src="{{ url_for('static',filename='js/subscriptions.js') }}" defer></script>
 {% endblock %}

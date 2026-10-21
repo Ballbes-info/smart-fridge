@@ -49,7 +49,7 @@
       <div class="profile-card-icon">{{ icon('phone') }}</div>
       <h2>Ваша подписка</h2>
       <p>
-        {{ billing_plans[subscription.plan].name }} · тестовая подписка.
+        {{ billing_plans[subscription.plan].name }} · подписка.
         Доступ до {{ subscription.period_end|billing_date }}.
       </p>
       <a class="btn btn-secondary" href="{{ url_for('billing.settings') }}">Управлять подпиской</a>

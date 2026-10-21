@@ -4,7 +4,6 @@
 {% block content %}
 <section class="billing-page billing-narrow">
   <p class="section-tag">НАСТРОЙКИ АККАУНТА</p><h1>Ваша подписка</h1>
-  <p class="billing-test">Тестовый режим. Настоящие деньги не списываются.</p>
   <div class="billing-panel">
     <p class="billing-eyebrow">{{ current_user.name }} · {{ current_user.email }}</p>
     <h2>{{ billing_plans[subscription.plan].name if subscription and subscription.plan else 'План не выбран' }}</h2>
