@@ -1,19 +1,13 @@
 """Hosted-style local checkout, using generated cards and no external bank."""
-from flask import Blueprint, current_app, session, render_template, redirect, url_for, request, abort, jsonify
-from billing_routes import verified, card_secret, return_url
-from local_gateway import LocalGateway, demo_cards, REASONS
-from payment_gateway import PaymentError
-import billing_service as service
+from flask import Blueprint, session, render_template, redirect, url_for, request, abort, jsonify
+from services.billing_routes import verified, card_secret, return_url
+from services.local_gateway import LocalGateway, PaymentError, demo_cards, REASONS
+from services import billing_service as service
 
 local_payment = Blueprint('local_payment', __name__)
 
 
-def allowed():
-    if current_app.config.get('PAYMENT_MODE','local')!='local': abort(404)
-
-
 def owned(payment_id):
-    allowed()
     payment=LocalGateway().page(payment_id,session['user_id'])
     if payment is None: abort(404)
     return payment

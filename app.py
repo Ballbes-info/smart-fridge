@@ -13,7 +13,6 @@ import secrets
 from functools import wraps
 from pathlib import Path
 
-import mail
 from data import db_session
 from data.user import User
 from dotenv import load_dotenv
@@ -26,7 +25,7 @@ from flask import (
     session,
     url_for,
 )
-from auth_service import complete_code, consume_limits, issue_code
+from services.auth_service import complete_code, consume_limits, issue_code
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "db" / "smartfridge.db"
@@ -54,16 +53,13 @@ def _load_secret_key() -> str:
 
 app = Flask(__name__)
 app.secret_key = _load_secret_key()
-app.config["PAYMENT_MODE"] = os.environ.get("PAYMENT_MODE", "local").strip()
 app.config["LOCAL_PAYMENT_WORKER"] = True
-for setting in ("YOOKASSA_SHOP_ID", "YOOKASSA_SECRET_KEY", "PUBLIC_BASE_URL", "PAYMENT_CARD_HASH_KEY"):
-    app.config[setting] = os.environ.get(setting, "").strip()
+app.config["PAYMENT_CARD_HASH_KEY"] = os.environ.get("PAYMENT_CARD_HASH_KEY", "").strip()
 
-from billing_routes import billing
+from services.billing_routes import billing
 app.register_blueprint(billing)
-from local_payment_routes import local_payment
+from services.local_payment_routes import local_payment
 app.register_blueprint(local_payment)
-
 
 
 # --------------------------------------------------------------------------- #
@@ -96,7 +92,7 @@ def get_user_by_id(user_id: int):
 
 @app.before_request
 def start_local_payment_worker():
-    from local_payment_worker import start_worker
+    from services.local_payment_worker import start_worker
     start_worker(app)
 
 
@@ -163,7 +159,7 @@ def subscription_required(view):
     @login_required
     @wraps(view)
     def wrapped(*args, **kwargs):
-        from billing_service import active, get_subscription
+        from services.billing_service import active, get_subscription
         if not active(get_subscription(session["user_id"])):
             return redirect(url_for("billing.plans"))
         return view(*args, **kwargs)

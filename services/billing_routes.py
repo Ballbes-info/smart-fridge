@@ -7,9 +7,8 @@ from flask import Blueprint, current_app, session, redirect, url_for, request, r
 import click
 from data import db_session
 from data.user import User
-from data.billing import BillingOrder
-import billing_service as service
-from payment_gateway import YooKassaTest, PaymentError
+from services import billing_service as service
+from services.local_gateway import LocalGateway, PaymentError
 
 billing = Blueprint('billing', __name__)
 
@@ -28,26 +27,11 @@ def verified(view):
 
 
 def gateway():
-    factory = current_app.config.get('BILLING_GATEWAY_FACTORY')
-    if factory and current_app.testing:
-        return factory()
-    if current_app.config.get('PAYMENT_MODE', 'local') == 'local':
-        from local_gateway import LocalGateway
-        return LocalGateway()
-    if current_app.config.get('PAYMENT_MODE') != 'yookassa_test':
-        raise PaymentError('Неизвестный режим оплаты.')
-    return YooKassaTest(current_app.config.get('YOOKASSA_SHOP_ID'), current_app.config.get('YOOKASSA_SECRET_KEY'))
+    return LocalGateway()
 
 
 def return_url(order_id):
-    path = current_app.url_map.bind('localhost').build('billing.checkout', {'order_id': order_id})
-    if current_app.config.get('PAYMENT_MODE', 'local') == 'local' and not current_app.config.get('BILLING_GATEWAY_FACTORY'):
-        return path
-    base = current_app.config.get('PUBLIC_BASE_URL', '').rstrip('/')
-    if not base or not (base.startswith('https://') or (current_app.testing and base.startswith('http://'))):
-        raise PaymentError('Тестовая оплата пока не подключена.')
-    path = current_app.url_map.bind('localhost').build('billing.checkout', {'order_id': order_id})
-    return base + path
+    return current_app.url_map.bind('localhost').build('billing.checkout', {'order_id': order_id})
 
 
 def card_secret():
@@ -69,7 +53,7 @@ def billing_date(value):
 @billing.app_context_processor
 def billing_context():
     sub = service.get_subscription(session['user_id']) if session.get('user_id') else None
-    return {'subscription':sub, 'subscription_active':service.active(sub), 'billing_plans':service.PLANS, 'local_payments':current_app.config.get('PAYMENT_MODE', 'local')=='local'}
+    return {'subscription':sub, 'subscription_active':service.active(sub), 'billing_plans':service.PLANS}
 
 
 @billing.route('/subscriptions')
@@ -101,7 +85,6 @@ def start():
     try:
         extra = int(request.form.get('extra_seats','0'))
         api=gateway()
-        return_url('check')  # Validate public URL before creating a local pending operation.
         order_id=service.new_checkout(session['user_id'],request.form.get('plan',''),request.form.get('interval',''),extra,api,return_url)
         return redirect(url_for('billing.checkout',order_id=order_id))
     except (ValueError, PaymentError) as exc:
@@ -171,28 +154,11 @@ def auto_renew():
     return redirect(url_for('billing.settings'))
 
 
-@billing.route('/billing/webhook',methods=['POST'])
-def webhook():
-    payload=request.get_json(silent=True)
-    if not isinstance(payload,dict) or not isinstance(payload.get('object'),dict):
-        return '',400
-    provider_id=payload['object'].get('id')
-    if not isinstance(provider_id,str): return '',400
-    with db_session.create_session() as ses:
-        order=ses.query(BillingOrder).filter(BillingOrder.provider_id==provider_id).first()
-        order_id=order.id if order else None
-    if not order_id: return '',200
-    # Notification body is untrusted: always fetch the payment using server credentials.
-    try: service.refresh_order(order_id,gateway(),card_secret(),return_url)
-    except PaymentError: return '',503
-    return '',200
-
-
 @billing.cli.command('renew')
 def renew():
     """Reconcile pending test payments and charge due subscriptions."""
     try:
-        api=gateway(); return_url('check')
+        api=gateway()
         results=service.renew_due(api,card_secret(),return_url)
         click.echo(f'Проверено продлений: {len(results)}; состояния: {results}')
     except PaymentError as exc:

@@ -3,7 +3,7 @@ import threading
 
 
 def start_worker(app):
-    if app.testing or app.config.get('PAYMENT_MODE','local')!='local' or not app.config.get('LOCAL_PAYMENT_WORKER',True):
+    if app.testing or not app.config.get('LOCAL_PAYMENT_WORKER',True):
         return
     lock=app.extensions.setdefault('local_payment_worker_lock',threading.Lock())
     with lock:
@@ -14,9 +14,9 @@ def start_worker(app):
             while not stop.is_set():
                 try:
                     with app.app_context():
-                        from billing_routes import return_url, card_secret
-                        from local_gateway import LocalGateway
-                        from billing_service import renew_due
+                        from services.billing_routes import return_url, card_secret
+                        from services.local_gateway import LocalGateway
+                        from services.billing_service import renew_due
                         renew_due(LocalGateway(),card_secret(),return_url)
                 except Exception:
                     app.logger.exception('Local payment renewal check failed')

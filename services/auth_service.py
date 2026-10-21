@@ -7,7 +7,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from data import db_session
 from data.auth import AuthCode, AuthRateLimit
 from data.user import User
-import mail
+from services import mail
 
 CODE_ATTEMPTS = 5
 

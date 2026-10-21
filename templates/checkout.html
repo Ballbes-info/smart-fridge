@@ -40,7 +40,7 @@
   {% else %}
     <h2>{{ 'Проверка карты' if order.kind=='bind' else 'Проверяем оплату' }}</h2>
     <p>{% if order.kind=='bind' %}Проверочный платёж 1 ₽ будет возвращён. Затем можно выбрать пробную неделю или оплату.{% else %}Тариф изменится после подтверждения оплаты.{% endif %}</p>
-    {% if order.confirmation_url %}<a class="btn btn-primary" href="{{ order.confirmation_url }}">{{ "Перейти к оплате" if local_payments else "Открыть ЮKassa" }}</a>{% endif %}
+    {% if order.confirmation_url %}<a class="btn btn-primary" href="{{ order.confirmation_url }}">Перейти к оплате</a>{% endif %}
     <a class="billing-link" href="{{ url_for('billing.checkout',order_id=order.id) }}">Проверить статус</a>
     <p class="billing-small">Если подтверждение задерживается, не создавайте повторную оплату. Эта операция будет проверена повторно.</p>
     <div id="payment-status" data-url="{{ url_for('billing.status',order_id=order.id) }}" data-state="{{ order.status }}"></div>

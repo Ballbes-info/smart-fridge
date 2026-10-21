@@ -6,7 +6,7 @@
   <p class="section-tag">ШАГ 2 ИЗ 3 · ВЫБОР ПОДПИСКИ</p>
   <h1>Выберите свой<br><em>план на кухню.</em></h1>
   <p class="billing-lead">База — для запасов и сроков. Премиум — для ИИ, рецептов и питания под вашу цель.</p>
-  <p class="billing-test">{% if local_payments %}Тестовая оплата · без реальных списаний.{% else %}Тестовая оплата ЮKassa. Настоящие деньги не списываются.{% endif %} Семейные функции и ИИ пока в разработке.</p>
+  <p class="billing-test">Тестовая оплата · без реальных списаний. Семейные функции и ИИ пока в разработке.</p>
   {% if subscription and subscription.pending_order_id %}<div class="billing-notice">У вас есть незавершённая операция. <a href="{{ url_for('billing.checkout',order_id=subscription.pending_order_id) }}">Продолжить проверку →</a></div>{% endif %}
   <div class="billing-cards">
   {% for key,plan in plans.items() %}
@@ -21,13 +21,13 @@
         <input type="hidden" name="plan" value="{{ key }}">
         <label>Период оплаты<select name="interval"><option value="month">Месяц · {{ plan.month }} ₽</option><option value="year">Год · {{ plan.year }} ₽</option></select></label>
         {% if plan.family %}<label>Доп. места сверх пяти<input type="number" name="extra_seats" value="0" min="0" max="95"></label><p class="billing-small">Место: {{ 99 if plan.premium else 49 }} ₽/месяц или {{ 990 if plan.premium else 490 }} ₽/год. Пока оформляется только тариф.</p>{% else %}<input type="hidden" name="extra_seats" value="0">{% endif %}
-        <label class="billing-check"><input type="checkbox" name="bind_consent" value="yes" required><span>Подтверждаю тестовый платёж 1 ₽ с возвратом и сохранение {{ "демо-карты" if local_payments else "карты в ЮKassa" }}. Условия подписки проверю на следующем шаге.</span></label>
+        <label class="billing-check"><input type="checkbox" name="bind_consent" value="yes" required><span>Подтверждаю тестовый платёж 1 ₽ с возвратом и сохранение демо-карты. Условия подписки проверю на следующем шаге.</span></label>
         <button class="btn btn-primary" type="submit">Продолжить {{ icon('arrow') }}</button>
       </form>
     </article>
   {% endfor %}
   </div>
   <div class="billing-notice"><strong>Первая месячная оплата — со скидкой 30%</strong><p>139 / 244 / 349 / 559 ₽ для четырёх тарифов соответственно. Один раз на аккаунт и карту; дополнительные места без скидки. Годовая оплата не суммируется со скидкой первой покупки. Окончательная сумма — после проверки карты.</p></div>
-  <p class="billing-small">Без выбранного действующего тарифа функции сервиса недоступны. Данные аккаунта, настройки оплаты и выход остаются доступны. {% if local_payments %}Для оформления используются готовые демо-карты.{% else %}Реквизиты карты вводятся только на странице ЮKassa.{% endif %}</p>
+  <p class="billing-small">Без выбранного действующего тарифа функции сервиса недоступны. Данные аккаунта, настройки оплаты и выход остаются доступны. Для оформления используются готовые демо-карты.</p>
 </section>
 {% endblock %}

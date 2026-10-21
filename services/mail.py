@@ -29,12 +29,6 @@ def _config():
     }
 
 
-def is_configured() -> bool:
-    """True, если заданы логин и пароль SMTP."""
-    cfg = _config()
-    return bool(cfg["user"] and cfg["password"])
-
-
 def code_ttl_seconds() -> int:
     return _config()["ttl_minutes"] * 60
 

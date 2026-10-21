@@ -8,7 +8,12 @@ from sqlalchemy import text
 from data import db_session
 from data.billing import BillingOrder
 from data.local_payment import LocalPayment, LocalRefund, LocalEventState
-from payment_gateway import PaymentError
+
+
+class PaymentError(Exception):
+    """Ошибка локальной оплаты."""
+
+    pass
 
 RARE_EVENTS = {'insufficient_funds', 'declined', 'delay'}
 REASONS = {'insufficient_funds': 'Недостаточно средств', 'declined': 'Платёж отклонён',
@@ -82,8 +87,6 @@ def _view(payment):
 
 
 class LocalGateway:
-    is_local = True
-
     def create_payment(self, payload, key):
         with _locked() as ses:
             existing=ses.query(LocalPayment).filter_by(idempotence_key=key).first()

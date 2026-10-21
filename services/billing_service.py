@@ -11,7 +11,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from sqlalchemy import text
 from data import db_session
 from data.billing import Subscription, CardPromotion, BillingOrder
-from payment_gateway import PaymentError, valid_confirmation_url
+from services.local_gateway import PaymentError
 
 PLANS = {
     'basic': {'name': 'Базовая', 'month': 199, 'year': 1990, 'family': False, 'premium': False},
@@ -66,15 +66,11 @@ def ensure_subscription(ses, user_id):
     return sub
 
 
-def card_identity(method, secret, local=False):
-    card = method.get('card', {})
-    values = [card.get('first6'), card.get('last4'), card.get('expiry_month'), card.get('expiry_year')]
-    if method.get('type') != 'bank_card' or not method.get('saved') or not method.get('id') or not all(values):
-        raise PaymentError('Нужна сохранённая банковская карта с подтверждёнными данными.')
-    if local and method.get('simulation_fingerprint'):
-        return hmac.new(secret.encode(), ('local:'+method['simulation_fingerprint']).encode(), hashlib.sha256).hexdigest()
-    # Partial card metadata is not a provider fingerprint. See README limitation.
-    return hmac.new(secret.encode(), '|'.join(map(str, values)).encode(), hashlib.sha256).hexdigest()
+def card_identity(method, secret):
+    fingerprint = method.get('simulation_fingerprint')
+    if method.get('type') != 'bank_card' or not method.get('saved') or not method.get('id') or not fingerprint:
+        raise PaymentError('Нужна подтверждённая демо-карта.')
+    return hmac.new(secret.encode(), ('local:'+fingerprint).encode(), hashlib.sha256).hexdigest()
 
 
 def discount_allowed(sub, card):
@@ -146,8 +142,7 @@ def start_payment(order_id, gateway, return_url):
         if not obj.get('id') or obj.get('metadata', {}).get('order_id') != order.id:
             raise PaymentError('Некорректный ответ платёжного сервиса.')
         url = obj.get('confirmation', {}).get('confirmation_url')
-        local_url = getattr(gateway, 'is_local', False) and url and re.fullmatch(r'/payment/local_[a-f0-9]{32}',url)
-        if url and not (local_url or valid_confirmation_url(url)):
+        if url and not re.fullmatch(r'/payment/local_[a-f0-9]{32}', url):
             raise PaymentError('Неизвестный адрес страницы оплаты.')
         order.provider_id = obj['id']; order.confirmation_url = url
         order.status = 'pending'; ses.commit()
@@ -190,7 +185,7 @@ def refresh_order(order_id, gateway, secret, return_url):
         if refund.get('status') != 'succeeded':
             return 'pending'
         try:
-            binding_key = card_identity(obj.get('payment_method', {}), secret, local=getattr(gateway,'is_local',False))
+            binding_key = card_identity(obj.get('payment_method', {}), secret)
         except PaymentError:
             with _locked_session() as ses:
                 saved = ses.get(BillingOrder, order.id)
