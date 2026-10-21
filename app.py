@@ -10,7 +10,6 @@
 import os
 import re
 import secrets
-from datetime import datetime, timedelta, timezone
 from functools import wraps
 from pathlib import Path
 
@@ -27,7 +26,7 @@ from flask import (
     session,
     url_for,
 )
-from werkzeug.security import check_password_hash, generate_password_hash
+from auth_service import complete_code, consume_limits, issue_code
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "db" / "smartfridge.db"
@@ -85,68 +84,25 @@ def get_user_by_id(user_id: int):
 # Коды подтверждения
 # --------------------------------------------------------------------------- #
 
-def set_verify_code(user_id: int) -> str:
-    """Генерирует и сохраняет код подтверждения. Возвращает код для письма."""
-    code = mail.generate_code()
-    expires = (datetime.now(timezone.utc) + timedelta(seconds=mail.code_ttl_seconds())).isoformat(
-        timespec="seconds"
-    )
-
-    ses = db_session.create_session()
-    try:
-        user = ses.get(User, user_id)
-        user.verify_code_hash = generate_password_hash(code)
-        user.verify_code_expires = expires
-        user.is_verified = False
-        ses.commit()
-    finally:
-        ses.close()
-
-    return code
-
-
-def verify_code(user_id: int, code: str) -> bool:
-    """Проверяет код подтверждения."""
-    ses = db_session.create_session()
-    try:
-        user = ses.get(User, user_id)
-        if user is None or not user.verify_code_hash or not user.verify_code_expires:
-            return False
-
-        try:
-            expired = datetime.fromisoformat(user.verify_code_expires) < datetime.now(timezone.utc)
-        except ValueError:
-            return False
-
-        if expired:
-            return False
-
-        if not check_password_hash(user.verify_code_hash, code.strip()):
-            return False
-
-        user.is_verified = True
-        user.verify_code_hash = None
-        user.verify_code_expires = None
-        ses.commit()
-        return True
-    finally:
-        ses.close()
-
-
-def issue_code(email: str) -> tuple[bool, str]:
-    """Отправляет код подтверждения. Возвращает (успех, сообщение)."""
-    user = find_user_by_email(email)
-    if user is None:
-        return False, "Аккаунт не найден."
-
-    code = set_verify_code(user.id)
-
-    try:
-        mail.send_code(user.email, code)
-    except mail.MailError as exc:
-        return False, str(exc)
-
-    return True, ""
+@app.before_request
+def limit_auth_requests():
+    if request.method != "POST":
+        return None
+    ip = request.remote_addr or "unknown"
+    email = request.form.get("email", "").lower().strip()
+    limits = {
+        "login": [("login-ip", ip, 30, 900), ("login-email", email, 10, 900)],
+        "register": [("register-ip", ip, 10, 3600)],
+        "reset_password": [("reset-ip", ip, 10, 900), ("reset-email", email, 5, 900)],
+        "resend": [("resend-ip", ip, 10, 3600)],
+        "verify": [("verify-ip", ip, 30, 900)],
+        "reset_password_verify": [("reset-verify-ip", ip, 30, 900)],
+    }.get(request.endpoint, [])
+    if limits:
+        retry = consume_limits(limits)
+        if retry:
+            return render_template("rate_limit.html", retry_after=retry), 429, {"Retry-After": str(retry)}
+    return None
 
 
 # --------------------------------------------------------------------------- #
@@ -307,10 +263,10 @@ def verify():
 
     if request.method == "POST":
         code = request.form.get("code", "")
-        if verify_code(user.id, code):
+        if complete_code(user.id, code, "verify"):
             flash("Email подтверждён, аккаунт активирован.", "success")
             return redirect(url_for("profile"))
-        flash("Неверный или истёкший код.", "error")
+        flash("Неверный или истёкший код либо превышен лимит попыток.", "error")
 
     return render_template("verify.html", email=user.email)
 
@@ -350,7 +306,7 @@ def reset_password():
         if user is None:
             errors.append("Аккаунт с таким email не найден.")
         else:
-            ok, msg = issue_code(email)
+            ok, msg = issue_code(email, "reset")
             if ok:
                 session["reset_user_id"] = user.id
                 flash(f"Код отправлен на {email}.", "success")
@@ -378,25 +334,16 @@ def reset_password_verify():
         password = request.form.get("password", "")
         password2 = request.form.get("password2", "")
 
-        if not verify_code(user.id, code):
-            errors.append("Неверный или истёкший код.")
-
         if len(password) < MIN_PASSWORD_LENGTH:
             errors.append(f"Пароль должен быть не короче {MIN_PASSWORD_LENGTH} символов.")
 
         if password != password2:
             errors.append("Пароли не совпадают.")
 
-        if not errors:
-            ses = db_session.create_session()
-            try:
-                u = ses.get(User, user.id)
-                u.set_password(password)
-                u.is_verified = True
-                ses.commit()
-            finally:
-                ses.close()
+        if not errors and not complete_code(user.id, code, "reset", password):
+            errors.append("Неверный или истёкший код либо превышен лимит попыток.")
 
+        if not errors:
             session.clear()
             flash("Пароль изменён. Войдите с новым паролем.", "success")
             return redirect(url_for("login"))

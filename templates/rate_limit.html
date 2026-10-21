@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Слишком много попыток — SmartFridge{% endblock %}
+{% block content %}
+<section class="auth-page">
+  <div class="auth-card">
+    <h1>Сделайте паузу</h1>
+    <p>Слишком много попыток. Повторите запрос через {{ retry_after }} сек.</p>
+    <a class="btn btn-secondary" href="{{ url_for("verify") if request.endpoint == "resend" else request.path }}">Вернуться к форме</a>
+  </div>
+</section>
+{% endblock %}

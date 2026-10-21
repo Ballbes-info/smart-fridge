@@ -44,21 +44,22 @@ def generate_code() -> str:
     return f"{secrets.randbelow(1_000_000):06d}"
 
 
-def _subject() -> str:
-    return "Код подтверждения SmartFridge"
+def _subject(purpose="verify") -> str:
+    return "Сброс пароля SmartFridge" if purpose == "reset" else "Код подтверждения SmartFridge"
 
 
-def _body(code: str) -> str:
+def _body(code: str, purpose="verify") -> str:
     minutes = _config()["ttl_minutes"]
+    action = "сброса пароля" if purpose == "reset" else "подтверждения почты"
     return (
-        "Ваш код подтверждения SmartFridge:\n\n"
+        f"Ваш код для {action} SmartFridge:\n\n"
         f"    {code}\n\n"
         f"Код действует {minutes} минут и подходит только один раз.\n"
-        "Если вы не регистрировались в SmartFridge, письмо можно удалить.\n"
+        "Если вы не запрашивали этот код, письмо можно удалить.\n"
     )
 
 
-def send_code(recipient: str, code: str) -> None:
+def send_code(recipient: str, code: str, purpose="verify") -> None:
     """Отправить код подтверждения на адрес recipient."""
     cfg = _config()
 
@@ -68,10 +69,10 @@ def send_code(recipient: str, code: str) -> None:
         )
 
     message = EmailMessage()
-    message["Subject"] = _subject()
+    message["Subject"] = _subject(purpose)
     message["From"] = formataddr(("SmartFridge", cfg["sender"]))
     message["To"] = recipient
-    message.set_content(_body(code))
+    message.set_content(_body(code, purpose))
 
     try:
         with smtplib.SMTP(cfg["host"], cfg["port"], timeout=20) as server:
