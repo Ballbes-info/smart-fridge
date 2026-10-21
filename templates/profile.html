@@ -47,12 +47,12 @@
 
     <section class="profile-card profile-info-card">
       <div class="profile-card-icon">{{ icon('phone') }}</div>
-      <h2>Ваш SmartFridge</h2>
+      <h2>Ваша подписка</h2>
       <p>
-        Дисплей на кухне и доступ с телефона. Продукты, сроки хранения
-        и идеи для ужина в одной системе.
+        {{ billing_plans[subscription.plan].name }} · тестовая подписка.
+        Доступ до {{ subscription.period_end|billing_date }}.
       </p>
-      <a class="btn btn-secondary" href="{{ url_for('index') }}">О проекте</a>
+      <a class="btn btn-secondary" href="{{ url_for('billing.settings') }}">Управлять подпиской</a>
     </section>
   </div>
 </section>

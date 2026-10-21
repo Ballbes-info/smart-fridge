@@ -54,6 +54,7 @@
         <span>SmartFridge</span>
       </a>
       <nav class="nav" aria-label="Основная навигация">
+        {% if current_user and current_user.is_verified %}<a href="{{ url_for('billing.settings') }}">Настройки</a>{% endif %}
         {% if current_user %}
           {% if current_user.is_verified %}
             <a class="nav-cta" href="{{ url_for('profile') }}" {% if request.endpoint == 'profile' %}aria-current="page"{% endif %}>Мой профиль {{ icon('user') }}</a>

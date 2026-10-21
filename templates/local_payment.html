@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ru">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Оплата — SmartFridge</title><link rel="stylesheet" href="{{ url_for('static',filename='css/local-payment.css') }}"></head>
+<body>
+<main class="payment-shell">
+  <header class="payment-header"><a href="{{ payment.return_path }}" aria-label="Вернуться в магазин">←</a><span>SmartFridge</span><span class="test-badge">Тестовая оплата</span></header>
+  <section class="payment-card">
+    <p class="payment-label">{{ 'ПРОВЕРКА КАРТЫ' if payment.kind=='bind' else 'ОПЛАТА ПОДПИСКИ' }}</p>
+    <h1>{{ payment.amount|rubles }}</h1>
+    {% if payment.phase=='awaiting_card' %}
+      <h2>Выберите карту</h2>
+      <form method="post">
+        <input type="hidden" name="action" value="card">
+        {% for item in cards %}<label class="saved-card"><input type="radio" name="card" value="{{ item.alias }}" required{% if loop.first %} checked{% endif %}><span class="card-symbol" aria-hidden="true">▤</span><span>Демо-карта <strong>•••• {{ item.last4 }}</strong></span></label>{% endfor %}
+        {% if error %}<p class="payment-error" role="alert">{{ error }}</p>{% endif %}
+        <button class="pay-button" type="submit">Продолжить</button>
+      </form>
+      <p class="payment-note">Проверочный платёж будет возвращён.</p>
+    {% elif payment.phase=='awaiting_confirmation' %}
+      <h2>Подтвердите операцию</h2>
+      <dl class="payment-details"><div><dt>Получатель</dt><dd>SmartFridge</dd></div><div><dt>Карта</dt><dd>•••• {{ card.last4 }}</dd></div><div><dt>Сумма</dt><dd>{{ payment.amount|rubles }}</dd></div></dl>
+      {% if error %}<p class="payment-error" role="alert">{{ error }}</p>{% endif %}
+      <form method="post"><input type="hidden" name="action" value="confirm"><button class="pay-button" type="submit">Подтвердить</button></form>
+    {% elif payment.phase=='processing' %}
+      <span class="payment-spinner" aria-hidden="true"></span><h2 role="status">Платёж обрабатывается</h2><p class="payment-note">Дождитесь результата. Повторно оплачивать не нужно.</p>
+      <a class="secondary-link" href="{{ url_for('local_payment.page',payment_id=payment.id) }}">Обновить статус</a>
+    {% elif payment.status=='succeeded' %}
+      <span class="result-icon success" aria-hidden="true">✓</span><h2>{{ 'Карта подтверждена' if payment.kind=='bind' else 'Оплата прошла' }}</h2>
+      {% if payment.kind=='bind' %}<p class="payment-note">1 ₽ возвращён на карту.</p>{% endif %}
+      <a class="pay-button" href="{{ payment.return_path }}">Вернуться в магазин</a>
+    {% else %}
+      <span class="result-icon failure" aria-hidden="true">×</span><h2>{{ reason }}</h2><p class="payment-note">Списание не выполнено.</p><a class="pay-button" href="{{ payment.return_path }}">Вернуться в магазин</a>
+    {% endif %}
+    {% if payment.phase in ['awaiting_card','awaiting_confirmation'] %}<form method="post"><input type="hidden" name="action" value="cancel"><button class="secondary-link" type="submit">Отменить</button></form>{% endif %}
+  </section>
+  <p class="payment-footer">Демо-карты · без реальных списаний</p>
+</main>
+{% if payment.phase=='processing' %}<script>
+(() => {
+  let checks=0;
+  async function poll() {
+    if (++checks>30) return;
+    try {
+      const r=await fetch({{ url_for('local_payment.status',payment_id=payment.id)|tojson }},{credentials:'same-origin'});
+      if(r.ok) { const result=await r.json(); if(result.status!=='pending'){location.reload();return;} }
+    } catch (_) {}
+    setTimeout(poll,2000);
+  }
+  setTimeout(poll,2000);
+})();
+</script>{% endif %}
+</body></html>

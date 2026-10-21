@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Настройки подписки — SmartFridge{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static',filename='css/billing.css') }}">{% endblock %}
+{% block content %}
+<section class="billing-page billing-narrow">
+  <p class="section-tag">НАСТРОЙКИ АККАУНТА</p><h1>Ваша подписка</h1>
+  <p class="billing-test">Тестовый режим. Настоящие деньги не списываются.</p>
+  <div class="billing-panel">
+    <p class="billing-eyebrow">{{ current_user.name }} · {{ current_user.email }}</p>
+    <h2>{{ billing_plans[subscription.plan].name if subscription and subscription.plan else 'План не выбран' }}</h2>
+    {% if subscription and subscription.plan %}
+      <p>{{ '7 пробных дней' if subscription.status=='trialing' and subscription_active else 'Подписка активна' if subscription_active else 'Доступ приостановлен' }}.</p>
+      <dl class="billing-summary"><div><dt>Оплаченный или пробный период до</dt><dd>{{ subscription.period_end|billing_date }}</dd></div><div><dt>Период оплаты</dt><dd>{{ 'Год' if subscription.interval=='year' else 'Месяц' }}</dd></div>{% if billing_plans[subscription.plan].family %}<div><dt>Участники</dt><dd>{{ 5+subscription.extra_seats }} мест · семейные функции ещё не подключены</dd></div>{% endif %}<div><dt>Карта</dt><dd>•••• {{ subscription.card_last4 }}</dd></div><div><dt>Автопродление</dt><dd>{{ 'Включено' if subscription.auto_renew else 'Отключено' }}</dd></div></dl>
+      {% if subscription.auto_renew %}<p>Следующий платёж: {{ next_amount|rubles }}. Дата: {{ subscription.period_end|billing_date }}.</p>{% endif %}
+      {% if not subscription_active %}<p>Данные сохранены. Для доступа к функциям оплатите подписку.</p>{% endif %}
+    {% else %}<p>Выбор плана обязателен для завершения регистрации.</p>{% endif %}
+    <a class="btn btn-primary" href="{{ url_for('billing.plans') }}">{{ 'Сменить план' if subscription and subscription.plan else 'Выбрать план' }}</a>
+    {% if subscription and subscription.pending_order_id %}<a class="billing-link" href="{{ url_for('billing.checkout',order_id=subscription.pending_order_id) }}">Продолжить текущую оплату</a>{% endif %}
+    {% if subscription and subscription.method_id and subscription_active %}
+      <form action="{{ url_for('billing.auto_renew') }}" method="post">
+      {% if subscription.auto_renew %}<input type="hidden" name="enabled" value="no"><button class="billing-link" type="submit">Отключить автопродление</button>
+      {% else %}<input type="hidden" name="enabled" value="yes"><label class="billing-check"><input type="checkbox" name="consent" value="yes" required><span>Разрешаю автоматическое продление: {{ next_amount|rubles }} {{ subscription.period_end|billing_date }}, далее по обычной цене выбранного тарифа каждый {{ 'год' if subscription.interval=='year' else 'месяц' }}.</span></label><button class="billing-link" type="submit">Включить автопродление</button>{% endif %}
+      </form>
+    {% endif %}
+  </div>
+  <p class="billing-small">При переходе на более дешёвый план деньги не возвращаются и баланс не создаётся. На более дорогой план рассчитывается доплата. Итоговая сумма показывается до подтверждения. Отключение автопродления не отменяет уже начатую оплату.</p>
+</section>
+{% endblock %}

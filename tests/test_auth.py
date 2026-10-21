@@ -23,6 +23,8 @@ class AuthTests(unittest.TestCase):
                 verify_code_hash VARCHAR, verify_code_expires VARCHAR)''')
             connection.execute("INSERT INTO users VALUES (99, 'old@example.com', 'Old', 'legacy-hash', NULL, 1, NULL, NULL)")
         from data import db_session
+        cls.previous_factory = db_session.__dict__.get('__factory')
+        db_session.__dict__['__factory'] = None
         db_session.global_init(str(db))
         with patch.dict(os.environ, {'SECRET_KEY': 'test-only-key'}):
             cls.module = importlib.import_module('app')
@@ -35,6 +37,7 @@ class AuthTests(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        cls.db_session.__dict__['__factory'] = cls.previous_factory
         cls.temp.cleanup()
 
     def setUp(self):
@@ -120,7 +123,7 @@ class AuthTests(unittest.TestCase):
         self.assertFalse(complete_code(new_id, '654321', 'verify'))
         self.assertEqual(self.client.post('/verify',data={'code':'123456'}).status_code,302)
         self.assertTrue(self.module.get_user_by_id(new_id).is_verified)
-        self.assertEqual(self.client.get('/profile').status_code,200)
+        self.assertEqual(self.client.get('/profile').location,'/subscriptions')
 
     def test_delivery_failure_preserves_old_code_and_account(self):
         self.reset_request(); self.clear_limits()
@@ -167,7 +170,7 @@ class AuthTests(unittest.TestCase):
 
     def test_valid_login_and_logout(self):
         self.assertEqual(self.client.post('/login',data={'email':'test@example.com','password':'Password123!'}).status_code,302)
-        self.assertEqual(self.client.get('/profile').status_code,200)
+        self.assertEqual(self.client.get('/profile').location,'/subscriptions')
         self.client.post('/logout')
         self.assertEqual(self.client.get('/profile').status_code,302)
 

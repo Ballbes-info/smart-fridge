@@ -54,6 +54,16 @@ def _load_secret_key() -> str:
 
 app = Flask(__name__)
 app.secret_key = _load_secret_key()
+app.config["PAYMENT_MODE"] = os.environ.get("PAYMENT_MODE", "local").strip()
+app.config["LOCAL_PAYMENT_WORKER"] = True
+for setting in ("YOOKASSA_SHOP_ID", "YOOKASSA_SECRET_KEY", "PUBLIC_BASE_URL", "PAYMENT_CARD_HASH_KEY"):
+    app.config[setting] = os.environ.get(setting, "").strip()
+
+from billing_routes import billing
+app.register_blueprint(billing)
+from local_payment_routes import local_payment
+app.register_blueprint(local_payment)
+
 
 
 # --------------------------------------------------------------------------- #
@@ -83,6 +93,12 @@ def get_user_by_id(user_id: int):
 # --------------------------------------------------------------------------- #
 # Коды подтверждения
 # --------------------------------------------------------------------------- #
+
+@app.before_request
+def start_local_payment_worker():
+    from local_payment_worker import start_worker
+    start_worker(app)
+
 
 @app.before_request
 def limit_auth_requests():
@@ -140,6 +156,17 @@ def login_required(view):
 
         return view(*args, **kwargs)
 
+    return wrapped
+
+
+def subscription_required(view):
+    @login_required
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        from billing_service import active, get_subscription
+        if not active(get_subscription(session["user_id"])):
+            return redirect(url_for("billing.plans"))
+        return view(*args, **kwargs)
     return wrapped
 
 
@@ -242,7 +269,7 @@ def logout():
 
 
 @app.route("/profile")
-@login_required
+@subscription_required
 def profile():
     return render_template("profile.html", user=current_user())
 
@@ -264,8 +291,8 @@ def verify():
     if request.method == "POST":
         code = request.form.get("code", "")
         if complete_code(user.id, code, "verify"):
-            flash("Email подтверждён, аккаунт активирован.", "success")
-            return redirect(url_for("profile"))
+            flash("Почта подтверждена. Выберите тариф, чтобы завершить регистрацию.", "success")
+            return redirect(url_for("billing.plans"))
         flash("Неверный или истёкший код либо превышен лимит попыток.", "error")
 
     return render_template("verify.html", email=user.email)
