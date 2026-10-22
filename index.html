@@ -2704,7 +2704,11 @@ main:focus {
  .landing .landing-section-head { display: block; }
 }
 </style><style>
-.plan-details summary { display: none; }
+.plan-details summary { display: flex; justify-content: space-between; align-items: center; min-height: 44px; gap: 8px; font-size: 13px; cursor: pointer; list-style: none; }
+.plan-details summary::-webkit-details-marker { display: none; }
+.plan-details summary span { font-size: 19px; color: var(--green); }
+.plan-details[open] summary span { transform: rotate(45deg); }
+.landing-plans { align-items: start; }
 .plan-details { flex: 1; }
 @media (max-width: 760px) {
  .landing { padding-inline: 20px; }
@@ -2894,7 +2898,7 @@ main:focus {
   </section>
 
   <section class="landing-section" id="how" aria-labelledby="how-title">
-    <div class="landing-section-head"><p class="landing-label">01 / КАК ЭТО РАБОТАЕТ</p><h2 id="how-title">От покупки<br>до <em>ужина.</em></h2></div>
+    <div class="landing-section-head"><div><p class="landing-label">01 / КАК ЭТО РАБОТАЕТ</p><h2 id="how-title">От покупки<br>до <em>ужина.</em></h2></div></div>
     <ol class="landing-steps">
       <li><span class="step-number">01</span><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3M3 16v3a2 2 0 0 0 2 2h3m8 0h3a2 2 0 0 0 2-2v-3M3 12h18M8 8v1m4-2v2m4-1v1M8 15v2m4-2v3m4-3v2"/>
@@ -2922,13 +2926,13 @@ main:focus {
     <p class="billing-note" id="billing-note" aria-live="polite">При годовой оплате — 12 месяцев по цене 10.</p>
     <div class="landing-plans">
       
-      <article class="landing-plan"><p class="plan-audience">Для одного</p><h3>Базовая</h3><p class="plan-price"><strong data-month="199" data-year="1990">199</strong> ₽<span class="plan-period">/месяц</span></p><p class="plan-equivalent" data-equivalent="166">Оплата за месяц</p><details class="plan-details" open><summary>Что входит <span>+</span></summary><ul><li>Сканирование текста этикетки</li><li>Учёт запасов и сроков годности</li><li>Напоминания о сроках</li><li>Список покупок</li><li>Готовые рецепты</li><li>Дневник питания и КБЖУ</li></ul></details><p class="plan-trial">7 дней бесплатно новым пользователям</p></article>
+      <article class="landing-plan"><p class="plan-audience">Для одного</p><h3>Базовая</h3><p class="plan-price"><strong data-month="199" data-year="1990">199</strong> ₽<span class="plan-period">/месяц</span></p><p class="plan-equivalent" data-equivalent="166">Оплата за месяц</p><details class="plan-details"><summary>Что входит <span>+</span></summary><ul><li>Сканирование текста этикетки</li><li>Учёт запасов и сроков годности</li><li>Напоминания о сроках</li><li>Список покупок</li><li>Готовые рецепты</li><li>Дневник питания и КБЖУ</li></ul></details><p class="plan-trial">7 дней бесплатно новым пользователям</p></article>
       
-      <article class="landing-plan"><p class="plan-audience">До 5 участников</p><h3>Семейная базовая</h3><p class="plan-price"><strong data-month="349" data-year="3490">349</strong> ₽<span class="plan-period">/месяц</span></p><p class="plan-equivalent" data-equivalent="291">Оплата за месяц</p><details class="plan-details" open><summary>Что входит <span>+</span></summary><ul><li>Сканирование текста этикетки</li><li>Общие запасы, сроки и напоминания</li><li>Общий список покупок</li><li>Готовые рецепты</li><li>Личные профили, дневники питания и КБЖУ</li><li>До 5 участников</li><li>Доп. место — 49 ₽/мес. или 490 ₽/год</li></ul></details><p class="plan-trial">Без бесплатного периода</p></article>
+      <article class="landing-plan"><p class="plan-audience">До 5 участников</p><h3>Семейная базовая</h3><p class="plan-price"><strong data-month="349" data-year="3490">349</strong> ₽<span class="plan-period">/месяц</span></p><p class="plan-equivalent" data-equivalent="291">Оплата за месяц</p><details class="plan-details"><summary>Что входит <span>+</span></summary><ul><li>Сканирование текста этикетки</li><li>Общие запасы, сроки и напоминания</li><li>Общий список покупок</li><li>Готовые рецепты</li><li>Личные профили, дневники питания и КБЖУ</li><li>До 5 участников</li><li>Доп. место — 49 ₽/мес. или 490 ₽/год</li></ul></details><p class="plan-trial">Без бесплатного периода</p></article>
       
-      <article class="landing-plan landing-plan-premium"><p class="plan-audience">Для одного</p><h3>Премиум</h3><p class="plan-price"><strong data-month="499" data-year="4990">499</strong> ₽<span class="plan-period">/месяц</span></p><p class="plan-equivalent" data-equivalent="416">Оплата за месяц</p><details class="plan-details" open><summary>Что входит <span>+</span></summary><ul><li>Сканирование текста этикетки</li><li>Учёт запасов, сроков и напоминания</li><li>Список покупок и готовые рецепты</li><li>Дневник питания и КБЖУ</li><li>ИИ-распознавание продуктов по фото</li><li>Генерация рецептов и меню под цели питания</li><li>ИИ-анализ дневника питания</li><li>ИИ-чат и голосовой диалог</li></ul></details><p class="plan-trial">Без бесплатного периода</p></article>
+      <article class="landing-plan landing-plan-premium"><p class="plan-audience">Для одного</p><h3>Премиум</h3><p class="plan-price"><strong data-month="499" data-year="4990">499</strong> ₽<span class="plan-period">/месяц</span></p><p class="plan-equivalent" data-equivalent="416">Оплата за месяц</p><details class="plan-details"><summary>Что входит <span>+</span></summary><ul><li>Сканирование текста этикетки</li><li>Учёт запасов, сроков и напоминания</li><li>Список покупок и готовые рецепты</li><li>Дневник питания и КБЖУ</li><li>ИИ-распознавание продуктов по фото</li><li>Генерация рецептов и меню под цели питания</li><li>ИИ-анализ дневника питания</li><li>ИИ-чат и голосовой диалог</li></ul></details><p class="plan-trial">Без бесплатного периода</p></article>
       
-      <article class="landing-plan landing-plan-premium"><p class="plan-audience">До 5 участников</p><h3>Семейная премиум</h3><p class="plan-price"><strong data-month="799" data-year="7990">799</strong> ₽<span class="plan-period">/месяц</span></p><p class="plan-equivalent" data-equivalent="666">Оплата за месяц</p><details class="plan-details" open><summary>Что входит <span>+</span></summary><ul><li>Сканирование текста этикетки</li><li>Общие запасы, сроки и напоминания</li><li>Общий список покупок и готовые рецепты</li><li>Личные профили, дневники питания и КБЖУ</li><li>ИИ-распознавание продуктов по фото</li><li>Генерация рецептов и меню под личные цели питания</li><li>ИИ-анализ дневников питания</li><li>ИИ-чат и голосовой диалог</li><li>Общая семейная квота ИИ</li><li>До 5 участников</li><li>Доп. место — 99 ₽/мес. или 990 ₽/год</li></ul></details><p class="plan-trial">Без бесплатного периода</p></article>
+      <article class="landing-plan landing-plan-premium"><p class="plan-audience">До 5 участников</p><h3>Семейная премиум</h3><p class="plan-price"><strong data-month="799" data-year="7990">799</strong> ₽<span class="plan-period">/месяц</span></p><p class="plan-equivalent" data-equivalent="666">Оплата за месяц</p><details class="plan-details"><summary>Что входит <span>+</span></summary><ul><li>Сканирование текста этикетки</li><li>Общие запасы, сроки и напоминания</li><li>Общий список покупок и готовые рецепты</li><li>Личные профили, дневники питания и КБЖУ</li><li>ИИ-распознавание продуктов по фото</li><li>Генерация рецептов и меню под личные цели питания</li><li>ИИ-анализ дневников питания</li><li>ИИ-чат и голосовой диалог</li><li>Общая семейная квота ИИ</li><li>До 5 участников</li><li>Доп. место — 99 ₽/мес. или 990 ₽/год</li></ul></details><p class="plan-trial">Без бесплатного периода</p></article>
       
     </div>
     <div class="landing-offer"><strong>Первая покупка подписки — со скидкой 30%</strong><p>Первый платный месяц: базовая — 139 ₽, семейная базовая — 244 ₽, премиум — 349 ₽, семейная премиум — 559 ₽. Затем обычная цена. Один раз для аккаунта и карты; не суммируется с годовой скидкой и не действует на дополнительные места.</p></div>
@@ -3005,11 +3009,5 @@ main:focus {
       <span class="footer-copy">&copy; 2026 SmartFridge</span>
     </div>
   </footer>
-<script>
-(() => {
- const mobile = window.matchMedia('(max-width: 760px)');
- function sync() { document.querySelectorAll('.plan-details').forEach(item => {item.open = !mobile.matches;}); }
- sync(); mobile.addEventListener('change', sync);
-})();
-</script></body>
+</body>
 </html>
