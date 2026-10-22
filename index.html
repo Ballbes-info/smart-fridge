@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f4f7f2">
-  <meta name="description" content="SmartFridge — умный подход к продуктам: контроль свежести, идеи блюд и порядок в холодильнике.">
+  <meta name="description" content="SmartFridge — запасы, сроки годности и рецепты для семьи. Сравните базовую и премиум-подписку, узнайте условия покупки дисплея.">
   <script>
     (function () {
       var preference = null;
@@ -2787,6 +2787,39 @@ main:focus {
  .landing-device .display-leaf .icon, .hardware-art .display-leaf .icon { width:24px;height:24px; }
  .landing-device .display-leaf span, .hardware-art .display-leaf span { width:35px; }
 }
+</style><style>
+/* Criterion updates preserve the existing layout and device illustration. */
+/* Quiet disclosure follows the typography of the hero. */
+.hero-economy { max-width: 470px; }
+.hero-economy summary { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 6px 0; cursor: pointer; list-style: none; color: var(--muted); }
+.hero-economy summary::-webkit-details-marker { display: none; }
+.hero-economy summary > span:first-child { font-size: 13px; line-height: 1.55; font-weight: 400; }
+.hero-economy summary:hover { color: var(--green); }
+.hero-economy summary:focus-visible { outline: 2px solid var(--green); outline-offset: 4px; border-radius: 3px; }
+.hero-economy .economy-toggle { display: inline-flex; align-items: center; flex: 0 0 16px; color: var(--green); }
+.hero-economy .economy-toggle span { font-size: 20px; font-weight: 400; line-height: 1; }
+.hero-economy .economy-less { display: none; }
+.hero-economy[open] .economy-more { display: none; }
+.hero-economy[open] .economy-less { display: inline; }
+.hero-economy-body { margin-top: 6px; padding: 4px 0 4px 14px; border-left: 1px solid var(--control-border); }
+.hero-economy-body p { font-size: 12px; line-height: 1.75; margin: 0; color: var(--muted); }
+.hero-economy-body p + p { margin-top: 9px; }
+@media(max-width:760px) {
+ .hero-economy summary { gap: 10px; }
+ .hero-economy summary > span:first-child { font-size: 12px; }
+}
+.landing-proof { margin-top: 14px; font-size: 13px; line-height: 1.5; }
+.landing-proof a { text-decoration: underline; text-underline-offset: 4px; }
+.trial-terms { margin-top: 20px; font-size: 13px; }
+.trial-terms summary { cursor: pointer; min-height: 44px; padding: 12px 0; color: var(--ink); }
+.trial-terms p { padding: 0 0 12px; max-width: 840px; line-height: 1.7; }
+.contact-email { margin-top: 18px; font-size: 14px; overflow-wrap: anywhere; }
+.contact-email a { text-decoration: underline; text-underline-offset: 4px; }
+.landing summary:focus-visible { outline: 3px solid var(--green); outline-offset: 4px; }
+@media(max-width:760px) {
+ .landing-proof { font-size: 12px; }
+ }
+@media(prefers-reduced-motion:reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style></head>
 <body>
   <a class="skip-link" href="#main-content">Перейти к содержимому</a>
@@ -2824,7 +2857,7 @@ main:focus {
 <path d="M4 12h16m-6-6 6 6-6 6"/>
 
 </svg></a></div>
-      
+      <details class="landing-proof hero-economy"><summary><span>Продукты не пропадают — подписка окупается</span><span class="economy-toggle" aria-hidden="true"><span class="economy-more">+</span><span class="economy-less">−</span></span></summary><div class="hero-economy-body"><p>Семейная база стоит 349 ₽ в месяц: если учёт запасов поможет избежать порчи продуктов больше чем на эту сумму, экономия превысит стоимость подписки.</p><p>Кроме учёта запасов, в подписке предусмотрены рецепты, список покупок и дневник питания; в премиуме — ИИ и меню под цели питания. Размер экономии зависит от ваших покупок; результаты пользователей пока не измерены.</p></div></details>
     </div>
     <div class="landing-device"><div class="display-art " aria-hidden="true">
   <div class="display-glow"></div>
@@ -2866,39 +2899,41 @@ main:focus {
       <li><span class="step-number">01</span><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3M3 16v3a2 2 0 0 0 2 2h3m8 0h3a2 2 0 0 0 2-2v-3M3 12h18M8 8v1m4-2v2m4-1v1M8 15v2m4-2v3m4-3v2"/>
 
-</svg><h3>Добавьте продукты</h3><p>Сфотографируйте этикетку; в премиуме — и сам продукт. Проверьте данные и сохраните покупку.</p></li>
+</svg><h3>Добавьте продукты</h3><p>Откройте SmartFridge и сфотографируйте этикетку. Подтвердите название, количество и срок годности; в премиуме можно снять сам продукт.</p></li>
       <li><span class="step-number">02</span><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>
 
-</svg><h3>Проверьте сроки</h3><p>Откройте запасы и выберите продукты с ближайшим сроком. Отмечайте вскрытие и расход.</p></li>
+</svg><h3>Проверьте сроки</h3><p>Откройте запасы, выберите продукты с ближайшим сроком годности. Отмечайте вскрытие упаковок и расход.</p></li>
       <li><span class="step-number">03</span><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <path d="M20 4C9 2 3 7 5 14c2 7 15 5 15-10Z M4 21 15 10"/>
 
-</svg><h3>Выберите блюдо</h3><p>Выберите рецепт из своих продуктов. Добавьте недостающее в список покупок и приготовьте блюдо.</p></li>
+</svg><h3>Выберите блюдо</h3><p>Выберите рецепт по своим запасам и получите список недостающего. Приготовьте блюдо, используя продукты с ближайшим сроком.</p></li>
     </ol>
   </section>
 
   <section class="landing-audience landing-section" aria-labelledby="audience-title">
     <div><p class="landing-label">02 / ДЛЯ КОГО</p><h2 id="audience-title">Один холодильник.<br><em>Вся семья в курсе.</em></h2></div>
-    <div><p class="audience-copy">Для того, кто покупает продукты на семью на несколько дней вперёд, забывает об открытых упаковках и получает из магазина вопрос: «Молоко ещё есть?» Делитесь запасами и списком покупок с близкими: до пяти человек в одной семейной подписке.</p></div>
+    <div><p class="audience-copy">Для того, кто покупает продукты на семью на несколько дней вперёд, забывает об открытых упаковках и получает из магазина вопрос: «Молоко ещё есть?» SmartFridge — сервис учёта продуктов: запасы, сроки и рецепты связаны между собой. В отличие от обычного списка покупок, он помогает решить, что использовать первым и что приготовить. Делитесь холодильником с близкими: до пяти человек в семейной подписке.</p></div>
   </section>
 
   <section class="landing-section" id="pricing" aria-labelledby="pricing-title">
-    <div class="landing-section-head"><div><p class="landing-label">03 / СКОЛЬКО СТОИТ</p><h2 id="pricing-title">Начните с запасов.<br><em>Добавьте ИИ.</em></h2></div><p class="pricing-intro">Подписку оплачивает один человек или владелец семьи.<br>Дисплей покупается отдельно. Цены планируемые.</p></div>
-    <div class="billing-control" role="group" aria-label="Период оплаты"><button type="button" data-billing="month" aria-pressed="true">За месяц</button><button type="button" data-billing="year" aria-pressed="false">За год <span>−17%</span></button></div>
+    <div class="landing-section-head"><div><p class="landing-label">03 / СКОЛЬКО СТОИТ</p><h2 id="pricing-title">Начните с запасов.<br><em>Добавьте ИИ.</em></h2></div><p class="pricing-intro">Вы оплачиваете личный доступ или один тариф на семью до пяти человек.<br>Дисплей — отдельно. Возможности и цены к запуску.</p></div>
+    <div class="billing-control" role="group" aria-label="Период оплаты"><button type="button" data-billing="month" aria-pressed="true">За месяц</button><button type="button" data-billing="year" aria-pressed="false">За год <span>−16,7%</span></button></div>
     <p class="billing-note" id="billing-note" aria-live="polite">При годовой оплате — 12 месяцев по цене 10.</p>
     <div class="landing-plans">
       
-      <article class="landing-plan"><p class="plan-audience">Для одного</p><h3>Базовая</h3><p class="plan-price"><strong data-month="199" data-year="1990">199</strong> ₽<span class="plan-period">/месяц</span></p><p class="plan-equivalent" data-equivalent="166">Оплата за месяц</p><details class="plan-details" open><summary>Что входит <span>+</span></summary><ul><li>Сканирование текста этикетки</li><li>Запасы, сроки и напоминания</li><li>Список покупок и готовые рецепты</li><li>Дневник питания и КБЖУ</li></ul></details><p class="plan-trial">7 дней бесплатно новым пользователям</p></article>
+      <article class="landing-plan"><p class="plan-audience">Для одного</p><h3>Базовая</h3><p class="plan-price"><strong data-month="199" data-year="1990">199</strong> ₽<span class="plan-period">/месяц</span></p><p class="plan-equivalent" data-equivalent="166">Оплата за месяц</p><details class="plan-details" open><summary>Что входит <span>+</span></summary><ul><li>Сканирование текста этикетки</li><li>Учёт запасов и сроков годности</li><li>Напоминания о сроках</li><li>Список покупок</li><li>Готовые рецепты</li><li>Дневник питания и КБЖУ</li></ul></details><p class="plan-trial">7 дней бесплатно новым пользователям</p></article>
       
-      <article class="landing-plan"><p class="plan-audience">До 5 участников</p><h3>Семейная базовая</h3><p class="plan-price"><strong data-month="349" data-year="3490">349</strong> ₽<span class="plan-period">/месяц</span></p><p class="plan-equivalent" data-equivalent="291">Оплата за месяц</p><details class="plan-details" open><summary>Что входит <span>+</span></summary><ul><li>Все базовые возможности</li><li>Общий холодильник и покупки</li><li>Личные профили и дневники</li><li>Доп. место — 49 ₽/мес. или 490 ₽/год</li></ul></details><p class="plan-trial">7 дней бесплатно новым пользователям</p></article>
+      <article class="landing-plan"><p class="plan-audience">До 5 участников</p><h3>Семейная базовая</h3><p class="plan-price"><strong data-month="349" data-year="3490">349</strong> ₽<span class="plan-period">/месяц</span></p><p class="plan-equivalent" data-equivalent="291">Оплата за месяц</p><details class="plan-details" open><summary>Что входит <span>+</span></summary><ul><li>Сканирование текста этикетки</li><li>Общие запасы, сроки и напоминания</li><li>Общий список покупок</li><li>Готовые рецепты</li><li>Личные профили, дневники питания и КБЖУ</li><li>До 5 участников</li><li>Доп. место — 49 ₽/мес. или 490 ₽/год</li></ul></details><p class="plan-trial">Без бесплатного периода</p></article>
       
-      <article class="landing-plan landing-plan-premium"><p class="plan-audience">Для одного</p><h3>Премиум</h3><p class="plan-price"><strong data-month="499" data-year="4990">499</strong> ₽<span class="plan-period">/месяц</span></p><p class="plan-equivalent" data-equivalent="416">Оплата за месяц</p><details class="plan-details" open><summary>Что входит <span>+</span></summary><ul><li>Всё из базовой</li><li>ИИ-распознавание продуктов</li><li>Меню для набора, снижения и поддержания веса</li><li>Анализ дневника, ИИ-чат и голос</li></ul></details><p class="plan-trial">Без бесплатного периода</p></article>
+      <article class="landing-plan landing-plan-premium"><p class="plan-audience">Для одного</p><h3>Премиум</h3><p class="plan-price"><strong data-month="499" data-year="4990">499</strong> ₽<span class="plan-period">/месяц</span></p><p class="plan-equivalent" data-equivalent="416">Оплата за месяц</p><details class="plan-details" open><summary>Что входит <span>+</span></summary><ul><li>Сканирование текста этикетки</li><li>Учёт запасов, сроков и напоминания</li><li>Список покупок и готовые рецепты</li><li>Дневник питания и КБЖУ</li><li>ИИ-распознавание продуктов по фото</li><li>Генерация рецептов и меню под цели питания</li><li>ИИ-анализ дневника питания</li><li>ИИ-чат и голосовой диалог</li></ul></details><p class="plan-trial">Без бесплатного периода</p></article>
       
-      <article class="landing-plan landing-plan-premium"><p class="plan-audience">До 5 участников</p><h3>Семейная премиум</h3><p class="plan-price"><strong data-month="799" data-year="7990">799</strong> ₽<span class="plan-period">/месяц</span></p><p class="plan-equivalent" data-equivalent="666">Оплата за месяц</p><details class="plan-details" open><summary>Что входит <span>+</span></summary><ul><li>Всё из семейной базы и премиума</li><li>Общие запасы, личные цели питания</li><li>Семейная квота ИИ</li><li>Доп. место — 99 ₽/мес. или 990 ₽/год</li></ul></details><p class="plan-trial">Без бесплатного периода</p></article>
+      <article class="landing-plan landing-plan-premium"><p class="plan-audience">До 5 участников</p><h3>Семейная премиум</h3><p class="plan-price"><strong data-month="799" data-year="7990">799</strong> ₽<span class="plan-period">/месяц</span></p><p class="plan-equivalent" data-equivalent="666">Оплата за месяц</p><details class="plan-details" open><summary>Что входит <span>+</span></summary><ul><li>Сканирование текста этикетки</li><li>Общие запасы, сроки и напоминания</li><li>Общий список покупок и готовые рецепты</li><li>Личные профили, дневники питания и КБЖУ</li><li>ИИ-распознавание продуктов по фото</li><li>Генерация рецептов и меню под личные цели питания</li><li>ИИ-анализ дневников питания</li><li>ИИ-чат и голосовой диалог</li><li>Общая семейная квота ИИ</li><li>До 5 участников</li><li>Доп. место — 99 ₽/мес. или 990 ₽/год</li></ul></details><p class="plan-trial">Без бесплатного периода</p></article>
       
     </div>
-    <div class="landing-offer"><strong>Первая покупка подписки — со скидкой 30%</strong><p>Первый платный месяц: базовая — 139 ₽, семейная базовая — 244 ₽, премиум — 349 ₽, семейная премиум — 559 ₽. Затем обычная цена. Один раз на плательщика; не суммируется с годовой скидкой и не действует на дополнительные места.</p></div>
+    <div class="landing-offer"><strong>Первая покупка подписки — со скидкой 30%</strong><p>Первый платный месяц: базовая — 139 ₽, семейная базовая — 244 ₽, премиум — 349 ₽, семейная премиум — 559 ₽. Затем обычная цена. Один раз для аккаунта и карты; не суммируется с годовой скидкой и не действует на дополнительные места.</p></div>
+    <details class="trial-terms" id="payback"><summary>Как подписка может окупиться</summary><p>Семейная базовая стоит 349 ₽ в месяц. Если благодаря учёту запасов вы используете до порчи продукты на 350 ₽, которые иначе выбросили бы и купили заново, эта экономия покроет месяц подписки. Для личной базы порог — 199 ₽, личного премиума — 499 ₽, семейного премиума — 799 ₽ в месяц. Расчёт по обычным месячным ценам, без дополнительных мест.</p><p>Это условие окупаемости, а не измеренный результат пользователей. Фактическая экономия зависит от ваших покупок и количества предотвращённых потерь. <a href="https://www.fao.org/platform-food-loss-waste/food-waste/food-waste-reduction/how-to-reduce-your-food-waste/" target="_blank" rel="noopener noreferrer">Рекомендации ФАО по сокращению пищевых отходов</a>.</p></details>
+    <details class="trial-terms"><summary>Условия пробной недели</summary><p>7 дней доступны только в личном базовом тарифе один раз для аккаунта и карты. У семейной базовой и премиум-тарифов бесплатного периода нет. При подключении — проверка карты на 1 ₽ с возвратом. После недели начинается платный период; автопродление можно отключить в настройках. При оплате до окончания недели оставшиеся пробные дни сгорают.</p></details>
     <p class="landing-fine">Чтение текста этикетки входит в базу. Анализ фото продукта, генерация и голосовой диалог с ИИ — в премиуме, в пределах квот. Размер квот определяется до запуска. Дневники питания остаются личными.</p>
 
   <div class="landing-hardware landing-section" aria-labelledby="hardware-title">
@@ -2939,10 +2974,10 @@ main:focus {
 
   </section>
 
-  <section class="landing-contact landing-section" id="contact" aria-labelledby="contact-title"><p class="landing-label">04 / СВЯЖИТЕСЬ С НАМИ</p><h2 id="contact-title">Выберите тариф.<br><em>Напишите нам.</em></h2><p>Уточните условия подписки или задайте вопрос о дисплее.</p><a class="btn btn-primary" href="mailto:smartfridgebd@gmail.com?subject=SmartFridge">Написать нам <svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  <section class="landing-contact landing-section" id="contact" aria-labelledby="contact-title"><p class="landing-label">04 / СВЯЖИТЕСЬ С НАМИ</p><h2 id="contact-title">Выберите тариф.<br><em>Напишите нам.</em></h2><p>Напишите, какой тариф рассматриваете, или задайте вопрос о дисплее.</p><a class="btn btn-primary" href="mailto:smartfridgebd@gmail.com?subject=SmartFridge">Написать нам <svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <path d="M4 12h16m-6-6 6 6-6 6"/>
 
-</svg></a></section>
+</svg></a><p class="contact-email"><a href="mailto:smartfridgebd@gmail.com">smartfridgebd@gmail.com</a></p></section>
 </div>
 <script>(() => {
   const buttons = document.querySelectorAll('[data-billing]');
