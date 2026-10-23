@@ -2,6 +2,7 @@
 (() => {
   const form = document.querySelector('.storage-form:not(.storage-delete-form)');
   if (!form) return;
+  const initiallyDisabled = new Set(form.querySelectorAll('button[type="submit"]:disabled'));
   let changed = Boolean(form.querySelector('[data-storage-errors]'));
   let submitting = false;
   form.addEventListener('input', () => { changed = true; });
@@ -16,6 +17,6 @@
   });
   window.addEventListener('pageshow', () => {
     submitting = false;
-    form.querySelectorAll('button[type="submit"]').forEach(button => { button.disabled = false; });
+    form.querySelectorAll('button[type="submit"]').forEach(button => { button.disabled = initiallyDisabled.has(button); });
   });
 })();

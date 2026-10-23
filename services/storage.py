@@ -4,15 +4,29 @@ import secrets
 import time
 import unicodedata
 from flask import Blueprint, abort, flash, redirect, render_template, request, session, url_for
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, select, update, func, text
 from sqlalchemy.exc import IntegrityError
 from data import db_session
 from data.storage import StorageLocation
+from data.billing import Subscription
+from services.billing_service import PLANS, active
 from services.workspace import SECTIONS
 
 storage = Blueprint('storage', __name__)
 KINDS = {'fridge': 'Холодильник', 'freezer': 'Морозильник', 'pantry': 'Шкаф', 'other': 'Другое'}
 PAGE_SIZE = 12
+
+
+class StorageLimitReached(Exception):
+    pass
+
+
+def quota(ses):
+    sub = ses.get(Subscription, session['user_id'])
+    limit = PLANS.get(sub.plan, {}).get('storage_limit', 0) if active(sub) else 0
+    count = ses.scalar(select(func.count()).select_from(StorageLocation).where(
+        StorageLocation.owner_id == session['user_id']))
+    return count, limit
 
 
 def normalized(value):
@@ -60,9 +74,12 @@ def read_form():
 def page(template, **context):
     if 'storage_csrf' not in session:
         session['storage_csrf'] = secrets.token_hex(32)
+    with db_session.create_session() as ses:
+        used, limit = quota(ses)
     feature = next(item for item in SECTIONS['fridges']['functions'] if item['slug'] == 'storage')
     return render_template(template, active_section='fridges', section=SECTIONS['fridges'], feature=feature,
-                           storage_kinds=KINDS, storage_csrf=session['storage_csrf'], **context)
+                           storage_kinds=KINDS, storage_csrf=session['storage_csrf'],
+                           storage_used=used, storage_limit=limit, storage_full=used >= limit, **context)
 
 
 def register_storage(app, subscription_required):
@@ -95,23 +112,31 @@ def register_storage(app, subscription_required):
     @subscription_required
     def create():
         values = dict(name='', kind='fridge', location='', note='')
-        errors = {}
+        errors = {}; status = 200
         if request.method == 'POST':
             check_form()
             values, errors = read_form()
             if not errors:
                 try:
                     with db_session.create_session() as ses:
+                        # Serialize quota check + insert with plan changes and other tabs.
+                        ses.execute(text('BEGIN IMMEDIATE'))
+                        used, limit = quota(ses)
+                        if used >= limit:
+                            raise StorageLimitReached(f'Лимит вашего тарифа — {limit}. Новое место не создано.')
                         now = time.time()
                         item = StorageLocation(owner_id=session['user_id'], name_key=values['name'].casefold(),
                                                created_at=now, updated_at=now, **values)
                         ses.add(item); ses.commit(); location_id = item.id
                     flash('Место хранения создано.', 'success')
                     return redirect(url_for('storage.detail', location_id=location_id))
+                except StorageLimitReached as exc:
+                    errors['form'] = str(exc)
+                    status = 409
                 except IntegrityError:
                     errors['name'] = 'У вас уже есть место с таким названием. Выберите другое.'
         return page('storage_form.html', values=values, errors=errors, item=None,
-                    workspace_back_url=url_for('storage.index')), 422 if errors else 200
+                    workspace_back_url=url_for('storage.index')), status if status == 409 else 422 if errors else 200
 
     @storage.route('/home/fridges/storage/<int:location_id>')
     @subscription_required

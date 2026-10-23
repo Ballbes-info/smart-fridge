@@ -1,5 +1,6 @@
 {% macro features(plan, detailed=false) -%}
 <ul class="plan-features">
+  <li>Места хранения: до {{ plan.storage_limit }}</li>
   {% if detailed or not plan.premium %}
   <li>Учёт продуктов и сроков хранения{% if detailed %} с напоминаниями об истечении срока{% endif %}</li>
   <li>Добавление продуктов по фото этикетки{% if detailed %}: распознавание текста, без ИИ-анализа изображения{% endif %}</li>

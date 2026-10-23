@@ -14,10 +14,10 @@ from data.billing import Subscription, CardPromotion, BillingOrder
 from services.local_gateway import PaymentError, demo_cards
 
 PLANS = {
-    'basic': {'name': 'Базовая', 'month': 199, 'year': 1990, 'family': False, 'premium': False},
-    'family_basic': {'name': 'Семейная базовая', 'month': 349, 'year': 3490, 'family': True, 'premium': False},
-    'premium': {'name': 'Премиум', 'month': 499, 'year': 4990, 'family': False, 'premium': True},
-    'family_premium': {'name': 'Семейная премиум', 'month': 799, 'year': 7990, 'family': True, 'premium': True},
+    'basic': {'name': 'Базовая', 'month': 199, 'year': 1990, 'family': False, 'premium': False, 'storage_limit': 3},
+    'family_basic': {'name': 'Семейная базовая', 'month': 349, 'year': 3490, 'family': True, 'premium': False, 'storage_limit': 10},
+    'premium': {'name': 'Премиум', 'month': 499, 'year': 4990, 'family': False, 'premium': True, 'storage_limit': 5},
+    'family_premium': {'name': 'Семейная премиум', 'month': 799, 'year': 7990, 'family': True, 'premium': True, 'storage_limit': 15},
 }
 
 
