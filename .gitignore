@@ -47,7 +47,11 @@ temp/
 
 # Тестовые данные
 test_data/
+
 # Large external recipe data: downloaded locally, never committed with account data.
 resources/recipes/downloads/
 *.import.lock
 *.incoming
+
+# Локальные сертификаты
+certificates/
