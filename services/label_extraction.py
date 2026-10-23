@@ -8,9 +8,24 @@ import re
 from datetime import date
 from statistics import median
 
+NUTRITION_WARNINGS = ('КБЖУ не согласуется с калорийностью. Проверьте цифры и выбранную колонку таблицы.',
+                      'Не определено, к какому количеству относятся КБЖУ.')
+
 NUMBER = r'\d{1,6}(?:[.,]\d{1,3})?'
 FOOD = re.compile(r'молок[оа]|кефир|творог|сметан|йогурт|сыр\b|масло|котлет|пельмен|фарш|мясо|свинин|говядин|куриц|шоколад|батончик|вафл|печень|конфет|крупа|греч|рис\b|макарон|хлеб|сок\b|вода\b|банан|яблок|рыб[аы]|колбас|сосиск',re.I)
 TECH = re.compile(r'состав|марка\s*[:—-]|бренд\s*[:—-]|пищев|ценност|энергет|калор|белк|углевод|ккал|кдж|изготов|производител|хранит|годен|срок|масса|объ[её]м|^\W*(?:гост|стб|ту\b|еас|ean)|www\.|@|\d{5,}|росси[яи]|адрес|упаковк|после\s+вскры',re.I)
+
+
+# OCR often inserts punctuation inside headings (e.g. 'Пищевая. ценность').
+INGREDIENT_STOP = re.compile(r'(?:\b(?:в\s*)?пищев[а-яё]*[\W_]{0,6}ценност[а-яё]*|'
+                             r'\bэнергетическ[а-яё]*[\W_]{0,6}ценност[а-яё]*|'
+                             r'\bусловия\s+хранения|\bхранить\s+при|\bсрок\s+годности|'
+                             r'\bгоден\s+до|\bизготовитель)',re.I)
+
+
+def ingredients_only(text):
+    stop=INGREDIENT_STOP.search(text)
+    return re.sub(r'\s+',' ',text[:stop.start()] if stop else text).strip(' \n|;')[:3000]
 
 
 def normalize(text):
@@ -103,14 +118,17 @@ def extract(regions):
     for row in lines:
         match=re.search(r'состав\s*[:;—-]?\s*(.*)',row['text'],re.I)
         if not match:continue
-        chunks=[match.group(1)] if match.group(1) else []
+        inline=ingredients_only(match.group(1))
+        chunks=[inline] if inline else []
+        heading_in_row=bool(INGREDIENT_STOP.search(match.group(1)))
         conf=[row['confidence']]
         bottom=row['y']+row['h']
         for following in sorted(lines,key=lambda r:r['y']):
+            if heading_in_row:break
             if following['y']<bottom-row['h']*.2:continue
             if abs(following['x']-row['x'])>max(35,row['w']*.25):continue
             if following['y']-bottom>row['h']*2.8:break
-            if re.search(r'пищев|ценност|энергет|калорий|срок|годен|хранить|изготовитель',following['text'],re.I):break
+            if INGREDIENT_STOP.search(following['text']) or re.search(r'пищев|ценност|энергет|калорий|срок|годен|хранить|изготовитель',following['text'],re.I):break
             ingredient_lines.add(following['text']);chunks.append(following['text']);conf.append(following['confidence']);bottom=following['y']+following['h']
         if chunks:proposals['ingredients']=' '.join(chunks)[:3000];confidence['ingredients']=min(conf)
         break
@@ -192,6 +210,7 @@ def extract(regions):
         value=proposals[key]
         supporting=[r['confidence'] for r in lines if value.casefold() in r['text'].replace(',','.').casefold()]
         if supporting:confidence[key]=min(supporting)
+    parsed['reading_confidence']=dict(confidence)
     validate_nutrition(parsed)
     parsed['warnings']=list(dict.fromkeys(parsed['warnings']))
     return parsed
@@ -221,9 +240,18 @@ def parse_label(text):
         match=re.search(label+r'\s*[:—-]\s*([^\n]{2,160})',text,re.I)
         if match:put(field,match.group(1).strip())
     match=re.search(r'состав\s*[:;—-]?\s*(.+?)(?=\s*(?:пищевая\s+ценность|энергетическая\s+ценность|условия\s+хранения|хранить\s+при|срок\s+годности|годен\s+до|изготовитель)|$)',text,re.I|re.S)
-    if match:put('ingredients',re.sub(r'\s+',' ',match.group(1)).strip()[:3000])
+    if match:
+        composition=ingredients_only(match.group(1))
+        if composition:put('ingredients',composition)
     # Product amount only, not a portion heading or values in a nutrition table.
     match=re.search(r'(?:масса\s*(?:нетто)?|объ[её]м|содержимое)\s*[:—-]?\s*((?:\d\s*){1,6}(?:[.,]\d+)?)\s*(кг|мл|г|л)\b',text,re.I)
+    reversed_amount=None
+    if not match:
+        reversed_amount=re.search(r'(?:масса\s*(?:нетто)?|объ[её]м|содержимое)\s*[:—-]?\s*(кг|мл|г|л)\s*[:—-]?\s*((?:\d[ \t]*){1,6}(?:[.,]\d+)?)(?![\d])',text,re.I)
+        if reversed_amount:
+            amount=re.sub(r'\s','',reversed_amount.group(2)).replace(',','.')
+            if 0<float(amount)<=1000000:
+                put('quantity',amount);put('unit',{'кг':'kg','г':'g','мл':'ml','л':'l'}[reversed_amount.group(1).lower()])
     if not match:
         match=next((m for m in re.finditer(r'(?<![\d.,])('+NUMBER+r')\s*(кг|мл|г|л)\b',text,re.I)
                     if not re.search(r'100\s*$|на\s*$|в\s*$|порци|белк|жир|углевод',text[max(0,m.start()-35):m.start()].split('\n')[-1],re.I)
@@ -255,6 +283,7 @@ def parse_label(text):
     for m in re.finditer(r'(?:хранить\s+при|условия\s+хранения|после\s+вскрытия|при\s+температуре\s+хранения)[^\n]{0,240}',text,re.I):extra.append(m.group().strip())
     if any(extra):put('other_info','\n'.join(dict.fromkeys(v for v in extra if v)))
     result={'proposals':p,'confidence':confidence,'dates':list(dict.fromkeys(dates)),'text':text,'warnings':warnings}
+    result['reading_confidence']=dict(confidence)
     validate_nutrition(result)
     return result
 

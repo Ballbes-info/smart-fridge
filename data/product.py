@@ -45,3 +45,13 @@ class ProductPreferences(SqlAlchemyBase):
     __tablename__ = 'product_preferences'
     user_id = sa.Column(sa.Integer, sa.ForeignKey('users.id'), primary_key=True)
     default_storage_id = sa.Column(sa.Integer, sa.ForeignKey('storage_locations.id', ondelete='SET NULL'), nullable=True)
+
+
+class ProductScanUsage(SqlAlchemyBase):
+    """Monthly photo allowance; pending rows reserve slots across server workers."""
+    __tablename__ = 'product_scan_usage'
+    id = sa.Column(sa.String, primary_key=True)
+    user_id = sa.Column(sa.Integer, sa.ForeignKey('users.id'), nullable=False, index=True)
+    month = sa.Column(sa.String(7), nullable=False, index=True)
+    status = sa.Column(sa.String, nullable=False)
+    created_at = sa.Column(sa.Float, nullable=False)

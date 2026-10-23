@@ -76,8 +76,14 @@ def public_product(code, *, allow_network=True):
         with con:
             con.execute('BEGIN IMMEDIATE')
             row=con.execute('SELECT payload,fetched FROM products WHERE code=?',(code,)).fetchone()
-            if row and now-row[1]<(7*86400 if row[0]!='{}' else 3600):
-                return json.loads(row[0]),'cached' if row[0]!='{}' else 'not_found'
+            if row:
+                try:cached=json.loads(row[0])
+                except ValueError:cached={}
+                if isinstance(cached,dict) and cached.get('_schema')==2 and isinstance(cached.get('fields'),dict):
+                    fields=cached['fields']
+                    complete=all(key in fields for key in ['name','ingredients','quantity','nutrition_basis',*NUTRIENTS])
+                    ttl=7*86400 if complete else 600 if fields else 3600
+                    if now-row[1]<ttl:return fields,'cached' if fields else 'not_found'
             if not allow_network or os.environ.get('PRODUCT_CATALOG_ONLINE','1')=='0':return {},'offline'
             backoff=con.execute('SELECT until_time FROM backoff WHERE id=1').fetchone()
             if backoff and backoff[0]>now:return {},'unavailable'
@@ -107,7 +113,7 @@ def public_product(code, *, allow_network=True):
     try:
         con=_cache()
         with con:
-            con.execute('INSERT OR REPLACE INTO products VALUES (?,?,?)',(code,json.dumps(product,ensure_ascii=False),now))
+            con.execute('INSERT OR REPLACE INTO products VALUES (?,?,?)',(code,json.dumps({'_schema':2,'fields':product},ensure_ascii=False),now))
             # Bound the public cache and its disk use. This is not user inventory.
             con.execute('DELETE FROM products WHERE code IN (SELECT code FROM products ORDER BY fetched DESC LIMIT -1 OFFSET 2000)')
     except (OSError,sqlite3.Error):pass
@@ -146,6 +152,8 @@ def normalize_product(product):
     if declared in ['100ml','100мл']:basis='100ml'
     elif declared in ['100g','100г']:
         basis='100ml' if quantity_unit in ['ml','l','cl','dl','мл','л'] else '100g'
+    elif not declared and quantity_unit in ['ml','l','cl','dl','мл','л']:basis='100ml'
+    elif not declared and quantity_unit in ['g','kg','г','кг']:basis='100g'
     else:basis=None
     nutriments=product.get('nutriments')
     if basis and isinstance(nutriments,dict):
@@ -194,15 +202,20 @@ def lookup(code,user_id):
     p={**public,**own}
     p={**p,'barcode':code}
     if public:p['catalog_source']='openfoodfacts'
-    return {'proposals':p,'confidence':{key:.86 if key!='barcode' else 1 for key in p},'dates':[],'text':'',
+    result={'proposals':p,'confidence':{key:.86 if key!='barcode' else 1 for key in p},'dates':[],'text':'',
             'warnings':[],'catalog_state':state,'sources':{key:('saved' if key in own else 'openfoodfacts') if key!='barcode' else 'barcode' for key in p},
-            'catalog_url':'https://world.openfoodfacts.org/product/'+code if public or own.get('catalog_source')=='openfoodfacts' else None}
+            'catalog_url':'https://world.openfoodfacts.org/product/'+code if public or own.get('catalog_source')=='openfoodfacts' else None,
+            'catalog_fields':[key for key in public if key!='catalog_source']}
+    from services.label_extraction import validate_nutrition
+    validate_nutrition(result)
+    return result
 
 
 def enrich(label,catalog):
     """Catalogue fills gaps; a clear contradiction on the photo is left for review."""
+    from services.label_extraction import NUTRITION_WARNINGS
     result={**label,'proposals':dict(label['proposals']),'confidence':dict(label.get('confidence',{})),
-            'warnings':list(label.get('warnings',[])),'sources':{k:'label' for k in label['proposals']},
+            'warnings':[warning for warning in label.get('warnings',[]) if warning not in NUTRITION_WARNINGS],'sources':{k:'label' for k in label['proposals']},
             'alternatives':dict(label.get('alternatives',{})),'amount_options':[]}
     p=result['proposals'];scores=result['confidence'];cp=catalog.get('proposals',{})
     # Quantity and unit form one fact. Never offer independent choices such as 900 kg.
@@ -234,8 +247,11 @@ def enrich(label,catalog):
         for key in ['calories','protein','fat','carbs','nutrition_basis']:
             if key in p:scores[key]=0
     if cp.get('catalog_source')=='openfoodfacts':p['catalog_source']='openfoodfacts';scores['catalog_source']=1
-    for key in ['catalog_state','catalog_url']:result[key]=catalog.get(key)
+    for key in ['catalog_state','catalog_url','catalog_fields']:result[key]=catalog.get(key)
     from services.label_extraction import validate_nutrition
+    for key in NUTRIENTS:
+        if p.get(key)==label['proposals'].get(key) and key not in result['alternatives']:
+            scores[key]=max(scores.get(key,0),label.get('reading_confidence',{}).get(key,0))
     validate_nutrition(result)
     result['warnings']=list(dict.fromkeys(result['warnings']))
     return result

@@ -136,3 +136,19 @@
 .product-catalog-source a,.product-source-credit a{color:var(--green);text-decoration:underline;text-underline-offset:3px}
 [data-barcode-choices]{display:flex;flex-wrap:wrap;gap:6px}
 [data-barcode-choices] p{flex-basis:100%;font-size:12px}
+
+.product-scan-diagnostics{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;font-size:12px;line-height:1.7;color:var(--muted);padding:10px 0}
+
+/* Entry methods follow the app's restrained, squared controls. */
+.product-entry-methods{display:flex;gap:6px;border:0;padding:0;margin:0 0 24px;flex-wrap:wrap}
+.product-entry-methods legend{font-size:.8rem;color:var(--muted);margin-bottom:10px}
+.product-entry-methods label{position:relative;cursor:pointer}
+.product-entry-methods input{position:absolute;opacity:0;width:1px;height:1px}
+.product-entry-methods span{display:block;padding:10px 22px;border:1px solid var(--control-border);border-radius:0;font-weight:600}
+.product-entry-methods input:checked+span{border-color:var(--green);background:var(--mint)}
+.product-entry-methods input:focus-visible+span{outline:2px solid currentColor;outline-offset:3px}
+.product-entry-methods input:disabled+span{opacity:.5;cursor:wait}
+.product-entry-layout.is-manual{grid-template-columns:minmax(0,760px)}
+.product-method-hint,.product-giga-quota{font-size:.85rem;line-height:1.6;margin:0 0 14px}
+.product-giga-quota{font-variant-numeric:tabular-nums;padding:10px 12px;border-left:2px solid var(--green);background:var(--mint)}
+.product-scanner[hidden],.product-giga-quota[hidden]{display:none!important}

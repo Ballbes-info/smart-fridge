@@ -13,6 +13,23 @@
   scannerToggle.addEventListener('click', () => toggleScanner(scannerBody.hidden));
   const $ = selector => scanner.querySelector(selector);
   const field = name => form.elements.namedItem(name);
+  let method='manual';
+  const methodInputs=[...document.querySelectorAll('[name=entry_method]')];
+  function setMethod(value){
+    method=value;scanner.hidden=value==='manual';
+    if(value==='manual')void stopCamera();
+    document.querySelector('.product-entry-layout').classList.toggle('is-manual',value==='manual');
+    if(value!=='manual')toggleScanner(true);
+    $('#label-scanner-title').textContent=value==='gigachat'?'Распознать через GigaChat':'Сканировать этикетку';
+    $('[data-method-hint]').textContent=value==='gigachat'?'Загрузите фото и нажмите «Распознать через GigaChat». Один снимок — одно обращение.':'OCR читает текст на сервере. Сложные этикетки могут потребовать исправлений.';
+    $('[data-giga-quota]').hidden=value!=='gigachat';
+    $('[data-scan-privacy]').textContent=value==='gigachat'?'При нажатии кнопки выбранное фото отправляется в GigaChat. После обработки сервер запрашивает удаление загруженного файла.':'Фото OCR обрабатывается на сервере SmartFridge. В Open Food Facts передаётся только штрихкод.';
+    $('[data-recognize]').textContent=value==='gigachat'?'Распознать через GigaChat':'Заполнить по фото';
+    if(value==='gigachat' && $('[data-giga-quota]').dataset.configured!=='yes')status('GigaChat ещё не подключён: нужен ключ API в .env на сервере.',true);
+    else status('');
+  }
+  methodInputs.forEach(input=>input.addEventListener('change',()=>{if(!busy)setMethod(input.value);}));
+
   let dirty = Boolean(document.querySelector('[data-product-errors]')), submitting = false;
   const touched = new Set(), autoValues = new Map(), resolved = new Map();
   const defaults = {quantity:'1',unit:'pcs',shelf_unit:'days'};
@@ -57,9 +74,9 @@
   const canvas = $('[data-crop-canvas]'), ctx = canvas.getContext('2d');
   function status(text, error = false) { $('[data-scan-status]').textContent = text; $('[data-scan-status]').classList.toggle('is-error',error); }
   function syncBusy(value) {
-    busy=value;
+    busy=value;methodInputs.forEach(input=>{input.disabled=value;});
     scanner.querySelectorAll('button,input[type=file]').forEach(button=>{button.disabled=value;});
-    $('[data-recognize]').textContent=value?'Распознаём…':'Заполнить по фото';
+    $('[data-recognize]').textContent=value?'Распознаём…':method==='gigachat'?'Распознать через GigaChat':'Заполнить по фото';
     scanner.setAttribute('aria-busy',String(value));
   }
   function cropInputs(rect) {
@@ -77,25 +94,30 @@
     if(images.length){paint();cropInputs(null);} else ctx.clearRect(0,0,canvas.width,canvas.height);
     renderResults();
   }
-  async function addFiles(files) {
+  async function addFiles(files,append=false) {
     if(busy)return;
-    const firstNew=images.length;const problems=[];
+    const firstNew=append?images.length:0;const pending=[];const problems=[];
     for(const file of [...files]){
-      if(images.length>=6){problems.push('Можно добавить до 6 снимков.');break;}
+      if((append?images.length:0)+pending.length>=6){problems.push('Можно добавить до 6 снимков.');break;}
       if(file.size>8*1024*1024){problems.push('Снимок больше 8 МБ.');continue;}
       if(!['image/jpeg','image/png','image/webp'].includes(file.type)){problems.push('Поддерживаются JPEG, PNG и WebP.');continue;}
       const url=URL.createObjectURL(file);
       try{
         const image=new Image();image.src=url;await image.decode();
         if(image.naturalWidth*image.naturalHeight>20000000)throw new Error('Снимок больше 20 мегапикселей.');
-        if(images.length>=6){problems.push('Можно добавить до 6 снимков.');continue;}
-        const ratio=Math.min(1,2400/Math.max(image.naturalWidth,image.naturalHeight));const source=document.createElement('canvas');source.width=Math.round(image.naturalWidth*ratio);source.height=Math.round(image.naturalHeight*ratio);source.getContext('2d').drawImage(image,0,0,source.width,source.height);images.push({id:'photo-'+(++photoSequence),canvas:source});dirty=true;
+        if((append?images.length:0)+pending.length>=6){problems.push('Можно добавить до 6 снимков.');continue;}
+        const ratio=Math.min(1,2400/Math.max(image.naturalWidth,image.naturalHeight));const source=document.createElement('canvas');source.width=Math.round(image.naturalWidth*ratio);source.height=Math.round(image.naturalHeight*ratio);source.getContext('2d').drawImage(image,0,0,source.width,source.height);pending.push({id:'photo-'+(++photoSequence),canvas:source});dirty=true;
       }catch(error){problems.push(error.message==='Снимок больше 20 мегапикселей.'?error.message:'Не удалось прочитать снимок. Попробуйте другое фото.');}finally{URL.revokeObjectURL(url);}
     }
+    if(pending.length){
+      if(!append){images.length=0;recognized.clear();resolved.clear();}
+      images.push(...pending);
+    }
     select(Math.max(0,images.length-1));status(problems.join(' '),Boolean(problems.length));
-    if(images.length>firstNew)void scan(images.length-firstNew>1,firstNew);
+    if(pending.length && method==='ocr')void scan(images.length-firstNew>1,firstNew);
   }
   $('[data-photo-input]').addEventListener('change',event=>{addFiles(event.target.files);event.target.value='';});
+  $('[data-photo-extra]').addEventListener('change',event=>{addFiles(event.target.files,true);event.target.value='';});
   $('[data-photo-capture]').addEventListener('change',event=>{addFiles(event.target.files);event.target.value='';});
   const zone=$('[data-drop-zone]');
   zone.addEventListener('dragover',event=>{event.preventDefault();zone.classList.add('is-dragging');});
@@ -172,7 +194,7 @@
     for(const [key,value] of Object.entries(proposals)){
       if(key==='catalog_source')continue;
       const label=document.createElement('label');label.className='product-proposal';const check=document.createElement('input');check.type='checkbox';check.dataset.proposal=key;
-      check.checked=(!touched.has(key) && (!field(key).value || autoValues.get(key)===field(key).value)) || (!touched.has(key) && (Object.hasOwn(defaults,key) && field(key).value===defaults[key]));
+      check.checked=scores[key]>=.8 && ((!touched.has(key) && (!field(key).value || autoValues.get(key)===field(key).value)) || (!touched.has(key) && (Object.hasOwn(defaults,key) && field(key).value===defaults[key])));
       const span=document.createElement('span'),title=document.createElement('strong');title.textContent=labels[key];span.append(title,document.createTextNode(friendly[value]||value));
       if(scores[key]<.8){const hint=document.createElement('small');hint.textContent='Проверьте на упаковке';span.append(hint);label.classList.add('needs-review');}
       label.append(check,span);container.append(label);
@@ -183,7 +205,7 @@
       for(const value of variants){const option=document.createElement('option');option.value=value;option.textContent=key==='amount'?value.split('|')[0]+' '+(friendly[value.split('|')[1]]||value.split('|')[1]):friendly[value]||value;select.append(option);}
       select.value=resolved.get(key)||'';select.addEventListener('change',()=>{resolved.set(key,select.value);if(key==='amount' && select.value){const [quantity,unit]=select.value.split('|');field('quantity').value=quantity;field('unit').value=unit;touched.add('quantity');touched.add('unit');confirmNeeded();renderResults();}else autoFill();});label.append(select);container.append(label);
     }
-    renderCatalog();
+    renderCatalog();renderDiagnostics();
     const details=$('[data-result-details]');if(details)details.open=Object.keys(conflicts).length>0 || Object.entries(scores).some(([key,score])=>score<.8 && key!=='catalog_source');
     $('[data-apply-ocr]').disabled=!Object.keys(proposals).length;
     $('[data-ocr-warnings]').textContent=[...new Set(warnings)].join(' ');
@@ -224,6 +246,19 @@
     }
     if(codes.size>1){const hint=document.createElement('p');hint.textContent='Выберите штрихкод нужного продукта';choices.append(hint);for(const code of codes){const button=document.createElement('button');button.type='button';button.className='workspace-secondary-button';button.textContent=code;button.disabled=busy;button.addEventListener('click',()=>lookupCode(code));choices.append(button);}}
   }
+  function renderDiagnostics(){
+    const output=$('[data-scan-diagnostics]');const lines=[];
+    for(const result of recognized.values()){
+      if(result.engine)lines.push('Распознавание: '+(result.engine==='gigachat'?'GigaChat':'Tesseract'));
+      const states={saved:'сохранённый продукт',found:'карточка найдена',cached:'карточка из кеша',not_found:'карточки нет',unavailable:'каталог недоступен',limited:'лимит обращений',offline:'без обращения в интернет'};
+      if(result.catalog_state && states[result.catalog_state])lines.push('Справочник: '+states[result.catalog_state]);
+      if(result.catalog_fields)lines.push('Поля внешней карточки: '+(result.catalog_fields.map(key=>labels[key]||key).join(', ')||'нет'));
+      if(result.refined_fields?.length)lines.push('Повторно прочитаны: '+result.refined_fields.map(key=>labels[key]||key).join(', '));
+    }
+    output.textContent=[...new Set(lines)].join('\n');output.parentElement.hidden=!lines.length;
+    const code=field('barcode').value;if(code && document.activeElement!==$('[data-catalog-code]'))$('[data-catalog-code]').value=code;
+    else if(!code && !recognized.size)$('[data-catalog-code]').value='';
+  }
   async function lookupCode(code){
     if(busy)return;syncBusy(true);status('Ищем продукт…');
     try{
@@ -234,14 +269,20 @@
     }catch(error){status(error.name==='TimeoutError'?'Каталог не ответил. Сканирование этикетки остаётся доступным.':error.message,true);}
     finally{syncBusy(false);renderResults();}
   }
-  $('[data-lookup-code]').addEventListener('click',()=>lookupCode($('[data-catalog-code]').value.trim()));
-  $('[data-catalog-code]').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();lookupCode(event.target.value.trim());}});
+  $('[data-lookup-code]').addEventListener('click',()=>lookupCode($('[data-catalog-code]').value.trim()||field('barcode').value));
+  $('[data-catalog-code]').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();lookupCode(event.target.value.trim()||field('barcode').value);}});
   field('barcode').addEventListener('input',()=>{field('catalog_source').value='';touched.add('catalog_source');});
   async function recognizeImage(image,rect){
     const output=document.createElement('canvas');output.width=Math.round(rect.w);output.height=Math.round(rect.h);output.getContext('2d').drawImage(image.canvas,rect.x,rect.y,rect.w,rect.h,0,0,output.width,output.height);
     const blob=await new Promise(resolve=>output.toBlob(resolve,'image/jpeg',.96));if(!blob)throw new Error('Не удалось подготовить снимок.');
     const key=image.id+':'+[rect.x,rect.y,rect.w,rect.h].map(Math.round).join(',');
     function body(phase){const data=new FormData();data.append('image',blob,'label.jpg');data.append('csrf_token',field('csrf_token').value);data.append('phase',phase);return data;}
+    if(method==='gigachat'){
+      const data=await jsonRequest('/products/gigachat',body('text'),240000);
+      recognized.delete(key+':quick');recognized.set(key,data);resolved.clear();
+      if(data.quota){const q=$('[data-giga-quota]');q.dataset.remaining=data.quota.remaining;q.textContent=`GigaChat: осталось ${data.quota.remaining} из ${data.quota.limit} фото в этом месяце.`;}
+      return;
+    }
     let code='';
     try{
       const identified=await jsonRequest('/products/ocr',body('identify'),8000);
@@ -249,13 +290,20 @@
       if(identified.proposals?.barcode){code=identified.proposals.barcode;recognized.set(key+':quick',identified);autoFill();if(!identified.proposals.quantity && !touched.has('quantity') && field('quantity').value===defaults.quantity)field('quantity').value='';status('Карточка обработана. Читаем данные с упаковки…');}
     }catch(error){if(error.message.startsWith('На снимке несколько продуктов'))throw error;}
     // A second side of the same package can omit the barcode.
-    if(!code && !conflicts.barcode)code=field('barcode').value;
+    if(!code){const known=new Set([...recognized.values()].map(r=>r.proposals?.barcode).filter(Boolean));if(known.size===1)code=[...known][0];}
     const requestBody=body('text');if(code)requestBody.append('barcode',code);
     const data=await jsonRequest('/products/ocr',requestBody,95000);
     recognized.delete(key+':quick');recognized.set(key,data);resolved.clear();
   }
   async function scan(all=false,first=0){
-    if(!images[active]||busy)return;syncBusy(true);await stopCamera();
+    if(!images[active]||busy || method==='manual')return;
+    if(method==='gigachat'){
+      const quota=$('[data-giga-quota]');
+      if(quota.dataset.configured!=='yes'){status('GigaChat ещё не подключён: нужен ключ API в .env на сервере.',true);return;}
+      const needed=all?images.length-first:1;
+      if(Number(quota.dataset.remaining)<needed){status('Недостаточно обращений GigaChat. Выберите один снимок или используйте OCR.',true);return;}
+    }
+    syncBusy(true);await stopCamera();
     const jobs=all?images.slice(first).map(image=>({image,rect:{x:0,y:0,w:image.canvas.width,h:image.canvas.height}})):
       [{image:images[active],rect:crop||{x:0,y:0,w:images[active].canvas.width,h:images[active].canvas.height}}];
     const problems=[];let done=0;

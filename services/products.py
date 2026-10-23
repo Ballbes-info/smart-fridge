@@ -9,7 +9,7 @@ from data.storage import StorageLocation
 from data.product import ProductGroup, ProductBatch, ProductPreferences
 from services.storage import check_form
 from services import product_service as service
-from services import label_ocr, product_catalog
+from services import label_ocr, product_catalog, gigachat_label
 from services.auth_service import consume_limits
 from services.workspace import SECTIONS
 
@@ -31,6 +31,7 @@ def context_page(template, **kwargs):
     feature=next(item for item in SECTIONS['fridges']['functions'] if item['slug']==slug)
     return render_template(template,active_section='fridges',section=SECTIONS['fridges'],feature=feature,
                            units=service.UNITS,nutrition_bases=service.BASES,nutrients=service.NUTRIENTS,
+                           giga_quota=gigachat_label.allowance(session['user_id']),
                            shelf_units=service.SHELF_UNITS,product_csrf=session['storage_csrf'],**preferences_context(),**kwargs)
 
 
@@ -39,6 +40,8 @@ def own_storage(location_id, ses):
 
 
 def register_products(app, subscription_required, login_required):
+    scanner=label_ocr.runtime_status()
+    print(f"Сканер этикеток: {scanner['engine']} · Python {scanner['python']}")
     @products.app_template_filter('product_quantity')
     def quantity(micro,dimension): return service.quantity_text(micro,dimension)
 
@@ -144,6 +147,23 @@ def register_products(app, subscription_required, login_required):
         retry=consume_limits([('catalog-minute',session['user_id'],12,60)])
         if retry:return jsonify(error='Слишком много запросов. Повторите чуть позже.'),429,{'Retry-After':str(retry)}
         return jsonify(product_catalog.lookup(code,session['user_id']))
+
+    @products.route('/products/gigachat',methods=['POST'])
+    @subscription_required
+    def gigachat_scan():
+        request.max_content_length=9*1024*1024
+        try:
+            check_form()
+            retry=consume_limits([('gigachat-minute',session['user_id'],12,60)])
+            if retry:return jsonify(error='Слишком много запросов. Повторите через минуту.'),429,{'Retry-After':str(retry)}
+            upload=request.files.get('image')
+            if upload is None:return jsonify(error='Добавьте изображение этикетки.'),400
+            result=gigachat_label.recognize(upload.read(8*1024*1024+1),session['user_id'])
+            result['quota']=gigachat_label.allowance(session['user_id'])
+            return jsonify(result)
+        except RequestEntityTooLarge:return jsonify(error='Размер снимка превышает 8 МБ.'),413
+        except gigachat_label.ScanError as exc:return jsonify(error=str(exc)),exc.status
+        except label_ocr.OCRError as exc:return jsonify(error=str(exc)),422
 
     @products.route('/products/ocr',methods=['POST'])
     @subscription_required
