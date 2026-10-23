@@ -177,6 +177,8 @@ from services.product_import_routes import register_imports
 register_imports(app, subscription_required)
 from services.activity_routes import register_activity
 register_activity(app, login_required)
+from services.recipes import register_recipes
+register_recipes(app, subscription_required)
 
 
 # --------------------------------------------------------------------------- #
