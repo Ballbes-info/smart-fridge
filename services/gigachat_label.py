@@ -45,9 +45,14 @@ shelf_unit days, months или years. Условия хранения и «не 
 
 
 class ScanError(Exception):
-    def __init__(self, message, status=502):
+    def __init__(self, message, status=502, diagnostic=''):
         super().__init__(message)
         self.status = status
+        self.diagnostic = diagnostic
+
+
+class ResponseFormatError(ScanError):
+    """A completed provider response is not a usable structured payload."""
 
 
 def configured():
@@ -135,10 +140,40 @@ def access_token(client):
     return value
 
 
+LABEL_FIELDS=('name','brand','manufacturer','quantity','unit','ingredients','nutrition_basis','portion',
+              'calories','protein','fat','carbs','manufactured_date','expiry_date','shelf_value',
+              'shelf_unit','other_info','barcode')
+
+
+def label_function():
+    properties={key:{'type':'string'} for key in LABEL_FIELDS}
+    properties['unit']['enum']=['g','kg','ml','l','pcs','pack']
+    properties['nutrition_basis']['enum']=['100g','100ml','portion']
+    properties['shelf_unit']['enum']=['days','months','years']
+    return {'name':'record_product_label','description':'Передать только прочитанные с этикетки данные одного продукта.',
+            'parameters':{'type':'object','properties':{
+                'fields':{'type':'object','properties':properties},
+                'uncertain':{'type':'array','items':{'type':'string'}},
+                'text':{'type':'string','description':'Краткая выдержка, до 1500 символов.'}},'required':['fields']}}
+
+
+def wrapped_fields(value):
+    if not isinstance(value,dict):return None
+    if isinstance(value.get('fields'),dict):return value
+    # Some older responses omit the requested wrapper. Accept only declared field names.
+    if value and set(value).issubset(set(LABEL_FIELDS)|{'uncertain','text'}) and any(key in value for key in LABEL_FIELDS):
+        return {'fields':{key:val for key,val in value.items() if key in LABEL_FIELDS},
+                'uncertain':value.get('uncertain',[]),'text':value.get('text','')}
+    return None
+
+
 def response_object(content):
     """Recover formatting only; never complete truncated JSON or change field values."""
+    if isinstance(content,dict):
+        result=wrapped_fields(content)
+        if result is not None:return result
     if not isinstance(content,str) or len(content)>128*1024:
-        raise ScanError('GigaChat не вернул данные этикетки.')
+        raise ResponseFormatError('GigaChat не вернул данные этикетки.')
     content=content.lstrip('\ufeff').strip()
     # Remove trailing commas outside strings. Ingredients can contain commas, braces,
     # backslashes and quotes; those must remain byte-for-byte unchanged.
@@ -165,8 +200,11 @@ def response_object(content):
         except ValueError:
             position=start+1;continue
         if isinstance(value,dict) and isinstance(value.get('fields'),dict):candidates.append(value)
+        elif start==0 and not content[end:].strip():
+            wrapped=wrapped_fields(value)
+            if wrapped is not None:candidates.append(wrapped)
     if len(candidates)!=1:
-        raise ScanError('GigaChat вернул ответ, который не удалось разобрать. Снимок менять не обязательно; лимит не потрачен.')
+        raise ResponseFormatError('GigaChat вернул ответ, который не удалось разобрать. Лимит не потрачен.', diagnostic=content[:12000])
     return candidates[0]
 
 
@@ -209,6 +247,45 @@ def normalize_response(content):
     return result
 
 
+def completion_result(reply):
+    try:
+        choice=reply['choices'][0]
+        message=choice['message']
+        finish_reason=choice.get('finish_reason')
+        if finish_reason=='length':
+            raise ResponseFormatError('GigaChat обрезал ответ. Лимит не потрачен.',diagnostic=str(message.get('content',''))[:12000])
+        if finish_reason not in [None,'stop','function_call']:
+            raise ScanError('GigaChat не завершил разбор этикетки. Лимит не потрачен.')
+        call=message.get('function_call')
+        if call:
+            if not isinstance(call,dict) or call.get('name')!='record_product_label':
+                raise ResponseFormatError('GigaChat вернул неизвестный формат полей.')
+            return normalize_response(call.get('arguments'))
+        return normalize_response(message.get('content',''))
+    except (KeyError,IndexError,TypeError) as exc:
+        raise ResponseFormatError('GigaChat не вернул результат распознавания.') from exc
+
+
+def read_uploaded(client,file_id):
+    # Sequential attempts share one uploaded file and one user allowance reservation.
+    # No retries for network errors, rate limits, refusals or a genuinely empty label.
+    for attempt in range(2):
+        instruction=('Прочитай этикетку и передай поля через record_product_label.' if attempt==0 else
+                     'Предыдущий ответ не соответствовал формату. Прочитай эту же этикетку заново. '
+                     'Вызови record_product_label. Передай поля в fields, uncertain списком, text пустой строкой. '
+                     'Не пиши пояснений. Не меняй цифры ради согласованности.')
+        reply=request_json(client,'POST',API+'/chat/completions',json={
+            'model':os.environ.get('GIGACHAT_MODEL','GigaChat-2-Pro'),
+            'messages':[{'role':'system','content':PROMPT},
+                        {'role':'user','content':instruction,'attachments':[file_id]}],
+            'functions':[label_function()],'function_call':{'name':'record_product_label'},
+            'temperature':0.1,'max_tokens':4000 if attempt==0 else 5000,'stream':False})
+        try:return completion_result(reply)
+        except ResponseFormatError:
+            if attempt:raise
+            log.info('GigaChat: повторный разбор формата в рамках одного распознавания.')
+
+
 def recognize(raw,user_id):
     if not configured():raise ScanError('GigaChat ещё не подключён. Добавьте ключ API в .env на сервере.',503)
     image=prepare_image(raw)
@@ -225,16 +302,7 @@ def recognize(raw,user_id):
                 file_id=uploaded.get('id')
                 if not isinstance(file_id,str) or not re.fullmatch(r'[A-Za-z0-9_-]{1,128}',file_id):
                     file_id=None;raise ScanError('GigaChat не принял фотографию.')
-                reply=request_json(client,'POST',API+'/chat/completions',json={
-                    'model':os.environ.get('GIGACHAT_MODEL','GigaChat-2-Pro'),
-                    'messages':[{'role':'system','content':PROMPT},
-                                {'role':'user','content':'Прочитай этикетку и верни JSON.','attachments':[file_id]}],
-                    'temperature':0.1,'max_tokens':4000,'stream':False})
-                try:
-                    choice=reply['choices'][0]
-                    if choice.get('finish_reason') not in [None,'stop']:raise ScanError('GigaChat не завершил разбор этикетки. Попробуйте выделить область.')
-                    result=normalize_response(choice['message']['content'])
-                except (KeyError,IndexError,TypeError) as exc:raise ScanError('GigaChat не вернул результат распознавания.') from exc
+                result=read_uploaded(client,file_id)
                 success=True
             finally:
                 if file_id:

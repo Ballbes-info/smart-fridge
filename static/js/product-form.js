@@ -229,7 +229,16 @@
   async function jsonRequest(url,body,timeout){
     const response=await fetch(url,{method:'POST',body,signal:AbortSignal.timeout(timeout)});
     if(!response.headers.get('content-type')?.includes('application/json'))throw new Error('Сеанс истёк или сервер недоступен. Сохраните введённые данные и обновите страницу.');
-    const data=await response.json();if(!response.ok)throw new Error(data.error||'Не удалось прочитать снимок.');return data;
+    const data=await response.json();
+    if(!response.ok){
+      if(url==='/products/gigachat'){
+        const debug=$('[data-scan-debug]');debug.hidden=!data.diagnostic;
+        $('[data-scan-debug-text]').value=typeof data.diagnostic==='string'?data.diagnostic:'';
+      }
+      throw new Error(data.error||'Не удалось прочитать снимок.');
+    }
+    if(url==='/products/gigachat'){$('[data-scan-debug]').hidden=true;$('[data-scan-debug-text]').value='';}
+    return data;
   }
   function renderCatalog(){
     const container=$('[data-catalog-source]');container.replaceChildren();delete container.dataset.saved;container.hidden=true;

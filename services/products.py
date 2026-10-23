@@ -162,7 +162,7 @@ def register_products(app, subscription_required, login_required):
             result['quota']=gigachat_label.allowance(session['user_id'])
             return jsonify(result)
         except RequestEntityTooLarge:return jsonify(error='Размер снимка превышает 8 МБ.'),413
-        except gigachat_label.ScanError as exc:return jsonify(error=str(exc)),exc.status
+        except gigachat_label.ScanError as exc:return jsonify(error=str(exc),diagnostic=exc.diagnostic),exc.status
         except label_ocr.OCRError as exc:return jsonify(error=str(exc)),422
 
     @products.route('/products/ocr',methods=['POST'])

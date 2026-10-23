@@ -152,3 +152,5 @@
 .product-method-hint,.product-giga-quota{font-size:.85rem;line-height:1.6;margin:0 0 14px}
 .product-giga-quota{font-variant-numeric:tabular-nums;padding:10px 12px;border-left:2px solid var(--green);background:var(--mint)}
 .product-scanner[hidden],.product-giga-quota[hidden]{display:none!important}
+
+.product-scan-debug{margin:12px 0;font-size:13px}.product-scan-debug textarea{width:100%;margin-top:10px;background:var(--control-bg);color:var(--ink);border:1px solid var(--control-border);font:inherit;resize:vertical}
