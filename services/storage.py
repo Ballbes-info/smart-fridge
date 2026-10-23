@@ -9,6 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from data import db_session
 from data.storage import StorageLocation
 from data.billing import Subscription
+from data.product import ProductGroup, ProductPreferences
 from services.billing_service import PLANS, active
 from services.workspace import SECTIONS
 
@@ -34,6 +35,8 @@ def normalized(value):
 
 
 def owned(location_id, ses):
+    if not 0 < location_id <= 9223372036854775807:
+        abort(404)
     item = ses.scalar(select(StorageLocation).where(
         StorageLocation.id == location_id, StorageLocation.owner_id == session['user_id']))
     if item is None:
@@ -182,6 +185,7 @@ def register_storage(app, subscription_required):
     def remove(location_id):
         with db_session.create_session() as ses:
             item = owned(location_id, ses)
+            product_count = ses.scalar(select(func.count()).select_from(ProductGroup).where(ProductGroup.storage_id==location_id))
         error = None; status = 200
         if request.method == 'POST':
             check_form()
@@ -193,6 +197,13 @@ def register_storage(app, subscription_required):
                 status = 409
             else:
                 with db_session.create_session() as ses:
+                    ses.execute(text('BEGIN IMMEDIATE'))
+                    product_count = ses.scalar(select(func.count()).select_from(ProductGroup).where(ProductGroup.storage_id==location_id))
+                    if product_count:
+                        return page('storage_delete.html', item=item, error='В этом месте есть продукты. Удаление недоступно.',
+                                    product_count=product_count, workspace_back_url=url_for('storage.detail',location_id=location_id)),409
+                    ses.execute(update(ProductPreferences).where(ProductPreferences.user_id==session['user_id'],
+                                ProductPreferences.default_storage_id==location_id).values(default_storage_id=None))
                     result = ses.execute(delete(StorageLocation).where(
                         StorageLocation.id == location_id, StorageLocation.owner_id == session['user_id'],
                         StorageLocation.revision == item.revision))
@@ -201,7 +212,7 @@ def register_storage(app, subscription_required):
                     ses.commit()
                 flash('Место хранения удалено.', 'success')
                 return redirect(url_for('storage.index'))
-        return page('storage_delete.html', item=item, error=error,
+        return page('storage_delete.html', item=item, error=error, product_count=product_count,
                     workspace_back_url=url_for('storage.detail', location_id=location_id)), status
 
     app.register_blueprint(storage)

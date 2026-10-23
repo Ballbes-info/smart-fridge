@@ -59,3 +59,4 @@
 @media(max-width:640px) { .storage-grid { grid-template-columns:1fr; gap:16px; } .storage-filters { flex-wrap:wrap; padding:18px; } .storage-filters label:first-child { flex-basis:100%; } .storage-filters label { flex-basis:calc(100% - 120px); } .storage-form, .storage-details { padding:22px 18px; } .storage-details dl > div { grid-template-columns:1fr; gap:6px; } .storage-danger-zone { align-items:flex-start; flex-direction:column; gap:8px; } .app-page-heading:has(.storage-primary) { flex-wrap:wrap; } .storage-empty { padding:32px 18px; } .storage-empty h2 { font-size:20px; } }
 .storage-quota-message { max-width:700px; margin-bottom:20px; font-size:13px; line-height:1.8; }
 .storage-quota-message a { color:var(--green); text-decoration:underline; text-underline-offset:3px; }
+.storage-product-actions { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:22px; }

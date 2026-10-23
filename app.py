@@ -170,6 +170,8 @@ from services.workspace import register_workspace
 register_workspace(app, login_required, subscription_required)
 from services.storage import register_storage
 register_storage(app, subscription_required)
+from services.products import register_products
+register_products(app, subscription_required, login_required)
 
 
 # --------------------------------------------------------------------------- #
