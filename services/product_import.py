@@ -2,12 +2,8 @@
 import csv
 import io
 import json
-import os
 from pathlib import Path
 import re
-import shutil
-import subprocess
-import tempfile
 import zipfile
 from datetime import date, datetime
 from defusedxml import ElementTree as ET
@@ -15,7 +11,7 @@ from services import product_service as service
 
 MAX_BYTES = 5 * 1024 * 1024
 MAX_ROWS = 100
-EXTENSIONS = {'xlsx','xls','csv','tsv','txt','json','docx','doc','pdf','odt','ods','rtf'}
+EXTENSIONS = {'xlsx','xls','csv','tsv','txt','json','docx','pdf','odt','ods','rtf'}
 LABELS = dict(name='Название', brand='Марка', manufacturer='Производитель', quantity='Количество', unit='Единица',
     expiry_date='Годен до', manufactured_date='Дата изготовления', opened_date='Дата вскрытия',
     shelf_value='Срок хранения', shelf_unit='Единица срока', price='Цена партии', note='Заметка',
@@ -224,18 +220,9 @@ def read_file(filename,data):
                 content='\n'.join('\t'.join(re.split(r' {2,}',line.strip())) for line in lines if line.strip())
             if not content.strip():raise ImportProblem('В PDF нет текстового слоя. Загрузите документ с текстом или добавьте фото через OCR / ИИ.')
             rows=text_records(content)
-        elif ext=='rtf' or (ext=='doc' and data.lstrip().startswith(b'{\\rtf')):
+        elif ext=='rtf':
             from striprtf.striprtf import rtf_to_text
             rows=text_records(rtf_to_text(decode(data)))
-        elif ext=='doc':
-            converter=shutil.which(os.environ.get('ANTIWORD_CMD','antiword'))
-            if not converter:raise ImportProblem('Для старого DOC нужен antiword на сервере. Сохраните документ как DOCX или TXT и загрузите его.')
-            if not data.startswith(bytes.fromhex('D0CF11E0A1B11AE1')):raise ImportProblem('Это не документ DOC. Проверьте формат файла.')
-            with tempfile.TemporaryDirectory(prefix='smartfridge-import-') as tmp:
-                path=Path(tmp)/'input.doc';path.write_bytes(data)
-                result=subprocess.run([converter,'-m','UTF-8.txt',str(path)],capture_output=True,timeout=25,check=False)
-                if result.returncode:raise ImportProblem('Не удалось прочитать DOC. Сохраните его как DOCX.')
-                rows=text_records(result.stdout.decode('utf-8',errors='replace'))
         else:
             content=decode(data)
             if ext in ('csv','tsv'):
