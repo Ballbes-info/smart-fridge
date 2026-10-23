@@ -25,7 +25,7 @@
 {% if feature is defined %}
 <section class="workspace-feature-empty"><span class="app-empty-symbol">{{ icon(section.icon) }}</span><span class="workspace-status">В разработке</span><h2>Функция ещё не подключена</h2><p>Работа с данными появится позже.</p></section>
 {% else %}
-<section class="app-module-notice"><span class="app-notice-icon">{{ icon('clock') }}</span><div><h2>Раздел в разработке</h2><p>Доступны страницы функций. Работа с данными ещё не подключена.</p></div></section>
+<section class="app-module-notice"><span class="app-notice-icon">{{ icon('clock') }}</span><div>{% if active_section == 'fridges' %}<h2>Места хранения доступны</h2><p>Создавайте и редактируйте места хранения. Остальные функции раздела ещё не подключены.</p>{% else %}<h2>Раздел в разработке</h2><p>Доступны страницы функций. Работа с данными ещё не подключена.</p>{% endif %}</div></section>
 <div class="workspace-function-list">{% for item in section.functions %}<div class="sf-feature-row{% if item.locked %} sf-feature-locked{% endif %}"><div class="sf-feature-top"><a href="{{ url_for('workspace.feature', section=active_section, feature=item.slug) }}" {{ access_attrs(item) }}><span class="app-function-icon">{{ icon(item.icon|default(section.icon)) }}</span><strong>{{ item.name }}</strong>{{ icon('lock' if item.locked else 'chevron') }}</a>{{ help_button('help-' ~ item.slug, item.name) }}</div><p class="sf-help-copy" id="help-{{ item.slug }}" hidden>{{ item.description }}
 
 {{ section.help }}</p></div>{% endfor %}</div>

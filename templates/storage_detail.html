@@ -1,0 +1,8 @@
+{% extends 'workspace_base.html' %}
+{% block title %}{{ item.name }} — SmartFridge{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/storage.css') }}">{% endblock %}
+{% block workspace_content %}
+<header class="workspace-heading app-page-heading"><div><h1>{{ item.name }}</h1><p>{{ storage_kinds[item.kind] }}</p></div><a class="workspace-secondary-button" href="{{ url_for('storage.edit', location_id=item.id) }}">Редактировать</a></header>
+<section class="storage-details" aria-label="Данные места хранения"><dl><div><dt>Тип</dt><dd>{{ storage_kinds[item.kind] }}</dd></div><div><dt>Расположение</dt><dd>{{ item.location or 'Не указано' }}</dd></div><div><dt>Заметка</dt><dd class="storage-note">{{ item.note or 'Не добавлена' }}</dd></div><div><dt>Создано</dt><dd>{{ item.created_at|billing_date }}</dd></div>{% if item.updated_at != item.created_at %}<div><dt>Обновлено</dt><dd>{{ item.updated_at|billing_date }}</dd></div>{% endif %}</dl></section>
+<div class="storage-danger-zone"><div><h2>Удаление места</h2><p>Удаляет место хранения и его описание.</p></div><a class="storage-danger-link" href="{{ url_for('storage.remove', location_id=item.id) }}">Удалить место</a></div>
+{% endblock %}

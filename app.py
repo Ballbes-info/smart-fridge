@@ -168,6 +168,8 @@ def subscription_required(view):
 
 from services.workspace import register_workspace
 register_workspace(app, login_required, subscription_required)
+from services.storage import register_storage
+register_storage(app, subscription_required)
 
 
 # --------------------------------------------------------------------------- #

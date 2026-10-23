@@ -1,0 +1,14 @@
+{% extends 'workspace_base.html' %}
+{% block title %}Места хранения — SmartFridge{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/storage.css') }}">{% endblock %}
+{% block workspace_content %}
+<header class="workspace-heading app-page-heading"><div><h1>Места хранения</h1><p>Холодильники, морозильники и другие места для запасов.</p></div><a class="storage-primary" href="{{ url_for('storage.create') }}">{{ icon('plus') }}Создать место</a></header>
+{% if total %}
+<form class="storage-filters" method="get" action="{{ url_for('storage.index') }}"><label><span>Поиск</span><input name="q" type="search" value="{{ query }}" placeholder="Название или расположение…" maxlength="100" autocomplete="off"></label><label><span>Тип</span><select name="kind"><option value="">Все типы</option>{% for key, label in storage_kinds.items() %}<option value="{{ key }}" {% if selected_kind == key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label><button class="workspace-secondary-button" type="submit">Показать</button>{% if query or selected_kind %}<a class="storage-reset" href="{{ url_for('storage.index') }}">Сбросить</a>{% endif %}</form>
+<p class="storage-result-count">{% if query or selected_kind %}Найдено: {{ found }} из {{ total }}{% else %}Всего мест: {{ total }}{% endif %}</p>
+{% endif %}
+{% if items %}<div class="storage-grid">{% for place in items %}<a class="storage-tile" href="{{ url_for('storage.detail', location_id=place.id) }}"><div class="storage-tile-top"><span class="storage-kind-icon">{{ icon('fridge' if place.kind in ['fridge','freezer'] else 'grid') }}</span><span>{{ storage_kinds[place.kind] }}</span>{{ icon('chevron') }}</div><h2>{{ place.name }}</h2><p>{{ place.location or 'Расположение не указано' }}</p></a>{% endfor %}</div>
+{% elif total %}<section class="storage-empty"><h2>Места не найдены</h2><p>Измените название или выберите другой тип.</p><a class="workspace-secondary-button" href="{{ url_for('storage.index') }}">Сбросить фильтры</a></section>
+{% else %}<section class="storage-empty"><span class="storage-empty-icon">{{ icon('fridge') }}</span><h2>Мест хранения пока нет</h2><p>Добавьте первое место, например холодильник на кухне или морозильник на даче.</p><a class="storage-primary" href="{{ url_for('storage.create') }}">{{ icon('plus') }}Создать место</a></section>{% endif %}
+{% if pages > 1 %}<nav class="storage-pagination" aria-label="Страницы мест хранения">{% if current_page > 1 %}<a class="workspace-secondary-button" href="{{ url_for('storage.index', q=query, kind=selected_kind, page=current_page-1) }}">Предыдущая</a>{% endif %}<span>Страница {{ current_page }} из {{ pages }}</span>{% if current_page < pages %}<a class="workspace-secondary-button" href="{{ url_for('storage.index', q=query, kind=selected_kind, page=current_page+1) }}">Следующая</a>{% endif %}</nav>{% endif %}
+{% endblock %}

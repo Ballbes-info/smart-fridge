@@ -1,5 +1,7 @@
 /* Application navigation only. All destinations are existing page shells. */
 (() => {
+  const errors = document.querySelector('[data-storage-errors]');
+  if (errors) errors.focus();
   const desktop = window.matchMedia('(min-width: 901px)');
   const openers = new WeakMap();
   const getDrawer = () => document.getElementById('workspace-drawer');

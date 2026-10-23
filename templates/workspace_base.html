@@ -25,7 +25,7 @@
     </div>
   </aside>
   <div class="workspace-content">
-    {% if active_section|default('') != 'home' %}<a class="sf-back-link" href="{{ url_for('workspace.section', section=active_section) if feature is defined else url_for('workspace.settings') if request.endpoint == 'billing.settings' else url_for('workspace.home') }}">{{ icon('back') }}Назад</a>{% endif %}
+    {% if active_section|default('') != 'home' %}<a class="sf-back-link" href="{{ workspace_back_url if workspace_back_url is defined else url_for('workspace.section', section=active_section) if feature is defined else url_for('workspace.settings') if request.endpoint == 'billing.settings' else url_for('workspace.home') }}">{{ icon('back') }}Назад</a>{% endif %}
     {% block workspace_content %}
 {% endblock %}
     <footer class="workspace-footnote"><span translate="no">SmartFridge</span><span>Личное пространство</span></footer>

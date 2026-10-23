@@ -1,0 +1,9 @@
+{% extends 'workspace_base.html' %}
+{% block title %}Удаление места — SmartFridge{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/storage.css') }}">{% endblock %}
+{% block workspace_content %}
+<header class="workspace-heading"><h1>Удалить место хранения?</h1></header>
+<form class="storage-form storage-delete-form" method="post" action="{{ url_for('storage.remove', location_id=item.id) }}"><input type="hidden" name="csrf_token" value="{{ storage_csrf }}"><input type="hidden" name="revision" value="{{ item.revision }}">
+{% if error %}<p class="storage-errors" role="alert" tabindex="-1" data-storage-errors>{{ error }}</p>{% endif %}
+<h2>{{ item.name }}</h2><p>{{ storage_kinds[item.kind] }}{% if item.location %} · {{ item.location }}{% endif %}</p><p>Место и его описание будут удалены. Отменить это действие нельзя.</p><label class="storage-delete-confirm"><input name="confirm" type="checkbox" value="yes" required><span>Подтверждаю удаление «{{ item.name }}»</span></label><div class="storage-form-actions"><a class="workspace-secondary-button" href="{{ workspace_back_url }}">Отмена</a><button class="storage-danger-button" type="submit">Удалить место</button></div></form>
+{% endblock %}

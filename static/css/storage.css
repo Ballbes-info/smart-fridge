@@ -1,0 +1,59 @@
+/* Storage is real account data; retain the application palette and square geometry. */
+.storage-primary { display:inline-flex; align-items:center; justify-content:center; gap:10px; min-height:44px; padding:11px 18px; background:var(--button-bg); color:var(--button-ink); border:1px solid var(--button-bg); font-size:13px; flex-shrink:0; }
+.storage-primary:hover { background:var(--button-hover); border-color:var(--button-hover); color:var(--button-ink); }
+.storage-primary .icon { width:18px; height:18px; }
+.storage-filters { display:flex; align-items:flex-end; gap:14px; padding:20px; border:1px solid var(--line); background:var(--surface); }
+.storage-filters label { display:flex; flex-direction:column; gap:7px; min-width:0; flex:1; font-size:12px; }
+.storage-filters label:first-child { flex:2; }
+.storage-filters input, .storage-filters select, .storage-field input, .storage-field select, .storage-field textarea { width:100%; min-height:46px; border:1px solid var(--control-border); background:var(--control-bg); color:var(--ink); padding:11px 12px; border-radius:0; font:inherit; font-size:14px; }
+.storage-filters input::placeholder, .storage-field input::placeholder, .storage-field textarea::placeholder { color:var(--muted); opacity:1; }
+.storage-reset { display:inline-flex; align-items:center; min-height:44px; font-size:12px; color:var(--green); }
+.storage-result-count { font-size:12px; padding:18px 0; }
+.storage-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; }
+.storage-tile { display:block; min-width:0; padding:22px; background:var(--surface); border:1px solid var(--line); border-top:2px solid var(--green); }
+.storage-tile:hover { border-color:var(--green); background:var(--app-soft); }
+.storage-tile-top { display:flex; align-items:center; gap:10px; font-size:12px; color:var(--muted); margin-bottom:26px; }
+.storage-tile-top > .icon { width:13px; height:13px; margin-left:auto; flex-shrink:0; }
+.storage-kind-icon { display:grid; place-items:center; width:36px; height:36px; background:var(--mint); color:var(--green); flex-shrink:0; }
+.storage-kind-icon .icon { width:20px; height:20px; }
+.storage-tile h2 { font-size:19px; font-weight:550; line-height:1.45; letter-spacing:-.025em; margin-bottom:8px; overflow-wrap:anywhere; }
+.storage-tile p { font-size:12px; line-height:1.7; overflow-wrap:anywhere; }
+.storage-empty { padding:48px 24px; text-align:center; border:1px solid var(--line); background:var(--surface); }
+.storage-empty-icon { display:inline-grid; place-items:center; width:64px; height:64px; background:var(--mint); color:var(--green); margin-bottom:20px; }
+.storage-empty-icon .icon { width:32px; height:32px; }
+.storage-empty h2 { font-size:22px; font-weight:550; margin-bottom:12px; }
+.storage-empty p { max-width:440px; margin:0 auto 24px; font-size:14px; line-height:1.8; }
+.storage-form, .storage-details { padding:28px; max-width:700px; background:var(--surface); border:1px solid var(--line); }
+.storage-field { display:flex; flex-direction:column; gap:8px; margin-bottom:22px; font-size:13px; }
+.storage-field > span { display:flex; align-items:baseline; gap:12px; }
+.storage-field > span small { font-size:11px; color:var(--muted); }
+.storage-field > small { font-size:12px; color:var(--muted); line-height:1.6; }
+.storage-field textarea { resize:vertical; min-height:110px; }
+.storage-field [aria-invalid] { border-color:var(--danger); }
+.storage-field .storage-field-error { color:var(--danger); }
+.storage-form-actions { display:flex; flex-wrap:wrap; gap:12px; padding-top:8px; }
+.storage-errors { margin-bottom:24px; padding:16px; border-left:3px solid var(--danger); background:var(--app-soft); color:var(--danger); font-size:13px; line-height:1.8; }
+.storage-errors h2 { font-size:14px; font-weight:600; margin-bottom:7px; }
+.storage-errors p { color:inherit; margin-top:6px; }
+.storage-errors a { text-decoration:underline; text-underline-offset:3px; }
+.storage-details dl { margin:0; }
+.storage-details dl > div { display:grid; grid-template-columns:140px minmax(0,1fr); gap:20px; padding:18px 0; border-bottom:1px solid var(--line); font-size:14px; }
+.storage-details dl > div:first-child { padding-top:0; }
+.storage-details dl > div:last-child { border:0; padding-bottom:0; }
+.storage-details dt { color:var(--muted); }
+.storage-details dd { margin:0; overflow-wrap:anywhere; }
+.storage-note { white-space:pre-wrap; }
+.storage-danger-zone { display:flex; justify-content:space-between; align-items:center; gap:20px; max-width:700px; margin-top:28px; padding-top:22px; border-top:1px solid var(--line); }
+.storage-danger-zone h2 { font-size:14px; font-weight:550; margin-bottom:6px; }
+.storage-danger-zone p { font-size:12px; }
+.storage-danger-link { display:inline-flex; align-items:center; min-height:44px; color:var(--danger); font-size:13px; flex-shrink:0; }
+.storage-danger-link:hover { text-decoration:underline; }
+.storage-danger-button { min-height:44px; padding:10px 18px; background:transparent; color:var(--danger); border:1px solid var(--danger); font-size:13px; }
+.storage-danger-button:hover { background:var(--app-soft); }
+.storage-delete-form h2 { font-size:22px; margin-bottom:8px; overflow-wrap:anywhere; }
+.storage-delete-form > p { font-size:14px; line-height:1.8; margin-bottom:18px; overflow-wrap:anywhere; }
+.storage-delete-confirm { display:flex; gap:12px; align-items:flex-start; margin:24px 0; font-size:14px; overflow-wrap:anywhere; }
+.storage-delete-confirm input { width:18px; height:18px; flex:0 0 18px; margin-top:3px; accent-color:var(--green); }
+.storage-pagination { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:20px; padding-top:24px; font-size:13px; }
+@media(max-width:1200px) { .storage-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:640px) { .storage-grid { grid-template-columns:1fr; gap:16px; } .storage-filters { flex-wrap:wrap; padding:18px; } .storage-filters label:first-child { flex-basis:100%; } .storage-filters label { flex-basis:calc(100% - 120px); } .storage-form, .storage-details { padding:22px 18px; } .storage-details dl > div { grid-template-columns:1fr; gap:6px; } .storage-danger-zone { align-items:flex-start; flex-direction:column; gap:8px; } .app-page-heading:has(.storage-primary) { flex-wrap:wrap; } .storage-empty { padding:32px 18px; } .storage-empty h2 { font-size:20px; } }
