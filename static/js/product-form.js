@@ -15,17 +15,22 @@
   const field = name => form.elements.namedItem(name);
   let method='manual';
   const methodInputs=[...document.querySelectorAll('[name=entry_method]')];
+  function isAI(){return method==='gigachat'||method==='product';}
+  function recognizeCaption(){return method==='product'?'Распознать продукт':method==='gigachat'?'Распознать этикетку':'Заполнить по фото';}
   function setMethod(value){
     method=value;scanner.hidden=value==='manual';
     if(value==='manual')void stopCamera();
     document.querySelector('.product-entry-layout').classList.toggle('is-manual',value==='manual');
     if(value!=='manual')toggleScanner(true);
-    $('#label-scanner-title').textContent=value==='gigachat'?'Распознать через GigaChat':'Сканировать этикетку';
-    $('[data-method-hint]').textContent=value==='gigachat'?'Загрузите фото и нажмите «Распознать через GigaChat». Один снимок — одно обращение.':'OCR читает текст на сервере. Сложные этикетки могут потребовать исправлений.';
-    $('[data-giga-quota]').hidden=value!=='gigachat';
-    $('[data-scan-privacy]').textContent=value==='gigachat'?'При нажатии кнопки выбранное фото отправляется в GigaChat. После обработки сервер запрашивает удаление загруженного файла.':'Фото OCR обрабатывается на сервере SmartFridge. В Open Food Facts передаётся только штрихкод.';
-    $('[data-recognize]').textContent=value==='gigachat'?'Распознать через GigaChat':'Заполнить по фото';
-    if(value==='gigachat' && $('[data-giga-quota]').dataset.configured!=='yes')status('GigaChat ещё не подключён: нужен ключ API в .env на сервере.',true);
+    $('#label-scanner-title').textContent=value==='product'?'Распознать продукт':value==='gigachat'?'Распознать этикетку · ИИ':'Сканировать этикетку';
+    $('[data-method-hint]').textContent=value==='product'?'Сфотографируйте один продукт или блюдо. ИИ предложит название и категорию; количество — если предметы можно пересчитать. Вес укажите сами.':value==='gigachat'?'Загрузите этикетку и нажмите «Распознать этикетку». Один снимок — одно обращение.':'OCR читает текст на сервере. Сложные этикетки могут потребовать исправлений.';
+    $('[data-giga-quota]').hidden=!isAI();
+    $('[data-scan-privacy]').textContent=isAI()?'При нажатии кнопки выбранное фото отправляется в GigaChat. После обработки сервер запрашивает удаление загруженного файла.':'Фото OCR обрабатывается на сервере SmartFridge. В Open Food Facts передаётся только штрихкод.';
+    $('.product-code-search').hidden=value==='product';
+    $('.product-ocr-results h3').textContent=value==='product'?'Продукт на фото':'Данные с этикетки';
+    $('[data-recognize]').textContent=recognizeCaption();
+    $('[data-scan-debug]').hidden=true;
+    if(isAI() && $('[data-giga-quota]').dataset.configured!=='yes')status('GigaChat ещё не подключён: нужен ключ API в .env на сервере.',true);
     else status('');
   }
   methodInputs.forEach(input=>input.addEventListener('change',()=>{if(!busy)setMethod(input.value);}));
@@ -68,15 +73,16 @@
     const change = document.createElement('span');change.textContent='Изменить';summary.append(change);
     const listLink=form.querySelector('[data-product-list-link]');const url=new URL(listLink.href);url.searchParams.set('storage_id',storage.value);listLink.href=url;
   });
-  const labels = {name:'Название',brand:'Марка',manufacturer:'Производитель',quantity:'Количество',unit:'Единица',ingredients:'Состав',calories:'Калории, ккал',protein:'Белки, г',fat:'Жиры, г',carbs:'Углеводы, г',nutrition_basis:'Основание КБЖУ',portion:'Порция',manufactured_date:'Дата изготовления',expiry_date:'Годен до',shelf_value:'Срок хранения',shelf_unit:'Единица срока',other_info:'Другие сведения',barcode:'Штрихкод',amount:'Количество'};
+  const labels = {category:'Категория',name:'Название',brand:'Марка',manufacturer:'Производитель',quantity:'Количество',unit:'Единица',ingredients:'Состав',calories:'Калории, ккал',protein:'Белки, г',fat:'Жиры, г',carbs:'Углеводы, г',nutrition_basis:'Основание КБЖУ',portion:'Порция',manufactured_date:'Дата изготовления',expiry_date:'Годен до',shelf_value:'Срок хранения',shelf_unit:'Единица срока',other_info:'Другие сведения',barcode:'Штрихкод',amount:'Количество'};
   const friendly = {g:'г',kg:'кг',ml:'мл',l:'л',pcs:'шт.',pack:'уп.','100g':'На 100 г','100ml':'На 100 мл',portion:'На порцию',days:'дней',months:'месяцев',years:'лет'};
+  for(const option of form.querySelector('[name=category]').options)if(option.value)friendly[option.value]=option.textContent;
   const images = []; let active = 0, crop = null, stream = null, cameraGeneration = 0, photoSequence = 0, busy = false, proposals = {}, recognized = new Map();
   const canvas = $('[data-crop-canvas]'), ctx = canvas.getContext('2d');
   function status(text, error = false) { $('[data-scan-status]').textContent = text; $('[data-scan-status]').classList.toggle('is-error',error); }
   function syncBusy(value) {
     busy=value;methodInputs.forEach(input=>{input.disabled=value;});
     scanner.querySelectorAll('button,input[type=file]').forEach(button=>{button.disabled=value;});
-    $('[data-recognize]').textContent=value?'Распознаём…':method==='gigachat'?'Распознать через GigaChat':'Заполнить по фото';
+    $('[data-recognize]').textContent=value?'Распознаём…':recognizeCaption();
     scanner.setAttribute('aria-busy',String(value));
   }
   function cropInputs(rect) {
@@ -286,8 +292,10 @@
     const blob=await new Promise(resolve=>output.toBlob(resolve,'image/jpeg',.96));if(!blob)throw new Error('Не удалось подготовить снимок.');
     const key=image.id+':'+[rect.x,rect.y,rect.w,rect.h].map(Math.round).join(',');
     function body(phase){const data=new FormData();data.append('image',blob,'label.jpg');data.append('csrf_token',field('csrf_token').value);data.append('phase',phase);return data;}
-    if(method==='gigachat'){
-      const data=await jsonRequest('/products/gigachat',body('text'),240000);
+    if(isAI()){
+      const request=body('text');request.append('kind',method==='product'?'product':'label');
+      if(method==='product' && !touched.has('quantity') && field('quantity').value===defaults.quantity)field('quantity').value='';
+      const data=await jsonRequest('/products/gigachat',request,360000);
       recognized.delete(key+':quick');recognized.set(key,data);resolved.clear();
       if(data.quota){const q=$('[data-giga-quota]');q.dataset.remaining=data.quota.remaining;q.textContent=`GigaChat: осталось ${data.quota.remaining} из ${data.quota.limit} фото в этом месяце.`;}
       return;
@@ -306,7 +314,7 @@
   }
   async function scan(all=false,first=0){
     if(!images[active]||busy || method==='manual')return;
-    if(method==='gigachat'){
+    if(isAI()){
       const quota=$('[data-giga-quota]');
       if(quota.dataset.configured!=='yes'){status('GigaChat ещё не подключён: нужен ключ API в .env на сервере.',true);return;}
       const needed=all?images.length-first:1;

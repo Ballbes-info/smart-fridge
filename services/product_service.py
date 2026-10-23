@@ -17,7 +17,10 @@ UNITS = {'g': ('г', 'mass', 1), 'kg': ('кг', 'mass', 1000), 'ml': ('мл', 'v
 BASES = {'100g': 'На 100 г', '100ml': 'На 100 мл', 'portion': 'На порцию'}
 SHELF_UNITS = {'days': 'дней', 'months': 'месяцев', 'years': 'лет'}
 NUTRIENTS = {'calories': 'Калории, ккал', 'protein': 'Белки, г', 'fat': 'Жиры, г', 'carbs': 'Углеводы, г'}
-FIELDS = ['name', 'brand', 'manufacturer', 'quantity', 'unit', 'expiry_date', 'manufactured_date',
+CATEGORIES={'vegetables':'Овощи','fruits':'Фрукты и ягоды','meat':'Мясо и птица','fish':'Рыба и морепродукты',
+            'dairy':'Молочные продукты','eggs':'Яйца','grains':'Крупы и макароны','bakery':'Хлеб и выпечка',
+            'sweets':'Сладости','ready':'Готовое блюдо','other':'Другое'}
+FIELDS = ['category', 'name', 'brand', 'manufacturer', 'quantity', 'unit', 'expiry_date', 'manufactured_date',
           'shelf_value', 'shelf_unit', 'opened_date', 'price', 'note', 'ingredients',
           'nutrition_basis', 'portion', 'calories', 'protein', 'fat', 'carbs', 'other_info', 'barcode', 'catalog_source']
 
@@ -61,6 +64,7 @@ def validate(form):
         values[key] = clean(values[key])
         if len(values[key]) > limit or any(unicodedata.category(c).startswith('C') for c in values[key]):
             errors[key] = f'Не более {limit} символов, без управляющих знаков.'
+    if values['category'] and values['category'] not in CATEGORIES:errors['category']='Выберите категорию из списка.'
     if not values['name']: errors['name'] = 'Укажите название продукта.'
     from services.product_catalog import valid_gtin
     if values['barcode'] and not valid_gtin(values['barcode']):errors['barcode']='Проверьте штрихкод: нужны 8, 12, 13 или 14 цифр и правильная контрольная цифра.'
@@ -118,7 +122,7 @@ def validate(form):
                 if nutrition[key] and Decimal(nutrition[key]) > 100: errors[key] = 'На 100 г/мл значение не может превышать 100 г.'
     elif values['nutrition_basis'] and values['nutrition_basis'] not in BASES: errors['nutrition_basis'] = 'Выберите основание КБЖУ.'
     details = {key: values[key] for key in ['ingredients','nutrition_basis','portion','other_info']}
-    for key in ['barcode','catalog_source']:
+    for key in ['barcode','catalog_source','category']:
         if values[key]:details[key]=values[key]
     details.update(nutrition)
     parsed.update(dates, shelf_value=shelf, shelf_unit=values['shelf_unit'] if shelf else None, details=details)

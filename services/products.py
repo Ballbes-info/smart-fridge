@@ -32,6 +32,7 @@ def context_page(template, **kwargs):
     return render_template(template,active_section='fridges',section=SECTIONS['fridges'],feature=feature,
                            units=service.UNITS,nutrition_bases=service.BASES,nutrients=service.NUTRIENTS,
                            giga_quota=gigachat_label.allowance(session['user_id']),
+                           product_vision_allowed=gigachat_label.product_allowed(session['user_id']),categories=service.CATEGORIES,
                            shelf_units=service.SHELF_UNITS,product_csrf=session['storage_csrf'],**preferences_context(),**kwargs)
 
 
@@ -154,11 +155,15 @@ def register_products(app, subscription_required, login_required):
         request.max_content_length=9*1024*1024
         try:
             check_form()
+            kind=request.form.get('kind','label')
+            if kind not in ['label','product']:return jsonify(error='Неизвестный режим распознавания.'),400
+            if kind=='product' and not gigachat_label.product_allowed(session['user_id']):
+                return jsonify(error='Распознавание продукта по внешнему виду доступно в Премиум и Семейном премиуме.'),403
             retry=consume_limits([('gigachat-minute',session['user_id'],12,60)])
             if retry:return jsonify(error='Слишком много запросов. Повторите через минуту.'),429,{'Retry-After':str(retry)}
             upload=request.files.get('image')
             if upload is None:return jsonify(error='Добавьте изображение этикетки.'),400
-            result=gigachat_label.recognize(upload.read(8*1024*1024+1),session['user_id'])
+            result=gigachat_label.recognize(upload.read(8*1024*1024+1),session['user_id'],kind=kind)
             result['quota']=gigachat_label.allowance(session['user_id'])
             return jsonify(result)
         except RequestEntityTooLarge:return jsonify(error='Размер снимка превышает 8 МБ.'),413
