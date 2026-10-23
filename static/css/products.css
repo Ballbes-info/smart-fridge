@@ -169,6 +169,24 @@
 .product-operation-panel [data-use-all]{margin:0 0 20px}.product-delete-confirm{display:flex;align-items:center;gap:12px;margin:24px 0;font-size:14px}.product-delete-confirm input{width:18px;height:18px;flex-shrink:0}
 .product-history-link{display:inline-block;color:var(--green);font-size:13px;margin-top:10px;min-height:30px}
 .product-history{display:grid;gap:16px}.product-history-entry{padding:22px;border:1px solid var(--line);background:var(--surface)}.product-history-entry header{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}.product-history-entry h2{font-size:16px}.product-history-entry time{font-size:12px;color:var(--muted)}.product-history-entry p,.product-history-entry dl{font-size:14px;line-height:1.7;margin-top:10px}.product-history-entry summary{cursor:pointer;font-size:13px;margin-top:14px}.product-history-entry dd{margin:0;overflow-wrap:anywhere}
-.product-date-badge.is-soon{background:var(--mint);color:var(--green);border:1px solid var(--green)}
+
 .product-list-filters{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px}.product-list-filters>label{flex:1 1 160px;min-width:0}.product-list-filters>label:first-child{flex-basis:220px}
 @media(max-width:600px){.product-operation-panel{padding:20px 16px}.product-operation-summary>div{flex-wrap:wrap}.product-batch-actions>*{flex:1 1 auto;justify-content:center}.product-list-filters>label{flex-basis:calc(50% - 12px)}.product-list-filters>label:first-child{flex-basis:100%}}
+
+/* Expiry is conveyed by text and a restrained tint, in both themes. */
+.product-expiry-expired{--expiry-edge:#bb5751;--expiry-tint:#fff5f3}
+.product-expiry-soon{--expiry-edge:#bd8b30;--expiry-tint:#fffaf0}
+.product-expiry-fresh{--expiry-edge:#468566;--expiry-tint:#f3faf6}
+.product-expiry-unknown,.product-expiry-finished{--expiry-edge:var(--control-border);--expiry-tint:var(--surface)}
+.product-list-card[class*="product-expiry-"],.product-batch[class*="product-expiry-"]{border-left:3px solid var(--expiry-edge);background:var(--expiry-tint)}
+.product-catalog-expiry{display:inline-block;margin-top:12px}
+.product-catalog-expiry+.product-date-badge{display:inline-block;margin:6px 0 0 8px}
+.product-date-badge.is-soon{color:#72521c;background:#f5ebd3;border-color:#d6bb82}
+.product-date-badge.is-fresh{color:#286044;background:#e6f3eb;border-color:#9cc5ad}
+.product-date-badge.is-unknown,.product-date-badge.is-finished{color:var(--muted);background:var(--control-bg);border-color:var(--control-border)}
+[data-theme='dark'] .product-expiry-expired{--expiry-edge:#aa6862;--expiry-tint:#30272a}
+[data-theme='dark'] .product-expiry-soon{--expiry-edge:#ad9154;--expiry-tint:#2d2b24}
+[data-theme='dark'] .product-expiry-fresh{--expiry-edge:#5c9379;--expiry-tint:#222e2b}
+[data-theme='dark'] .product-date-badge.is-soon{color:#e0ca91;background:#383221;border-color:#756339}
+[data-theme='dark'] .product-date-badge.is-fresh{color:#acd2bc;background:#253b30;border-color:#527a64}
+@media(max-width:640px){.product-catalog-expiry+.product-date-badge{margin-left:0}}

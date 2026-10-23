@@ -6,3 +6,5 @@ from .storage import StorageLocation
 from .product import ProductGroup, ProductBatch, ProductPreferences, ProductScanUsage, ProductMutation, ProductNotificationRead, ProductImport
 
 from .scan_credits import ScanRequest, ScanCreditPack
+
+from .activity import ActivityEvent

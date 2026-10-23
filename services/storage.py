@@ -10,6 +10,7 @@ from data import db_session
 from data.storage import StorageLocation
 from data.billing import Subscription
 from data.product import ProductGroup, ProductPreferences
+from data.activity import ActivityEvent
 from services.billing_service import PLANS, active
 from services.workspace import SECTIONS
 
@@ -170,6 +171,9 @@ def register_storage(app, subscription_required):
                                 **values, name_key=values['name'].casefold(), updated_at=time.time(), revision=item.revision+1))
                         if result.rowcount != 1:
                             abort(409, description='Место изменилось. Обновите страницу перед сохранением.')
+                        before={key:getattr(item,key) for key in ['name','kind','location','note']}
+                        if before!=values:
+                            ses.add(ActivityEvent(owner_id=session['user_id'],category='storage',action='storage_changed',before=before,after=values))
                         ses.commit()
                     flash('Изменения сохранены.', 'success')
                     return redirect(url_for('storage.detail', location_id=location_id))
@@ -202,13 +206,14 @@ def register_storage(app, subscription_required):
                     if product_count:
                         return page('storage_delete.html', item=item, error='В этом месте есть продукты. Удаление недоступно.',
                                     product_count=product_count, workspace_back_url=url_for('storage.detail',location_id=location_id)),409
-                    ses.execute(update(ProductPreferences).where(ProductPreferences.user_id==session['user_id'],
-                                ProductPreferences.default_storage_id==location_id).values(default_storage_id=None))
+                    pref=ses.get(ProductPreferences,session['user_id'])
+                    if pref and pref.default_storage_id==location_id:pref.default_storage_id=None
                     result = ses.execute(delete(StorageLocation).where(
                         StorageLocation.id == location_id, StorageLocation.owner_id == session['user_id'],
                         StorageLocation.revision == item.revision))
                     if result.rowcount != 1:
                         abort(409, description='Место изменилось. Обновите страницу перед удалением.')
+                    ses.add(ActivityEvent(owner_id=session['user_id'],category='storage',action='storage_deleted',before={key:getattr(item,key) for key in ['name','kind','location','note']}))
                     ses.commit()
                 flash('Место хранения удалено.', 'success')
                 return redirect(url_for('storage.index'))

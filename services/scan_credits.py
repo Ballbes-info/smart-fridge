@@ -10,6 +10,7 @@ from data import db_session
 from data.billing import Subscription,BillingOrder
 from data.product import ProductScanUsage
 from data.scan_credits import ScanRequest,ScanCreditPack
+from data.activity import ActivityEvent
 from services.billing_service import PLANS,active
 from services.local_gateway import PaymentError,demo_cards
 
@@ -93,17 +94,24 @@ def reserve(user_id,kind='label'):
             if pack_id is None:raise LimitReached('Пакет распознаваний закончился.')
         key=uuid.uuid4().hex
         ses.add(ScanRequest(id=key,user_id=user_id,kind=kind,period_start=quota['period_start'],
-                            credit_pack_id=pack_id,status='pending',created_at=time.time()));ses.commit()
+                            credit_pack_id=pack_id,status='pending',created_at=time.time()))
+        ses.add(ActivityEvent(id=key,owner_id=user_id,category='ai',action='recognition',after=dict(kind=kind,status='pending',credit_pack_id=pack_id,charged=0)))
+        ses.commit()
         return key
 
 
-def finish(key,success):
+def finish(key,success,*,usage=None,error='',product_name=''):
     with db_session.create_session() as ses:
+        ses.execute(text('BEGIN IMMEDIATE'))
         item=ses.get(ScanRequest,key)
+        log=ses.get(ActivityEvent,key)
         if item:
             if success:item.status='used'
             else:ses.delete(item)
-            ses.commit()
+        if log and log.after.get('status')=='pending':
+            log.after={**log.after,'status':'used' if success and item else 'failed','charged':1 if success and item else 0,
+                       'usage':usage or {},'error':str(error)[:500],'product_name':str(product_name)[:120],'finished_at':time.time()}
+        ses.commit()
 
 
 def new_order(user_id,package_id,submission):

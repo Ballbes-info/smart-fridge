@@ -26,6 +26,7 @@ from flask import (
     url_for,
 )
 from services.auth_service import complete_code, consume_limits, issue_code
+from services.activity_audit import record as record_activity
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "db" / "smartfridge.db"
@@ -174,6 +175,8 @@ from services.products import register_products
 register_products(app, subscription_required, login_required)
 from services.product_import_routes import register_imports
 register_imports(app, subscription_required)
+from services.activity_routes import register_activity
+register_activity(app, login_required)
 
 
 # --------------------------------------------------------------------------- #
@@ -222,6 +225,7 @@ def register():
                 ses.add(user)
                 ses.commit()
                 user_id = user.id
+                record_activity(user_id, "account_created", after={"name":user.name,"email":user.email})
             finally:
                 ses.close()
 
@@ -263,6 +267,7 @@ def login():
         else:
             session.clear()
             session["user_id"] = user.id
+            record_activity(user.id, "login")
             flash("Вы вошли в аккаунт.", "success")
             return redirect(next_url)
 
@@ -271,6 +276,8 @@ def login():
 
 @app.route("/logout", methods=["POST"])
 def logout():
+    if session.get("user_id"):
+        record_activity(session["user_id"], "logout")
     session.clear()
     flash("Вы вышли из аккаунта.", "success")
     return redirect(url_for("index"))

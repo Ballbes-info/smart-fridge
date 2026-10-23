@@ -11,6 +11,7 @@
     {% if not item.locked %}<div class="sf-subnav" id="{{ prefix }}-{{ key }}" {% if not selected %}hidden{% endif %}>{% for function in item.functions %}<a href="{{ url_for('workspace.feature', section=key, feature=function.slug) }}" {{ access_attrs(function) }} {% if selected and feature is defined and feature.slug == function.slug %}aria-current="page"{% endif %}><span>{{ function.name }}</span>{% if function.locked %}{{ icon('lock') }}{% endif %}</a>{% endfor %}</div>{% endif %}
   </div>
   {% endfor %}{% endfor %}
+  <a class="sf-nav-main" href="{{ url_for('activity.index') }}" {% if request.blueprint=='activity' %}aria-current="page"{% endif %}>{{ icon('chart') }}<span>История</span></a>
 </nav>
 {% endmacro %}
 {% block content %}

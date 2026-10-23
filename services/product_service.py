@@ -143,7 +143,7 @@ def save(owner_id, storage_id, submission_key, values, parsed):
         return result
 
 
-def save_in_session(ses, owner_id, storage_id, submission_key, values, parsed):
+def save_in_session(ses, owner_id, storage_id, submission_key, values, parsed, *, source='add', source_note=''):
     """Caller owns the transaction; shared by single entry and atomic file imports."""
     details = parsed['details']
     identity = {key: clean(values[key]).casefold() for key in ['name','brand','manufacturer']}
@@ -173,6 +173,14 @@ def save_in_session(ses, owner_id, storage_id, submission_key, values, parsed):
                        shelf_value=parsed['shelf_value'], shelf_unit=parsed['shelf_unit'], opened_date=parsed['opened_date'],
                        price_kopecks=parsed['price_kopecks'], note=values['note'])
     ses.add(batch);ses.flush()
+    from services.product_operations import snapshot
+    place=ses.get(StorageLocation,storage_id)
+    after=snapshot(batch,group,place)
+    if source=='import':after['import_filename']=source_note[:160]
+    event_key=hashlib.sha256(('product-add:'+submission_key).encode()).hexdigest()[:48]
+    ses.add(ProductMutation(owner_id=owner_id,batch_id=batch.id,action='import' if source=='import' else 'add',
+                            submission_key=event_key,payload_hash=payload_hash,before={},after=after,result_group_id=group.id))
+    ses.flush()
     return group.id, True
 
 
@@ -182,3 +190,19 @@ def quantity_text(micro, dimension):
     if dimension in ['mass','volume'] and value >= 1000:
         value /= 1000; unit = 'кг' if dimension == 'mass' else 'л'
     return format(value.normalize(),'f').replace('.',',')+' '+unit
+
+
+def expiry_status(batches, on_date):
+    """Only stock still present affects a product's expiry colour."""
+    active = [batch for batch in batches if batch.quantity_micro > 0]
+    if not active:
+        return dict(state='finished', label='Израсходовано', date=None, missing=False)
+    dates = [batch.expiry_date for batch in active if batch.expiry_date is not None]
+    missing = len(dates) != len(active)
+    if not dates:
+        return dict(state='unknown', label='Срок не указан', date=None, missing=True)
+    nearest = min(dates)
+    days = (nearest - on_date).days
+    state = 'expired' if days < 0 else 'soon' if days <= 3 else 'fresh'
+    label = 'Просрочен' if days < 0 else 'Срок истекает сегодня' if days == 0 else 'Скоро истекает' if days <= 3 else 'Годен до'
+    return dict(state=state, label=label, date=nearest, missing=missing)

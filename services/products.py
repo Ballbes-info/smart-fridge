@@ -44,10 +44,26 @@ def own_storage(location_id, ses):
 
 
 def register_products(app, subscription_required, login_required):
+    @products.after_request
+    def log_free_scans(response):
+        if request.endpoint in ['products.ocr','products.catalog'] and request.method=='POST' and session.get('user_id') and response.status_code in [200,422]:
+            import hmac
+            if session.get('storage_csrf') and hmac.compare_digest(session['storage_csrf'],request.form.get('csrf_token','')):
+                from services.activity_audit import record
+                data=response.get_json(silent=True) or {}
+                phase=request.form.get('phase','full')
+                if request.endpoint=='products.catalog' or phase!='identify':
+                    action='barcode_lookup' if request.endpoint=='products.catalog' else 'ocr_read'
+                    record(session['user_id'],action,category='ai',after=dict(kind='barcode' if action=='barcode_lookup' else 'ocr',status='used' if response.status_code==200 else 'failed',charged=0,product_name=str(data.get('proposals',{}).get('name',''))[:120],error=str(data.get('error',''))[:500]))
+        return response
+
     scanner=label_ocr.runtime_status()
     print(f"Сканер этикеток: {scanner['engine']} · Python {scanner['python']}")
     @products.app_template_filter('product_quantity')
     def quantity(micro,dimension): return service.quantity_text(micro,dimension)
+
+    @products.app_template_filter('product_expiry_status')
+    def expiry_status(batches,on_date):return service.expiry_status(batches,on_date)
 
     @products.app_template_filter('product_date')
     def date_text(value):return value.strftime('%d.%m.%Y') if value else 'Не указан'
@@ -204,26 +220,9 @@ def register_products(app, subscription_required, login_required):
                             workspace_back_url=url_for('products.detail',group_id=group.id)),status
 
     @products.route('/home/fridges/history')
-    @subscription_required
+    @login_required
     def history():
-        try:page=max(1,int(request.args.get('page','1')))
-        except ValueError:page=1
-        selected=request.args.get('group_id','');origin=request.args.get('origin','')
-        if origin and not re.fullmatch(r'[0-9]{1,12}(?:\.[0-9]{1,9})?',origin):abort(404)
-        condition=[ProductMutation.owner_id==session['user_id']]
-        if selected:
-            if not re.fullmatch('[0-9]{1,18}',selected):abort(404)
-            before_match=ProductMutation.before['group_id'].as_integer()==int(selected)
-            after_match=ProductMutation.after['group_id'].as_integer()==int(selected)
-            if origin:
-                before_match=before_match & (ProductMutation.before['group_created_at'].as_float()==float(origin))
-                after_match=after_match & (ProductMutation.after['group_created_at'].as_float()==float(origin))
-            condition.append(or_(before_match,after_match))
-        with db_session.create_session() as ses:
-            total=ses.scalar(select(func.count()).select_from(ProductMutation).where(*condition));pages=max(1,(total+29)//30);page=min(page,pages)
-            events=list(ses.scalars(select(ProductMutation).where(*condition).order_by(ProductMutation.id.desc()).offset((page-1)*30).limit(30)))
-        return context_page('product_history.html',active_feature='products',events=events,page=page,pages=pages,selected_group=selected,selected_origin=origin,
-                            workspace_back_url=url_for('products.index'))
+        return app.view_functions['activity.index']()
 
     @products.route('/products/notifications/read',methods=['POST'])
     @subscription_required

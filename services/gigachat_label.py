@@ -89,9 +89,9 @@ def reserve(user_id,kind='label'):
     except LimitReached as exc:raise ScanError(str(exc),429) from exc
 
 
-def finish(key,success):
+def finish(key,success,**metadata):
     from services.scan_credits import finish as finish_credit
-    finish_credit(key,success)
+    finish_credit(key,success,**metadata)
 
 
 def request_stage(url):
@@ -346,7 +346,7 @@ def completion_result(reply, *, kind='label'):
         raise ResponseFormatError('GigaChat не вернул результат распознавания.') from exc
 
 
-def read_uploaded(client,file_id, *, kind='label'):
+def read_uploaded(client,file_id, *, kind='label', usage=None):
     # Both attempts request JSON directly. No function calls and no full-text duplicate.
     for attempt in range(2):
         base=PRODUCT_PROMPT if kind=='product' else PROMPT
@@ -359,7 +359,17 @@ def read_uploaded(client,file_id, *, kind='label'):
                              {'role':'user','content':instruction,'attachments':[file_id]}],
                  'response_format':{'type':'json_schema','schema':schema,'strict':True},
                  'temperature':0.1,'repetition_penalty':1.1,'max_tokens':4000,'stream':False}
+        if usage is not None:usage['unreported_attempts']=usage.get('unreported_attempts',0)+1
         reply=request_json(client,'POST',API+'/chat/completions',json=payload)
+        if usage is not None:usage['unreported_attempts']-=1
+        if usage is not None:
+            raw_usage=reply.get('usage') if isinstance(reply,dict) else None
+            clean_usage={}
+            for field in ['prompt_tokens','completion_tokens','total_tokens','precached_prompt_tokens']:
+                value=raw_usage.get(field) if isinstance(raw_usage,dict) else None
+                if type(value) is int and 0<=value<=1000000000:clean_usage[field]=value
+            model=reply.get('model') if isinstance(reply,dict) else None
+            usage.setdefault('calls',[]).append(dict(tokens=clean_usage,model=str(model)[:120] if model else ''))
         try:return completion_result(reply,kind=kind)
         except ResponseFormatError:
             if attempt:raise
@@ -373,7 +383,7 @@ def recognize(raw,user_id, *, kind='label'):
     if not configured():raise ScanError('GigaChat ещё не подключён. Добавьте ключ API в .env на сервере.',503)
     image=prepare_image(raw)
     output=io.BytesIO();image.save(output,format='JPEG',quality=94)
-    key=reserve(user_id,kind);success=False;file_id=None
+    key=reserve(user_id,kind);success=False;file_id=None;usage={'calls':[]};error='';product_name=''
     try:
         with requests.Session() as client:
             gigachat_tls.configure(client)
@@ -385,11 +395,14 @@ def recognize(raw,user_id, *, kind='label'):
                 file_id=uploaded.get('id')
                 if not isinstance(file_id,str) or not re.fullmatch(r'[A-Za-z0-9_-]{1,128}',file_id):
                     file_id=None;raise ScanError('GigaChat не принял фотографию.')
-                result=read_uploaded(client,file_id,kind=kind)
+                result=read_uploaded(client,file_id,kind=kind,usage=usage)
+                product_name=result.get('proposals',{}).get('name','')
                 success=True
             finally:
                 if file_id:
                     try:request_json(client,'POST',API+'/files/'+file_id+'/delete',files={'file':(None,file_id)})
                     except ScanError:log.warning('GigaChat: не удалось удалить временное фото у провайдера.')
         return result
-    finally:finish(key,success)
+    except ScanError as exc:
+        error=str(exc);raise
+    finally:finish(key,success,usage=usage,error=error,product_name=product_name)

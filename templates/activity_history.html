@@ -1,0 +1,31 @@
+{% extends 'workspace_base.html' %}
+{% block title %}История — SmartFridge{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static',filename='css/products.css') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/activity.css') }}">{% endblock %}
+{% block workspace_content %}
+<header class="workspace-heading activity-heading"><div><h1>История</h1><p>Событий по выбранным условиям: {{ total }}</p></div><div class="activity-export"><a class="workspace-secondary-button" href="{{ export_xlsx }}">Экспорт Excel</a><a class="workspace-secondary-button" href="{{ export_csv }}">Экспорт CSV</a></div></header>
+<form class="activity-filters" method="get">
+{% for key in ['group_id','origin','storage_id'] %}{% if history_filters[key] %}<input type="hidden" name="{{ key }}" value="{{ history_filters[key] }}">{% endif %}{% endfor %}
+<div class="product-field activity-search"><label for="history-query">Поиск</label><input id="history-query" name="q" value="{{ history_filters.q }}" maxlength="120" type="search" placeholder="Название продукта, места или действие"></div>
+<div class="product-field"><label for="history-category">Раздел</label><select id="history-category" name="category"><option value="">Все разделы</option>{% for key,label in categories.items() %}<option value="{{ key }}" {% if history_filters.category==key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+<div class="product-field"><label for="history-action">Действие</label><select id="history-action" name="action"><option value="">Все действия</option>{% for key,label in history_actions.items() %}<option value="{{ key }}" {% if history_filters.action==key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+<div class="product-field"><label for="history-status">Результат</label><select id="history-status" name="status"><option value="">Все результаты</option>{% for key,label in history_statuses.items() %}<option value="{{ key }}" {% if history_filters.status==key %}selected{% endif %}>{{ label }}{% if key=='used' %} · распознавание{% elif key=='succeeded' %} · оплата{% endif %}</option>{% endfor %}</select></div>
+<div class="product-field"><label for="history-from">С даты</label><input id="history-from" name="date_from" type="date" value="{{ history_filters.date_from }}"></div>
+<div class="product-field"><label for="history-to">По дату включительно</label><input id="history-to" name="date_to" type="date" value="{{ history_filters.date_to }}"></div>
+<div class="activity-filter-actions"><button class="product-primary" type="submit">Показать</button><a class="workspace-secondary-button" href="{{ url_for('activity.index') }}">Сбросить</a></div>
+</form>
+{% if history_filters.group_id %}<p class="activity-scope">История выбранного продукта. <a href="{{ url_for('activity.index',category='products') }}">Все продукты</a></p>{% endif %}
+<p class="activity-context">Время указано по Москве. Экспорт содержит все события по фильтрам, включая другие страницы. Распознавания и токены GigaChat учитываются отдельно.</p>
+{% if events %}<div class="activity-timeline">{% set calendar=namespace(day='') %}{% for event in events %}
+{% if event.day!=calendar.day %}<h2 class="activity-day">{{ event.day }}</h2>{% set calendar.day=event.day %}{% endif %}
+<article class="activity-entry activity-{{ event.category }}" id="event-{{ event.key }}"><header><div class="activity-event-label"><span class="activity-category">{{ event.category_label }}</span><h3>{{ event.title }}</h3></div><time>{{ event.timestamp }}</time></header>
+{% if event.name %}<p class="activity-object">{{ event.name }}</p>{% endif %}
+<div class="activity-summary">{% if event.summary %}<span>{{ event.summary }}</span>{% endif %}{% if event.status_label %}<span class="activity-status status-{{ event.status }}">{{ event.status_label }}</span>{% endif %}
+{% if event.tokens %}<span class="activity-tokens">{% if event.tokens.total is not none %}{{ event.tokens.total }} токенов GigaChat{% elif event.tokens.partial %}Не менее {{ event.tokens.known }} токенов · неполные данные{% else %}Токены: нет данных{% endif %}</span>{% endif %}</div>
+{% if event.changes or event.details %}<details class="activity-details"><summary>Подробности{% if event.changes %} · полей: {{ event.changes|length }}{% endif %}</summary>
+{% if event.details %}<dl class="activity-info">{% for key,value in event.details %}<div><dt>{{ key }}</dt><dd>{{ value }}</dd></div>{% endfor %}</dl>{% endif %}
+{% if event.changes %}<div class="activity-changes"><div class="activity-change-heading" aria-hidden="true"><span>Поле</span><span>До</span><span>После</span></div>{% for change in event.changes %}<div class="activity-change"><strong>{{ change.label }}</strong><div><span class="activity-mobile-label">До: </span>{{ change.before }}</div><div><span class="activity-mobile-label">После: </span>{{ change.after }}</div></div>{% endfor %}</div>{% endif %}
+</details>{% endif %}
+</article>{% endfor %}</div>{% else %}<section class="product-empty"><h2>Событий не найдено</h2><p>Измените фильтры или период.</p></section>{% endif %}
+{% if pages>1 %}<nav class="product-pagination" aria-label="Страницы истории">{% if page>1 %}<a href="{{ previous_url }}">Предыдущая</a>{% endif %}<span>{{ page }} / {{ pages }}</span>{% if page<pages %}<a href="{{ next_url }}">Следующая</a>{% endif %}</nav>{% endif %}
+<details class="activity-coverage"><summary>Какие данные есть в истории</summary><p>История объединяет действия с продуктами, распознавания, операции оплаты, изменения подписки, мест хранения, аккаунта и места по умолчанию. Новые события сохраняются после обновления. Ранее сохранённые операции с продуктами, платежи и распознавания также доступны.</p><p>Старые добавления, ошибки распознавания и изменения настроек, которые раньше не записывались, восстановить нельзя. Токены показываются по ответам GigaChat, включая повторные ответы модели. Если сведения отсутствуют или ответ не получен, точный расход неизвестен. Неудачная попытка не расходует лимит фото, но могла израсходовать токены провайдера.</p><p>Пароли, ключи API, полные номера карт, изображения и тексты запросов не записываются. Тема, сворачивание меню и другие настройки браузера не входят в серверную историю.</p></details>
+{% endblock %}

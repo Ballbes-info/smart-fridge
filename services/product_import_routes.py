@@ -8,6 +8,7 @@ from flask import Blueprint, abort, flash, redirect, request, session, url_for, 
 from sqlalchemy import select, delete, text
 from data import db_session
 from data.product import ProductImport
+from data.activity import ActivityEvent
 from services import product_import as importer, product_service as service
 from services.products import context_page, preferences_context
 from services.storage import check_form
@@ -57,7 +58,9 @@ def register_imports(app,subscription_required):
                         drafts=list(ses.scalars(select(ProductImport).where(ProductImport.owner_id==session['user_id'],ProductImport.status=='draft').order_by(ProductImport.created_at)))
                         if len(drafts)>=5:raise importer.ImportProblem('У вас уже 5 незавершённых импортов. Завершите или отмените предыдущий импорт.')
                         item=ProductImport(id=secrets.token_hex(16),owner_id=session['user_id'],filename=file.filename.replace('\\','/').rsplit('/',1)[-1][:160],rows=rows,warnings=list(dict.fromkeys(warnings)))
-                        ses.add(item);ses.flush();key=item.id;ses.commit()
+                        ses.add(item);ses.flush();key=item.id
+                        ses.add(ActivityEvent(owner_id=session['user_id'],category='products',action='import_preview',after=dict(filename=item.filename,count=len(rows))))
+                        ses.commit()
                     return redirect(url_for('product_import.review',import_id=key))
                 except importer.ImportProblem as exc:error=str(exc)
             status=422
@@ -107,6 +110,7 @@ def register_imports(app,subscription_required):
                 if request.form.get('revision')!=str(item.revision):
                     message='Этот предпросмотр изменён в другом окне. Показаны актуальные данные. Проверьте их перед сохранением.';status=409
                 elif request.form.get('action')=='cancel':
+                    ses.add(ActivityEvent(owner_id=session['user_id'],category='products',action='import_canceled',before=dict(filename=item.filename,count=len(item.rows))))
                     item.status='canceled';item.rows=[];ses.commit();flash('Импорт отменён. Продукты не добавлены.','success');return redirect(url_for('product_import.upload'))
                 elif request.form.get('action') in ['check','save']:
                     rows=[]
@@ -130,7 +134,7 @@ def register_imports(app,subscription_required):
                     try:
                         for i,row,values,parsed,_ in validated:
                             nonce=hashlib.sha256(f'{item.id}:{i}'.encode()).hexdigest()[:48]
-                            group_id,_=service.save_in_session(ses,session['user_id'],int(row['storage_id']),nonce,values,parsed)
+                            group_id,_=service.save_in_session(ses,session['user_id'],int(row['storage_id']),nonce,values,parsed,source='import',source_note=item.filename)
                             result.append({'group_id':group_id,'name':values['name']})
                     except (service.StorageMissing,service.ProductConflict):
                         ses.rollback();abort(409,description='Данные изменились. Обновите предпросмотр и повторите сохранение.')
