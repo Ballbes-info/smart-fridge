@@ -55,3 +55,27 @@ class ProductScanUsage(SqlAlchemyBase):
     month = sa.Column(sa.String(7), nullable=False, index=True)
     status = sa.Column(sa.String, nullable=False)
     created_at = sa.Column(sa.Float, nullable=False)
+
+
+class ProductMutation(SqlAlchemyBase):
+    """Idempotent stock operations and an audit snapshot surviving batch deletion."""
+    __tablename__='product_mutations'
+    __table_args__=(sa.UniqueConstraint('owner_id','submission_key',name='uq_stock_operation'),)
+    id=sa.Column(sa.Integer,primary_key=True)
+    owner_id=sa.Column(sa.Integer,sa.ForeignKey('users.id'),nullable=False,index=True)
+    batch_id=sa.Column(sa.Integer,nullable=False,index=True)
+    action=sa.Column(sa.String(12),nullable=False)
+    submission_key=sa.Column(sa.String(48),nullable=False)
+    payload_hash=sa.Column(sa.String(64),nullable=False)
+    before=sa.Column(sa.JSON,nullable=False)
+    after=sa.Column(sa.JSON,nullable=False)
+    result_group_id=sa.Column(sa.Integer,nullable=True)
+    removed_submission_key=sa.Column(sa.String(64),nullable=True,index=True)
+    created_at=sa.Column(sa.Float,nullable=False,default=time.time)
+
+
+class ProductNotificationRead(SqlAlchemyBase):
+    __tablename__='product_notification_reads'
+    owner_id=sa.Column(sa.Integer,sa.ForeignKey('users.id'),primary_key=True)
+    batch_id=sa.Column(sa.Integer,primary_key=True)
+    signature=sa.Column(sa.String(64),nullable=False)

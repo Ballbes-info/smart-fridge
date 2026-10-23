@@ -61,7 +61,7 @@
   {% if current_user %}<link rel="stylesheet" href="{{ url_for('static', filename='css/workspace.css') }}">{% endif %}
   {% block head %}{% endblock %}
 </head>
-<body{% if current_user %} class="is-authenticated{% if request.blueprint in ['storage', 'products'] or request.endpoint in ['workspace.home', 'workspace.section', 'workspace.feature', 'workspace.settings', 'profile', 'billing.settings'] %} has-workspace{% endif %}"{% endif %}>
+<body{% if current_user %} class="is-authenticated{% if request.blueprint in ['storage', 'products'] or request.endpoint in ['workspace.home', 'workspace.section', 'workspace.feature', 'workspace.settings', 'profile', 'billing.settings', 'billing.scan_limits'] %} has-workspace{% endif %}"{% endif %}>
   <a class="skip-link" href="#main-content">Перейти к содержимому</a>
   <header class="site-header">
     <div class="header-inner">
@@ -72,7 +72,7 @@
       <nav class="nav" aria-label="Основная навигация">
         {% if current_user %}
           {% if current_user.is_verified %}
-            {% if request.blueprint in ['storage', 'products'] or request.endpoint in ['workspace.home', 'workspace.section', 'workspace.feature', 'workspace.settings', 'profile', 'billing.settings'] %}<button class="sf-notifications-trigger" type="button" data-open-notifications aria-label="Уведомления" aria-haspopup="dialog" aria-controls="workspace-notifications" aria-expanded="false">{{ icon('bell') }}</button>{% endif %}
+            {% if request.blueprint in ['storage', 'products'] or request.endpoint in ['workspace.home', 'workspace.section', 'workspace.feature', 'workspace.settings', 'profile', 'billing.settings', 'billing.scan_limits'] %}<button class="sf-notifications-trigger" type="button" data-open-notifications aria-label="Уведомления{% if product_notifications.unread %}, непрочитанных: {{ product_notifications.unread }}{% endif %}" aria-haspopup="dialog" aria-controls="workspace-notifications" aria-expanded="false">{{ icon('bell') }}<span class="sf-notifications-count" data-notification-count {% if not product_notifications.unread %}hidden{% endif %}>{{ '99+' if product_notifications.unread>99 else product_notifications.unread }}</span></button>{% endif %}
             <a class="account-nav-button" title="Профиль" href="{{ url_for('profile') }}" {% if request.endpoint == 'profile' %}aria-current="page"{% endif %}>{{ icon('user') }}<span>Профиль</span></a>
             <a class="account-nav-button" title="Настройки" href="{{ url_for('workspace.settings') }}" {% if request.endpoint in ['workspace.settings', 'billing.settings'] %}aria-current="page"{% endif %}>{{ icon('settings') }}<span>Настройки</span></a>
           {% else %}

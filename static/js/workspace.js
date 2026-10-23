@@ -162,4 +162,17 @@
     } else if(document.contains(opener) && (event.target.id!=='workspace-drawer' || !desktop.matches)) opener.focus({preventScroll:true});
   },true);
   desktop.addEventListener('change',event=>{if(event.matches)closeDialog(getDrawer());});
+  document.querySelector('[data-read-notifications]')?.addEventListener('submit',async event=>{
+    event.preventDefault();const form=event.currentTarget,button=form.querySelector('button'),status=document.querySelector('[data-notification-status]');
+    button.disabled=true;
+    try{
+      const response=await fetch(form.action,{method:'POST',body:new FormData(form),headers:{Accept:'application/json'},signal:AbortSignal.timeout(10000)});
+      if(!response.ok || !response.headers.get('content-type')?.includes('application/json'))throw new Error();
+      const result=await response.json(),unread=Number(result.unread)||0;
+      document.querySelectorAll('[data-notification-count]').forEach(node=>{node.hidden=!unread;node.textContent=unread>99?'99+':String(unread);});
+      document.querySelectorAll('[data-open-notifications]').forEach(node=>node.setAttribute('aria-label',unread?'Уведомления, непрочитанных: '+unread:'Уведомления'));
+      document.querySelectorAll('.sf-notification-item').forEach(node=>node.classList.remove('is-unread'));
+      status.textContent=unread?'Осталось непрочитанных: '+unread+'. Обновите страницу.':'Уведомления прочитаны.';
+    }catch(_){status.textContent='Не удалось сохранить. Повторите позже.';button.disabled=false;}
+  });
 })();

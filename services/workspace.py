@@ -151,6 +151,9 @@ def register_workspace(app, login_required, subscription_required):
     @workspace.route('/home/<section>/<feature>')
     @subscription_required
     def feature(section, feature):
+        if section=='fridges' and feature=='transfer':
+            from flask import redirect,url_for
+            return redirect(url_for('products.index'))
         selected = navigation_sections().get(section)
         item = next((item for item in selected['functions'] if item['slug'] == feature), None) if selected else None
         if item is None:

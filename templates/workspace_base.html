@@ -48,7 +48,11 @@
 </dialog>
 <dialog id="workspace-notifications" class="sf-notifications" aria-labelledby="notifications-title">
   <div class="sf-notifications-heading"><h2 id="notifications-title">Уведомления</h2><button class="app-compact-search" type="button" data-close-notifications aria-label="Закрыть уведомления">{{ icon('close') }}</button></div>
-  <div class="sf-notifications-empty">{{ icon('bell') }}<p>Новых уведомлений нет</p><span>Уведомления о продуктах пока не подключены.</span></div>
+  {% if product_notifications['items'] %}
+  <p class="sf-notification-explainer">Сроки на сегодня и ближайшие 3 дня</p>
+  <div class="sf-notification-list">{% for item in product_notifications['items'] %}<a class="sf-notification-item {{ 'is-unread' if item.unread else '' }} {{ 'is-expired' if item.state=='expired' else '' }}" href="{{ url_for('products.detail',group_id=item.group_id) }}#batch-{{ item.batch_id }}"><strong>{{ item.name }}</strong><span>{{ item.text }} · {{ item.date }}</span><small>{{ item.place }}</small></a>{% endfor %}</div>
+  <div class="sf-notification-footer"><form method="post" action="{{ url_for('products.read_notifications') }}" data-read-notifications><input type="hidden" name="csrf_token" value="{{ notification_csrf }}"><input type="hidden" name="notifications_seen" value="{{ product_notifications['items']|tojson|forceescape }}"><button type="submit" class="workspace-secondary-button" {% if not product_notifications.unread %}disabled{% endif %}>Отметить прочитанными</button></form><a href="{{ url_for('products.index',state='due') }}">Все сроки</a><p role="status" data-notification-status></p></div>
+  {% else %}<div class="sf-notifications-empty">{{ icon('bell') }}<p>Сроки не требуют внимания</p><span>Уведомления появятся за 3 дня до срока и останутся при просрочке.</span></div>{% endif %}
 </dialog>
 <dialog id="workspace-search" class="app-search-dialog" aria-labelledby="search-title">
   <div class="app-search-head"><h2 id="search-title" class="visually-hidden">Поиск разделов</h2>{{ icon('search') }}<input id="workspace-search-input" type="search" name="section_search" autocomplete="off" spellcheck="false" placeholder="Название раздела или возможности…" aria-label="Найти раздел или возможность" aria-controls="workspace-search-results"><button type="button" data-close-search aria-label="Закрыть поиск">{{ icon('close') }}</button></div>

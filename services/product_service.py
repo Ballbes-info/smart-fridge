@@ -1,4 +1,4 @@
-"""Exact quantities, conservative grouping and validation; no AI or stock operations."""
+"""Exact quantities, conservative grouping and validation for product entry."""
 import calendar
 import hashlib
 import json
@@ -9,7 +9,7 @@ from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from sqlalchemy import select, text
 from data import db_session
-from data.product import ProductGroup, ProductBatch
+from data.product import ProductGroup, ProductBatch, ProductMutation
 from data.storage import StorageLocation
 
 UNITS = {'g': ('г', 'mass', 1), 'kg': ('кг', 'mass', 1000), 'ml': ('мл', 'volume', 1),
@@ -57,7 +57,7 @@ def add_shelf(start, count, unit):
     return date(year, month, min(start.day, calendar.monthrange(year, month)[1]))
 
 
-def validate(form):
+def validate(form, *, allow_zero=False):
     values = {key: form.get(key, '').strip() for key in FIELDS}
     errors = {}; dates = {}; parsed = {}
     for key, limit in [('name',120),('brand',120),('manufacturer',160),('portion',80)]:
@@ -84,7 +84,7 @@ def validate(form):
     if dates['manufactured_date'] and dates['opened_date'] and dates['opened_date'] < dates['manufactured_date']:
         errors['opened_date'] = 'Дата вскрытия раньше даты изготовления.'
     quantity = number(values['quantity'], 'Количество', errors, 'quantity', Decimal('1000000'), True)
-    if quantity is not None and quantity <= 0: errors['quantity'] = 'Количество должно быть больше нуля.'
+    if quantity is not None and quantity <= 0 and not allow_zero: errors['quantity'] = 'Количество должно быть больше нуля.'
     if values['unit'] not in UNITS: errors['unit'] = 'Выберите единицу измерения.'
     if quantity is not None and values['unit'] in UNITS:
         parsed['quantity_micro'] = int(quantity * UNITS[values['unit']][2] * 1000000)
@@ -150,6 +150,8 @@ def save(owner_id, storage_id, submission_key, values, parsed):
         if old:
             if old.payload_hash != payload_hash: raise ProductConflict
             return old.group_id, False
+        if ses.scalar(select(ProductMutation.id).where(ProductMutation.owner_id==owner_id,ProductMutation.removed_submission_key==submission_key)):
+            raise ProductConflict
         key = digest(identity) if values['brand'] else secrets.token_hex(32)
         group = ses.scalar(select(ProductGroup).where(ProductGroup.owner_id==owner_id, ProductGroup.storage_id==storage_id, ProductGroup.identity_key==key))
         if not group:
