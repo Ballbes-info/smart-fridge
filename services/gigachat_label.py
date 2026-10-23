@@ -8,12 +8,9 @@ import socket
 import threading
 import time
 import uuid
-from datetime import datetime, timedelta, timezone, date
+from datetime import date
 
 import requests
-from sqlalchemy import select, func, text, delete
-from data import db_session
-from data.product import ProductScanUsage
 from services.billing_service import get_subscription, PLANS, active
 from services.label_ocr import prepare_image
 from services import gigachat_tls
@@ -23,7 +20,6 @@ from services.product_catalog import valid_gtin
 log = logging.getLogger(__name__)
 API = 'https://api.giga.chat/v1'
 AUTH = 'https://ngw.devices.sberbank.ru:9443/api/v2/oauth'
-DEFAULT_LIMITS = {'basic':10, 'family_basic':30, 'premium':100, 'family_premium':300}
 _token = {'value':'', 'expires':0, 'credentials':None}
 _token_lock = threading.Lock()
 
@@ -82,45 +78,20 @@ def configured():
     return bool(os.environ.get('GIGACHAT_CREDENTIALS','').strip())
 
 
-def month_key():
-    return datetime.now(timezone(timedelta(hours=3))).strftime('%Y-%m')
+def allowance(user_id, *, kind='label', ses=None):
+    from services.scan_credits import allowance as current_allowance
+    return current_allowance(user_id,kind,ses=ses)
 
 
-def allowance(user_id, *, ses=None):
-    sub=get_subscription(user_id)
-    plan=sub.plan if sub and sub.plan in PLANS else 'basic'
-    try: limit=max(0,min(10000,int(os.environ.get('GIGACHAT_LIMIT_'+plan.upper(),DEFAULT_LIMITS[plan]))))
-    except ValueError: limit=DEFAULT_LIMITS[plan]
-    def count(db):
-        return db.scalar(select(func.count()).select_from(ProductScanUsage).where(
-            ProductScanUsage.user_id==user_id,ProductScanUsage.month==month_key(),
-            (ProductScanUsage.status=='used') | (ProductScanUsage.created_at>time.time()-600)))
-    if ses is not None:used=count(ses)
-    else:
-        with db_session.create_session() as db:used=count(db)
-    return dict(limit=limit,used=used,remaining=max(0,limit-used),month=month_key(),configured=configured())
+def reserve(user_id,kind='label'):
+    from services.scan_credits import reserve as reserve_credit,LimitReached
+    try:return reserve_credit(user_id,kind)
+    except LimitReached as exc:raise ScanError(str(exc),429) from exc
 
 
-def reserve(user_id):
-    with db_session.create_session() as ses:
-        ses.execute(text('BEGIN IMMEDIATE'))
-        # Expired reservations never block the user after a crashed worker.
-        ses.execute(delete(ProductScanUsage).where(ProductScanUsage.status=='pending',ProductScanUsage.created_at<time.time()-600))
-        quota=allowance(user_id,ses=ses)
-        if quota['remaining']<=0:raise ScanError('Лимит GigaChat на этот месяц исчерпан. Доступны ручной ввод и OCR.',429)
-        key=uuid.uuid4().hex
-        ses.add(ProductScanUsage(id=key,user_id=user_id,month=month_key(),status='pending',created_at=time.time()))
-        ses.commit()
-    return key
-
-
-def finish(key, success):
-    with db_session.create_session() as ses:
-        item=ses.get(ProductScanUsage,key)
-        if item:
-            if success:item.status='used'
-            else:ses.delete(item)
-            ses.commit()
+def finish(key,success):
+    from services.scan_credits import finish as finish_credit
+    finish_credit(key,success)
 
 
 def request_stage(url):
@@ -402,7 +373,7 @@ def recognize(raw,user_id, *, kind='label'):
     if not configured():raise ScanError('GigaChat ещё не подключён. Добавьте ключ API в .env на сервере.',503)
     image=prepare_image(raw)
     output=io.BytesIO();image.save(output,format='JPEG',quality=94)
-    key=reserve(user_id);success=False;file_id=None
+    key=reserve(user_id,kind);success=False;file_id=None
     try:
         with requests.Session() as client:
             gigachat_tls.configure(client)

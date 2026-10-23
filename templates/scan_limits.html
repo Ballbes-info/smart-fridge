@@ -1,0 +1,17 @@
+{% extends 'workspace_base.html' %}
+{% block title %}Лимиты ИИ — SmartFridge{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static',filename='css/billing.css') }}">{% endblock %}
+{% block workspace_content %}<section class="billing-page billing-narrow">
+<a class="billing-link" href="{{ url_for('billing.settings') }}">← Подписка</a><h1>Лимиты ИИ</h1>
+<p>Включённые распознавания обновляются ежемесячно от даты начала подписки. Купленные пакеты не сгорают и расходуются после включённого лимита.</p>
+{% for kind,q in quotas.items() %}<section class="billing-panel"><h2>{{ kind_names[kind] }}</h2>
+{% if kind=='product' and not premium %}<p>Доступно с Премиумом или Семейным премиумом. Купленный остаток сохраняется при смене тарифа. Осталось: {{ q.extra_remaining }}.</p>{% else %}
+<dl class="billing-summary"><div><dt>Включено в период</dt><dd>{{ q.limit }}</dd></div><div><dt>Осталось включённых</dt><dd>{{ q.included_remaining }}</dd></div><div><dt>Купленные распознавания</dt><dd>{{ q.extra_remaining }}</dd></div><div><dt>Обновление лимита</dt><dd>{{ q.resets_at|billing_date if subscription_active else 'После продления подписки' }}</dd></div></dl>
+{% endif %}
+{% if subscription_active and (kind=='label' or premium) %}
+{% for code,pack in packages.items() if pack.kind==kind %}<form method="post" action="{{ url_for('billing.scan_pack_start') }}" class="scan-pack-option"><input type="hidden" name="csrf_token" value="{{ csrf }}"><input type="hidden" name="submission_key" value="{{ submission }}"><input type="hidden" name="package" value="{{ code }}"><span>{{ pack.quantity }} распознаваний · {{ pack.amount|rubles }}</span><button class="btn btn-primary" type="submit">Купить пакет</button></form>{% endfor %}
+{% else %}<a class="billing-link" href="{{ url_for('billing.plans') }}">Выбрать подписку</a>{% endif %}
+</section>{% endfor %}
+<p class="billing-small">Пакет оплачивается один раз, без автопродления и проверочного списания 1 ₽. Для использования нужна активная подписка соответствующего уровня. Пакет этикеток и пакет продуктов расходуются отдельно. Неудачные распознавания не списываются.</p>
+<a class="btn btn-primary" href="{{ url_for('products.create') }}">Добавить продукт</a>
+</section>{% endblock %}

@@ -28,6 +28,10 @@ def page(payment_id):
     api=LocalGateway()
     error=None
     if request.method=='POST':
+        order=service.get_order(payment.order_id,session['user_id'])
+        if order and order.kind=='scan_pack':
+            from services.storage import check_form
+            check_form()
         try:
             action=request.form.get('action')
             if action=='card': api.choose_card(payment_id,session['user_id'],request.form.get('card',''))

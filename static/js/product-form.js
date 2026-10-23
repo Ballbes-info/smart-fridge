@@ -14,6 +14,15 @@
   const $ = selector => scanner.querySelector(selector);
   const field = name => form.elements.namedItem(name);
   let method='manual';
+  const quotas=JSON.parse(scanner.querySelector('[data-giga-quota]').dataset.quotas);
+  function quotaKind(){return method==='product'?'product':'label';}
+  function renderQuota(){
+    const q=quotas[quotaKind()],node=$('[data-giga-quota]');
+    node.dataset.remaining=q.remaining;node.dataset.limit=q.limit;node.dataset.configured=q.configured?'yes':'no';
+    const included=q.included_remaining??q.remaining,extra=q.extra_remaining??0;
+    const date=q.resets_at?new Intl.DateTimeFormat('ru-RU',{timeZone:'Europe/Moscow',day:'2-digit',month:'2-digit',year:'numeric'}).format(new Date(q.resets_at*1000)):'';
+    node.textContent=`Включено: ${included} из ${q.limit}. Куплено: ${extra}.`+(date?` Обновление: ${date}.`:'');
+  }
   const methodInputs=[...document.querySelectorAll('[name=entry_method]')];
   function isAI(){return method==='gigachat'||method==='product';}
   function recognizeCaption(){return method==='product'?'Распознать продукт':method==='gigachat'?'Распознать этикетку':'Заполнить по фото';}
@@ -24,7 +33,8 @@
     if(value!=='manual')toggleScanner(true);
     $('#label-scanner-title').textContent=value==='product'?'Распознать продукт':value==='gigachat'?'Распознать этикетку · ИИ':'Сканировать этикетку';
     $('[data-method-hint]').textContent=value==='product'?'Сфотографируйте один продукт или блюдо. ИИ предложит название и категорию; количество — если предметы можно пересчитать. Вес укажите сами.':value==='gigachat'?'Загрузите этикетку и нажмите «Распознать этикетку». Один снимок — одно обращение.':'OCR читает текст на сервере. Сложные этикетки могут потребовать исправлений.';
-    $('[data-giga-quota]').hidden=!isAI();
+    $('[data-giga-quota]').hidden=!isAI();$('[data-quota-link]').hidden=!isAI();
+    if(isAI())renderQuota();
     $('[data-scan-privacy]').textContent=isAI()?'При нажатии кнопки выбранное фото отправляется в GigaChat. После обработки сервер запрашивает удаление загруженного файла.':'Фото OCR обрабатывается на сервере SmartFridge. В Open Food Facts передаётся только штрихкод.';
     $('.product-code-search').hidden=value==='product';
     $('.product-ocr-results h3').textContent=value==='product'?'Продукт на фото':'Данные с этикетки';
@@ -34,6 +44,15 @@
     else status('');
   }
   methodInputs.forEach(input=>input.addEventListener('change',()=>{if(!busy)setMethod(input.value);}));
+
+  window.addEventListener('focus',async()=>{
+    if(!isAI()||busy)return;
+    const kind=quotaKind();
+    try{
+      const response=await fetch('/products/ai-quota?kind='+kind,{signal:AbortSignal.timeout(7000),cache:'no-store'});
+      if(response.ok && response.headers.get('content-type')?.includes('application/json')){quotas[kind]=await response.json();renderQuota();}
+    }catch(_){/* The next scan checks the live quota again. */}
+  });
 
   let dirty = Boolean(document.querySelector('[data-product-errors]')), submitting = false;
   const touched = new Set(), autoValues = new Map(), resolved = new Map();
@@ -297,7 +316,7 @@
       if(method==='product' && !touched.has('quantity') && field('quantity').value===defaults.quantity)field('quantity').value='';
       const data=await jsonRequest('/products/gigachat',request,360000);
       recognized.delete(key+':quick');recognized.set(key,data);resolved.clear();
-      if(data.quota){const q=$('[data-giga-quota]');q.dataset.remaining=data.quota.remaining;q.textContent=`GigaChat: осталось ${data.quota.remaining} из ${data.quota.limit} фото в этом месяце.`;}
+      if(data.quota){quotas[quotaKind()]=data.quota;renderQuota();}
       return;
     }
     let code='';
@@ -315,10 +334,16 @@
   async function scan(all=false,first=0){
     if(!images[active]||busy || method==='manual')return;
     if(isAI()){
+      syncBusy(true);
+      try{
+        const response=await fetch('/products/ai-quota?kind='+quotaKind(),{signal:AbortSignal.timeout(10000),cache:'no-store'});
+        if(!response.ok || !response.headers.get('content-type')?.includes('application/json'))throw new Error('Не удалось обновить лимит. Обновите страницу.');
+        quotas[quotaKind()]=await response.json();renderQuota();
+      }catch(error){syncBusy(false);status(error.name==='TimeoutError'?'Не удалось обновить лимит. Повторите позже.':error.message,true);return;}
       const quota=$('[data-giga-quota]');
-      if(quota.dataset.configured!=='yes'){status('GigaChat ещё не подключён: нужен ключ API в .env на сервере.',true);return;}
+      if(quota.dataset.configured!=='yes'){syncBusy(false);status('GigaChat ещё не подключён: нужен ключ API в .env на сервере.',true);return;}
       const needed=all?images.length-first:1;
-      if(Number(quota.dataset.remaining)<needed){status('Недостаточно обращений GigaChat. Выберите один снимок или используйте OCR.',true);return;}
+      if(Number(quota.dataset.remaining)<needed){syncBusy(false);status('Недостаточно распознаваний этого способа. Дождитесь обновления или откройте «Лимиты и докупка пакетов».',true);return;}
     }
     syncBusy(true);await stopCamera();
     const jobs=all?images.slice(first).map(image=>({image,rect:{x:0,y:0,w:image.canvas.width,h:image.canvas.height}})):

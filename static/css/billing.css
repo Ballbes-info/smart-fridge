@@ -85,3 +85,4 @@
 .billing-card, .billing-panel, .billing-notice,
 .billing-page .billing-choice, .billing-page select,
 .billing-page input[type=number] { border-radius:0; }
+.scan-pack-option{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:16px 0;border-top:1px solid var(--line)}

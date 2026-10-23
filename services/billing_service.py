@@ -145,7 +145,7 @@ def start_payment(order_id, gateway, return_url):
         if order.created_at < time.time() - 23*3600:
             raise PaymentError('Срок операции истёк. Свяжитесь с поддержкой для проверки платежа.')
         payload = {'amount': {'value': f'{order.amount / 100:.2f}', 'currency': 'RUB'},
-            'capture': True, 'description': 'SmartFridge: проверка карты (1 ₽ с возвратом)' if order.kind == 'bind' else 'SmartFridge: подписка',
+            'capture': True, 'description': 'SmartFridge: проверка карты (1 ₽ с возвратом)' if order.kind == 'bind' else 'SmartFridge: пакет распознаваний' if order.kind=='scan_pack' else 'SmartFridge: подписка',
             'metadata': {'order_id': order.id, 'user_id': str(order.user_id)}}
         if order.kind == 'bind':
             payload.update(payment_method_data={'type':'bank_card'}, save_payment_method=True,
@@ -159,8 +159,11 @@ def start_payment(order_id, gateway, return_url):
         url = obj.get('confirmation', {}).get('confirmation_url')
         if url and not re.fullmatch(r'/payment/local_[a-f0-9]{32}', url):
             raise PaymentError('Неизвестный адрес страницы оплаты.')
-        order.provider_id = obj['id']; order.confirmation_url = url
-        order.status = 'pending'; ses.commit()
+        with _locked_session() as locked:
+            saved=locked.get(BillingOrder,order.id)
+            if saved.status in ('succeeded','canceled','rejected'):return saved.id
+            if saved.provider_id and saved.provider_id!=obj['id']:raise PaymentError('Операция оплаты уже изменилась.')
+            saved.provider_id=obj['id'];saved.confirmation_url=url;saved.status='pending';locked.commit()
         return order.id
 
 
@@ -251,6 +254,13 @@ def refresh_order(order_id, gateway, secret, return_url):
 
 
 def _apply_payment(ses, order, sub):
+    if order.kind=='scan_pack':
+        from data.scan_credits import ScanCreditPack
+        pack=ses.get(ScanCreditPack,order.id)
+        if not pack or pack.user_id!=order.user_id:raise PaymentError('Не найдены данные пакета.')
+        # The succeeded order is the credit grant. Reconciliation cannot grant twice.
+        order.status,order.finished_at='succeeded',time.time()
+        return
     if sub.revision != order.subscription_revision:
         raise PaymentError('Состояние подписки изменилось. Требуется проверка операции.')
     card = ses.get(CardPromotion, order.card_key)

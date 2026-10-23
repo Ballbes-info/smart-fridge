@@ -1,5 +1,6 @@
 """Authenticated test checkout and subscription settings."""
 import time
+import secrets
 from datetime import datetime, timezone, timedelta
 from functools import wraps
 from flask import Blueprint, current_app, session, redirect, url_for, request, render_template, flash, jsonify, abort
@@ -98,6 +99,14 @@ def checkout(order_id):
             service.refresh_order(order_id,gateway(),card_secret(),return_url)
         except PaymentError as exc:
             flash(str(exc),'error')
+    if order.kind=='scan_pack':
+        from data.scan_credits import ScanCreditPack
+        from services.scan_credits import NAMES
+        session.setdefault('storage_csrf',secrets.token_hex(32))
+        with db_session.create_session() as ses:pack=ses.get(ScanCreditPack,order.id)
+        if not pack:abort(404)
+        return render_template('scan_pack_checkout.html',order=order,pack=pack,kind_name=NAMES[pack.kind],
+                               cards=demo_cards(session['user_id']),csrf=session['storage_csrf'])
     order,sub,quote,trial_allowed=service.checkout_details(order_id,session['user_id'])
     next_amount = service.first_price(order.plan,order.interval,order.extra_seats) if quote and quote['discounted'] else service.regular_price(order.plan,order.interval,order.extra_seats)
     return render_template('checkout.html',order=order,quote=quote,trial_allowed=trial_allowed,next_amount=next_amount,trial_end=time.time()+7*86400,cards=demo_cards(session["user_id"]))
@@ -169,3 +178,57 @@ def renew():
         click.echo(f'Проверено продлений: {len(results)}; состояния: {results}')
     except PaymentError as exc:
         raise click.ClickException(str(exc))
+
+
+@billing.route('/settings/ai-limits')
+@verified
+def scan_limits():
+    from services import scan_credits
+    session.setdefault('storage_csrf',secrets.token_hex(32))
+    sub=service.get_subscription(session['user_id'])
+    premium=bool(service.active(sub) and service.PLANS[sub.plan]['premium'])
+    return render_template('scan_limits.html',quotas={k:scan_credits.allowance(session['user_id'],k) for k in ['label','product']},
+                           packages=scan_credits.PACKAGES,kind_names=scan_credits.NAMES,premium=premium,
+                           csrf=session['storage_csrf'],submission=secrets.token_hex(24),workspace_back_url=url_for('billing.settings'))
+
+
+@billing.route('/scan-packs/start',methods=['POST'])
+@verified
+def scan_pack_start():
+    from services.storage import check_form
+    from services.scan_credits import new_order
+    check_form()
+    try:
+        key=new_order(session['user_id'],request.form.get('package',''),request.form.get('submission_key',''))
+        return redirect(url_for('billing.checkout',order_id=key))
+    except PaymentError as exc:flash(str(exc),'error');return redirect(url_for('billing.scan_limits'))
+
+
+@billing.route('/scan-packs/<order_id>/confirm',methods=['POST'])
+@verified
+def scan_pack_confirm(order_id):
+    from services.storage import check_form
+    from services.scan_credits import confirm_order
+    check_form()
+    if not service.get_order(order_id,session['user_id']):abort(404)
+    try:
+        confirm_order(order_id,session['user_id'],request.form.get('card',''),
+                      int(request.form.get('expected_amount','-1')),gateway(),return_url)
+        order=service.get_order(order_id,session['user_id'])
+        return redirect(order.confirmation_url or url_for('billing.checkout',order_id=order_id))
+    except (PaymentError,ValueError) as exc:
+        flash(str(exc) if isinstance(exc,PaymentError) else 'Проверьте сумму оплаты.','error')
+        return redirect(url_for('billing.checkout',order_id=order_id))
+
+
+@billing.route('/scan-packs/<order_id>/cancel',methods=['POST'])
+@verified
+def scan_pack_cancel(order_id):
+    from services.storage import check_form
+    from sqlalchemy import text
+    check_form()
+    with db_session.create_session() as ses:
+        ses.execute(text('BEGIN IMMEDIATE'));order=ses.get(service.BillingOrder,order_id)
+        if not order or order.user_id!=session['user_id'] or order.kind!='scan_pack':abort(404)
+        if order.status=='ready':order.status='canceled';order.finished_at=time.time();ses.commit()
+    return redirect(url_for('billing.scan_limits'))

@@ -32,6 +32,7 @@ def context_page(template, **kwargs):
     return render_template(template,active_section='fridges',section=SECTIONS['fridges'],feature=feature,
                            units=service.UNITS,nutrition_bases=service.BASES,nutrients=service.NUTRIENTS,
                            giga_quota=gigachat_label.allowance(session['user_id']),
+                           giga_quotas={k:gigachat_label.allowance(session['user_id'],kind=k) for k in ['label','product']},
                            product_vision_allowed=gigachat_label.product_allowed(session['user_id']),categories=service.CATEGORIES,
                            shelf_units=service.SHELF_UNITS,product_csrf=session['storage_csrf'],**preferences_context(),**kwargs)
 
@@ -149,6 +150,13 @@ def register_products(app, subscription_required, login_required):
         if retry:return jsonify(error='Слишком много запросов. Повторите чуть позже.'),429,{'Retry-After':str(retry)}
         return jsonify(product_catalog.lookup(code,session['user_id']))
 
+    @products.route('/products/ai-quota')
+    @subscription_required
+    def ai_quota():
+        kind=request.args.get('kind','label')
+        if kind not in ['label','product']:return jsonify(error='Неизвестный режим.'),400
+        return jsonify(gigachat_label.allowance(session['user_id'],kind=kind)),200,{'Cache-Control':'no-store'}
+
     @products.route('/products/gigachat',methods=['POST'])
     @subscription_required
     def gigachat_scan():
@@ -164,7 +172,7 @@ def register_products(app, subscription_required, login_required):
             upload=request.files.get('image')
             if upload is None:return jsonify(error='Добавьте изображение этикетки.'),400
             result=gigachat_label.recognize(upload.read(8*1024*1024+1),session['user_id'],kind=kind)
-            result['quota']=gigachat_label.allowance(session['user_id'])
+            result['quota']=gigachat_label.allowance(session['user_id'],kind=kind)
             return jsonify(result)
         except RequestEntityTooLarge:return jsonify(error='Размер снимка превышает 8 МБ.'),413
         except gigachat_label.ScanError as exc:return jsonify(error=str(exc),diagnostic=exc.diagnostic),exc.status

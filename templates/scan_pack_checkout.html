@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}Пакет распознаваний — SmartFridge{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static',filename='css/billing.css') }}">{% endblock %}
+{% block content %}<section class="billing-page billing-narrow"><a class="billing-link" href="{{ url_for('billing.scan_limits') }}">← Лимиты ИИ</a><h1>{{ kind_name }}</h1><p class="billing-lead">{{ pack.quantity }} распознаваний · {{ order.amount|rubles }}</p><div class="billing-panel">
+{% if order.status=='ready' %}<h2>Разовая покупка</h2><p>Пакет начислится после успешной оплаты. Остаток переносится в следующие периоды. Подписка и её автопродление не изменятся.</p>
+<form method="post" action="{{ url_for('billing.scan_pack_confirm',order_id=order.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf }}"><input type="hidden" name="expected_amount" value="{{ order.amount }}">{% for card in cards %}<label class="billing-choice"><input type="radio" name="card" value="{{ card.alias }}" required {% if loop.first %}checked{% endif %}><span>Карта •••• {{ card.last4 }}</span></label>{% endfor %}<button class="btn btn-primary" type="submit">Оплатить {{ order.amount|rubles }}</button></form>
+<form method="post" action="{{ url_for('billing.scan_pack_cancel',order_id=order.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf }}"><button class="billing-link" type="submit">Отменить покупку</button></form>
+{% elif order.status=='succeeded' %}<h2>Пакет начислен</h2><p>{{ pack.quantity }} распознаваний доступны в разделе «{{ kind_name }}».</p><a class="btn btn-primary" href="{{ url_for('products.create') }}">Добавить продукт</a><a class="billing-link" href="{{ url_for('billing.scan_limits') }}">Посмотреть остаток</a>
+{% elif order.status in ['canceled','rejected'] %}<h2>{{ order.error or 'Покупка отменена' }}</h2><p>Распознавания не начислены.</p><a class="btn btn-primary" href="{{ url_for('billing.scan_limits') }}">Вернуться к пакетам</a>
+{% else %}<h2>Проверяем оплату</h2>{% if order.confirmation_url %}<a class="btn btn-primary" href="{{ order.confirmation_url }}">Перейти к оплате</a>{% endif %}<a class="billing-link" href="{{ url_for('billing.checkout',order_id=order.id) }}">Обновить статус</a>{% endif %}
+</div></section>{% endblock %}

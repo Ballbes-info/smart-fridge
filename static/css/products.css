@@ -156,3 +156,4 @@
 .product-scan-debug{margin:12px 0;font-size:13px}.product-scan-debug textarea{width:100%;margin-top:10px;background:var(--control-bg);color:var(--ink);border:1px solid var(--control-border);font:inherit;resize:vertical}
 
 .product-vision-locked{display:inline-flex;align-items:center;gap:8px;padding:10px 22px;border:1px solid var(--control-border);background:transparent;color:var(--muted);border-radius:0;font:inherit;font-weight:600;min-height:44px;cursor:pointer}.product-vision-locked .icon{width:16px;height:16px}
+.product-quota-link{display:inline-block;margin:-4px 0 16px;font-size:13px;color:var(--green)}.product-quota-link[hidden]{display:none}
