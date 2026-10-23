@@ -9,7 +9,7 @@ from data.storage import StorageLocation
 from data.product import ProductGroup, ProductBatch, ProductPreferences
 from services.storage import check_form
 from services import product_service as service
-from services import label_ocr
+from services import label_ocr, product_catalog
 from services.auth_service import consume_limits
 from services.workspace import SECTIONS
 
@@ -134,18 +134,40 @@ def register_products(app, subscription_required, login_required):
         flash('Место по умолчанию сохранено.','success')
         return redirect(url_for('workspace.settings'))
 
+    @products.route('/products/catalog',methods=['POST'])
+    @subscription_required
+    def catalog():
+        request.max_content_length=4096
+        check_form()
+        code=request.form.get('barcode','').strip()
+        if not product_catalog.valid_gtin(code):return jsonify(error='Проверьте цифры штрихкода на упаковке.'),422
+        retry=consume_limits([('catalog-minute',session['user_id'],12,60)])
+        if retry:return jsonify(error='Слишком много запросов. Повторите чуть позже.'),429,{'Retry-After':str(retry)}
+        return jsonify(product_catalog.lookup(code,session['user_id']))
+
     @products.route('/products/ocr',methods=['POST'])
     @subscription_required
     def ocr():
         request.max_content_length=9*1024*1024
         try:
             check_form()
-            retry=consume_limits([('ocr-minute',session['user_id'],12,60)])
+            retry=consume_limits([('barcode-minute' if request.form.get('phase')=='identify' else 'ocr-minute',session['user_id'],12,60)])
             if retry:return jsonify(error='Слишком много снимков. Повторите чуть позже.'),429,{'Retry-After':str(retry)}
             upload=request.files.get('image')
             if upload is None:return jsonify(error='Добавьте изображение этикетки.'),400
             raw=upload.read(8*1024*1024+1)
-            result=label_ocr.parse_label(label_ocr.recognize(raw))
+            phase=request.form.get('phase','full')
+            if phase not in ['identify','text','full']:return jsonify(error='Неизвестный режим сканирования.'),400
+            if phase=='identify':return jsonify(product_catalog.identify(raw,session['user_id']))
+            result=label_ocr.recognize(raw, structured=True)
+            if phase=='full':
+                catalog=product_catalog.identify(raw,session['user_id'])
+            else:
+                code=request.form.get('barcode','')
+                catalog=product_catalog.lookup(code,session['user_id']) if product_catalog.valid_gtin(code) else {}
+            if catalog:
+                result=product_catalog.enrich(result,catalog)
+                result['barcodes']=catalog.get('barcodes',[])
             return jsonify(result)
         except RequestEntityTooLarge:return jsonify(error='Размер снимка превышает 8 МБ.'),413
         except label_ocr.OCRBusy as exc:return jsonify(error=str(exc)),429

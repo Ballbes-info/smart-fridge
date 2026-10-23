@@ -14,11 +14,15 @@
   const $ = selector => scanner.querySelector(selector);
   const field = name => form.elements.namedItem(name);
   let dirty = Boolean(document.querySelector('[data-product-errors]')), submitting = false;
+  const touched = new Set(), autoValues = new Map(), resolved = new Map();
+  const defaults = {quantity:'1',unit:'pcs',shelf_unit:'days'};
+  form.addEventListener('input', event => { if (event.target.name) touched.add(event.target.name); });
+  form.addEventListener('change', event => { if (event.target.name) touched.add(event.target.name); });
   const errorSummary = document.querySelector('[data-product-errors]');
   if (errorSummary) errorSummary.focus();
   form.addEventListener('input', () => { dirty = true; });
   form.addEventListener('change', () => { dirty = true; updateDates(); });
-  form.addEventListener('submit', () => { submitting = true; form.querySelector('[type=submit]').disabled = true; stopCamera(); });
+  form.addEventListener('submit', () => { if(field('ocr_used').value==='yes')field('ocr_confirm').value='yes';submitting = true; form.querySelector('[type=submit]').disabled = true; stopCamera(); });
   window.addEventListener('beforeunload', event => { if (dirty && !submitting) { event.preventDefault(); event.returnValue = ''; } });
   window.addEventListener('pageshow', () => { submitting = false; form.querySelector('[type=submit]').disabled = false; });
   const dayFormat = new Intl.DateTimeFormat('ru-RU', { timeZone:'Europe/Moscow',year:'numeric',month:'2-digit',day:'2-digit' });
@@ -47,7 +51,7 @@
     const change = document.createElement('span');change.textContent='Изменить';summary.append(change);
     const listLink=form.querySelector('[data-product-list-link]');const url=new URL(listLink.href);url.searchParams.set('storage_id',storage.value);listLink.href=url;
   });
-  const labels = {name:'Название',brand:'Марка',manufacturer:'Производитель',quantity:'Количество',unit:'Единица',ingredients:'Состав',calories:'Калории, ккал',protein:'Белки, г',fat:'Жиры, г',carbs:'Углеводы, г',nutrition_basis:'Основание КБЖУ',portion:'Порция',manufactured_date:'Дата изготовления',expiry_date:'Годен до',shelf_value:'Срок хранения',shelf_unit:'Единица срока'};
+  const labels = {name:'Название',brand:'Марка',manufacturer:'Производитель',quantity:'Количество',unit:'Единица',ingredients:'Состав',calories:'Калории, ккал',protein:'Белки, г',fat:'Жиры, г',carbs:'Углеводы, г',nutrition_basis:'Основание КБЖУ',portion:'Порция',manufactured_date:'Дата изготовления',expiry_date:'Годен до',shelf_value:'Срок хранения',shelf_unit:'Единица срока',other_info:'Другие сведения',barcode:'Штрихкод',amount:'Количество'};
   const friendly = {g:'г',kg:'кг',ml:'мл',l:'л',pcs:'шт.',pack:'уп.','100g':'На 100 г','100ml':'На 100 мл',portion:'На порцию',days:'дней',months:'месяцев',years:'лет'};
   const images = []; let active = 0, crop = null, stream = null, cameraGeneration = 0, photoSequence = 0, busy = false, proposals = {}, recognized = new Map();
   const canvas = $('[data-crop-canvas]'), ctx = canvas.getContext('2d');
@@ -55,7 +59,7 @@
   function syncBusy(value) {
     busy=value;
     scanner.querySelectorAll('button,input[type=file]').forEach(button=>{button.disabled=value;});
-    $('[data-recognize]').textContent=value?'Распознаём…':'Распознать текст';
+    $('[data-recognize]').textContent=value?'Распознаём…':'Заполнить по фото';
     scanner.setAttribute('aria-busy',String(value));
   }
   function cropInputs(rect) {
@@ -75,7 +79,7 @@
   }
   async function addFiles(files) {
     if(busy)return;
-    const problems=[];
+    const firstNew=images.length;const problems=[];
     for(const file of [...files]){
       if(images.length>=6){problems.push('Можно добавить до 6 снимков.');break;}
       if(file.size>8*1024*1024){problems.push('Снимок больше 8 МБ.');continue;}
@@ -85,10 +89,11 @@
         const image=new Image();image.src=url;await image.decode();
         if(image.naturalWidth*image.naturalHeight>20000000)throw new Error('Снимок больше 20 мегапикселей.');
         if(images.length>=6){problems.push('Можно добавить до 6 снимков.');continue;}
-        const ratio=Math.min(1,2000/Math.max(image.naturalWidth,image.naturalHeight));const source=document.createElement('canvas');source.width=Math.round(image.naturalWidth*ratio);source.height=Math.round(image.naturalHeight*ratio);source.getContext('2d').drawImage(image,0,0,source.width,source.height);images.push({id:'photo-'+(++photoSequence),canvas:source});dirty=true;
+        const ratio=Math.min(1,2400/Math.max(image.naturalWidth,image.naturalHeight));const source=document.createElement('canvas');source.width=Math.round(image.naturalWidth*ratio);source.height=Math.round(image.naturalHeight*ratio);source.getContext('2d').drawImage(image,0,0,source.width,source.height);images.push({id:'photo-'+(++photoSequence),canvas:source});dirty=true;
       }catch(error){problems.push(error.message==='Снимок больше 20 мегапикселей.'?error.message:'Не удалось прочитать снимок. Попробуйте другое фото.');}finally{URL.revokeObjectURL(url);}
     }
     select(Math.max(0,images.length-1));status(problems.join(' '),Boolean(problems.length));
+    if(images.length>firstNew)void scan(images.length-firstNew>1,firstNew);
   }
   $('[data-photo-input]').addEventListener('change',event=>{addFiles(event.target.files);event.target.value='';});
   $('[data-photo-capture]').addEventListener('change',event=>{addFiles(event.target.files);event.target.value='';});
@@ -108,7 +113,7 @@
     if(Object.values(r).some(n=>!Number.isFinite(n)||n<0)||r.w<30||r.h<30||r.x+r.w>canvas.width||r.y+r.h>canvas.height){status('Область должна находиться внутри снимка и быть не меньше 30 × 30 пикселей.',true);return;}
     crop=r;paint();status('Область выделена.');
   });
-  $('[data-rotate-photo]').addEventListener('click',()=>{const image=images[active];if(!image)return;const rotated=document.createElement('canvas');rotated.width=image.canvas.height;rotated.height=image.canvas.width;const c=rotated.getContext('2d');c.translate(rotated.width,0);c.rotate(Math.PI/2);c.drawImage(image.canvas,0,0);image.canvas=rotated;crop=null;paint();cropInputs(null);});
+  $('[data-rotate-photo]').addEventListener('click',()=>{const image=images[active];if(!image)return;const rotated=document.createElement('canvas');rotated.width=image.canvas.height;rotated.height=image.canvas.width;const c=rotated.getContext('2d');c.translate(rotated.width,0);c.rotate(Math.PI/2);c.drawImage(image.canvas,0,0);image.canvas=rotated;for(const key of recognized.keys())if(key.startsWith(image.id+':'))recognized.delete(key);crop=null;paint();cropInputs(null);renderResults();});
   $('[data-remove-photo]').addEventListener('click',()=>{const removed=images.splice(active,1)[0];if(removed) for(const key of recognized.keys()) if(key.startsWith(removed.id+':'))recognized.delete(key);select(Math.max(0,active-1));});
   async function stopCamera(){cameraGeneration++;if(stream){stream.getTracks().forEach(track=>track.stop());stream=null;}const video=$('video');video.srcObject=null;$('.product-camera').hidden=true;}
   $('[data-start-camera]').addEventListener('click',async()=>{
@@ -118,27 +123,161 @@
   $('[data-stop-camera]').addEventListener('click',stopCamera);
   $('[data-take-photo]').addEventListener('click',()=>{const video=$('video');if(!video.videoWidth)return;const shot=document.createElement('canvas');shot.width=video.videoWidth;shot.height=video.videoHeight;shot.getContext('2d').drawImage(video,0,0);shot.toBlob(async blob=>{if(blob)await addFiles([new File([blob],'camera.jpg',{type:'image/jpeg'})]);stopCamera();},'image/jpeg',.92);});
   document.addEventListener('visibilitychange',()=>{if(document.hidden)stopCamera();});window.addEventListener('pagehide',stopCamera);
-  function renderResults(){
-    proposals={};const texts=[],dates=[];for(const result of recognized.values()){Object.assign(proposals,result.proposals);texts.push(result.text);dates.push(...result.dates);}
-    const area=$('.product-ocr-results');area.hidden=!recognized.size;$('[data-ocr-text]').value=texts.join('\n\n');const container=$('[data-ocr-proposals]');container.replaceChildren();
-    for(const [key,value] of Object.entries(proposals)){if(!labels[key]||!field(key))continue;const label=document.createElement('label');label.className='product-proposal';const check=document.createElement('input');check.type='checkbox';check.dataset.proposal=key;check.checked=!field(key).value;const span=document.createElement('span'),title=document.createElement('strong');title.textContent=labels[key];span.append(title,document.createTextNode(friendly[value]||value));label.append(check,span);container.append(label);}
-    $('[data-apply-ocr]').disabled=!Object.keys(proposals).length;
-    $('[data-found-dates]').textContent=dates.length?'Найденные даты: '+[...new Set(dates)].map(value=>new Intl.DateTimeFormat('ru-RU',{timeZone:'UTC'}).format(new Date(value+'T00:00:00Z'))).join(', ')+'. Проверьте на упаковке, что означает каждая дата.':'';
+  let scores = {}, conflicts = {};
+  function aggregate() {
+    proposals={}; scores={}; conflicts={}; const values = new Map();
+    const chosenCode=resolved.get('barcode');
+    const results=[...recognized.values()].filter(result=>!chosenCode || !result.proposals?.barcode || result.proposals.barcode.padStart(14,'0')===chosenCode.padStart(14,'0'));
+    const amounts=new Map();
+    const addAmount=(option,score)=>{if(!option?.quantity || !option?.unit)return;const key=option.quantity+'|'+option.unit;amounts.set(key,{...option,score:Math.max(amounts.get(key)?.score||0,score)});};
+    for(const result of results){addAmount(result.proposals,Math.min(result.confidence?.quantity||0,result.confidence?.unit||0));for(const option of result.amount_options || [])addAmount(option,0);}
+    for(const result of results) for(const [key,value] of Object.entries(result.proposals || {})) {
+      if((!labels[key] && key!=='catalog_source') || !field(key))continue;
+      if(!values.has(key))values.set(key,new Map());
+      const variants=values.get(key), score=Number(result.confidence?.[key] || 0);
+      variants.set(String(value),Math.max(variants.get(String(value)) || 0,score));
+      for(const alternative of result.alternatives?.[key] || [])variants.set(String(alternative),0);
+    }
+    for(const [key,variants] of values) {
+      if(variants.size===1) { const [value,score]=[...variants][0];proposals[key]=value;scores[key]=score; }
+      else {
+        conflicts[key]=[...variants.keys()];
+        if(variants.has(resolved.get(key))) { proposals[key]=resolved.get(key);scores[key]=1; }
+      }
+    }
+    if(amounts.size>1){
+      delete conflicts.quantity;delete conflicts.unit;conflicts.amount=[...amounts.keys()];
+      const selected=amounts.get(resolved.get('amount'));
+      if(selected){proposals.quantity=selected.quantity;proposals.unit=selected.unit;scores.quantity=scores.unit=1;}
+      else{delete proposals.quantity;delete proposals.unit;scores.quantity=scores.unit=0;}
+    }
+    // Never automatically mix numbers belonging to different bases/portions.
+    if(conflicts.barcode && !resolved.get('barcode'))for(const key of Object.keys(scores))scores[key]=0;
+    if(conflicts.nutrition_basis) for(const key of ['calories','protein','fat','carbs','nutrition_basis'])scores[key]=0;
+    if((conflicts.amount && !resolved.get('amount')) || conflicts.quantity || conflicts.unit) scores.quantity=scores.unit=0;
+    if(conflicts.shelf_value || conflicts.shelf_unit)scores.shelf_value=scores.shelf_unit=0;
+    // Withdraw earlier automatic values once a later photo contradicts them.
+    for(const [key,value] of autoValues){
+      const dependent=(conflicts.barcode && !resolved.get('barcode')) || (conflicts.nutrition_basis && ['calories','protein','fat','carbs'].includes(key)) || (((conflicts.amount && !resolved.get('amount')) || conflicts.quantity||conflicts.unit) && ['quantity','unit'].includes(key));
+      if((!(key in proposals)||dependent) && !touched.has(key) && field(key).value===value){
+        field(key).value=({quantity:'',unit:'pcs',shelf_unit:'days'})[key]||'';autoValues.delete(key);
+        field('ocr_confirm').value='';updateDates();
+      }
+    }
   }
-  $('[data-recognize]').addEventListener('click',async()=>{
-    const image=images[active];if(!image||busy)return;const rect=crop||{x:0,y:0,w:image.canvas.width,h:image.canvas.height};const output=document.createElement('canvas');output.width=Math.round(rect.w);output.height=Math.round(rect.h);output.getContext('2d').drawImage(image.canvas,rect.x,rect.y,rect.w,rect.h,0,0,output.width,output.height);
-    syncBusy(true);status('Распознаём текст этикетки…');
-    try{const blob=await new Promise(resolve=>output.toBlob(resolve,'image/jpeg',.95));if(!blob)throw new Error('Не удалось подготовить снимок.');const body=new FormData();body.append('image',blob,'label.jpg');body.append('csrf_token',field('csrf_token').value);const response=await fetch('/products/ocr',{method:'POST',body,signal:AbortSignal.timeout(45000)});if(!response.headers.get('content-type')?.includes('application/json'))throw new Error('Сеанс истёк или сервер недоступен. Обновите страницу, предварительно сохранив введённые данные.');const data=await response.json();if(!response.ok)throw new Error(data.error||'Не удалось распознать снимок.');recognized.set(image.id+':'+[rect.x,rect.y,rect.w,rect.h].map(Math.round).join(','),data);renderResults();status('Текст распознан. Выберите поля и проверьте значения.');}
-    catch(error){status(error.name==='TimeoutError'?'Распознавание не ответило вовремя. Попробуйте меньшую область.':error.message,true);}
+  function renderResults(){
+    aggregate();const texts=[],dates=[],warnings=[];
+    for(const result of recognized.values()){texts.push(result.text);dates.push(...result.dates || []);warnings.push(...result.warnings || []);}
+    const area=$('.product-ocr-results');area.hidden=!recognized.size;$('[data-ocr-text]').value=texts.join('\n\n');const container=$('[data-ocr-proposals]');container.replaceChildren();
+    for(const [key,value] of Object.entries(proposals)){
+      if(key==='catalog_source')continue;
+      const label=document.createElement('label');label.className='product-proposal';const check=document.createElement('input');check.type='checkbox';check.dataset.proposal=key;
+      check.checked=(!touched.has(key) && (!field(key).value || autoValues.get(key)===field(key).value)) || (!touched.has(key) && (Object.hasOwn(defaults,key) && field(key).value===defaults[key]));
+      const span=document.createElement('span'),title=document.createElement('strong');title.textContent=labels[key];span.append(title,document.createTextNode(friendly[value]||value));
+      if(scores[key]<.8){const hint=document.createElement('small');hint.textContent='Проверьте на упаковке';span.append(hint);label.classList.add('needs-review');}
+      label.append(check,span);container.append(label);
+    }
+    for(const [key,variants] of Object.entries(conflicts)) {
+      const label=document.createElement('label');label.className='product-ocr-conflict';label.append(document.createTextNode(labels[key]+': на снимках разные значения'));
+      const select=document.createElement('select');const empty=document.createElement('option');empty.value='';empty.textContent='Выберите значение';select.append(empty);
+      for(const value of variants){const option=document.createElement('option');option.value=value;option.textContent=key==='amount'?value.split('|')[0]+' '+(friendly[value.split('|')[1]]||value.split('|')[1]):friendly[value]||value;select.append(option);}
+      select.value=resolved.get(key)||'';select.addEventListener('change',()=>{resolved.set(key,select.value);if(key==='amount' && select.value){const [quantity,unit]=select.value.split('|');field('quantity').value=quantity;field('unit').value=unit;touched.add('quantity');touched.add('unit');confirmNeeded();renderResults();}else autoFill();});label.append(select);container.append(label);
+    }
+    renderCatalog();
+    const details=$('[data-result-details]');if(details)details.open=Object.keys(conflicts).length>0 || Object.entries(scores).some(([key,score])=>score<.8 && key!=='catalog_source');
+    $('[data-apply-ocr]').disabled=!Object.keys(proposals).length;
+    $('[data-ocr-warnings]').textContent=[...new Set(warnings)].join(' ');
+    $('[data-found-dates]').textContent=dates.length?'Найденные даты: '+[...new Set(dates)].map(value=>new Intl.DateTimeFormat('ru-RU',{timeZone:'UTC'}).format(new Date(value+'T00:00:00Z'))).join(', ')+'. Проверьте назначение даты на упаковке.':'';
+  }
+  function confirmNeeded(){
+    field('ocr_used').value='yes';const confirm=form.querySelector('[data-ocr-confirm]');confirm.hidden=false;field('ocr_confirm').value='';form.querySelector('[type=submit]').textContent='Подтвердить и сохранить';dirty=true;updateDates();
+  }
+  function autoFill(){
+    aggregate();const keys=new Set(Object.keys(proposals).filter(key=>scores[key]>=.8 && !touched.has(key) &&
+      (!field(key).value || autoValues.get(key)===field(key).value || (Object.hasOwn(defaults,key) && field(key).value===defaults[key]))));
+    for(const [a,b] of [['quantity','unit'],['shelf_value','shelf_unit']])if(keys.has(a)!==keys.has(b)){keys.delete(a);keys.delete(b);}
+    // A shelf life alone is useful evidence, but cannot be submitted without a manufacture date.
+    if(!field('manufactured_date').value && !keys.has('manufactured_date')){keys.delete('shelf_value');keys.delete('shelf_unit');}
+    if(keys.has('nutrition_basis') && field('nutrition_basis').value!==proposals.nutrition_basis && ['calories','protein','fat','carbs'].some(key=>field(key).value && !keys.has(key)))keys.delete('nutrition_basis');
+    const basis=keys.has('nutrition_basis')?proposals.nutrition_basis:field('nutrition_basis').value;
+    if(!basis || (proposals.nutrition_basis && basis!==proposals.nutrition_basis))for(const key of ['calories','protein','fat','carbs'])keys.delete(key);
+    for(const key of keys){field(key).value=proposals[key];autoValues.set(key,proposals[key]);}
+    if(keys.size)confirmNeeded();renderResults();return keys.size;
+  }
+  async function jsonRequest(url,body,timeout){
+    const response=await fetch(url,{method:'POST',body,signal:AbortSignal.timeout(timeout)});
+    if(!response.headers.get('content-type')?.includes('application/json'))throw new Error('Сеанс истёк или сервер недоступен. Сохраните введённые данные и обновите страницу.');
+    const data=await response.json();if(!response.ok)throw new Error(data.error||'Не удалось прочитать снимок.');return data;
+  }
+  function renderCatalog(){
+    const container=$('[data-catalog-source]');container.replaceChildren();delete container.dataset.saved;container.hidden=true;
+    const choices=$('[data-barcode-choices]');choices.replaceChildren();const codes=new Set();
+    for(const result of recognized.values()){
+      for(const code of result.barcodes || [])codes.add(code);
+      if(result.proposals?.barcode)codes.add(result.proposals.barcode);
+      if(result.catalog_state==='saved' && !container.dataset.saved) {container.hidden=false;container.dataset.saved='yes';container.append(document.createTextNode('Найдены данные из ваших продуктов. '));}
+      if(result.catalog_url && /^https:\/\/world\.openfoodfacts\.org\/product\/[0-9]{8,14}$/.test(result.catalog_url)){
+        if(container.querySelector('a'))continue;container.hidden=false;
+        const link=document.createElement('a');link.href=result.catalog_url;link.target='_blank';link.rel='noopener noreferrer';link.textContent='Карточка Open Food Facts';container.append(link,document.createTextNode(' · '));
+        const license=document.createElement('a');license.href='https://opendatacommons.org/licenses/odbl/1-0/';license.target='_blank';license.rel='noopener noreferrer';license.textContent='ODbL';container.append(license);
+      }
+    }
+    if(codes.size>1){const hint=document.createElement('p');hint.textContent='Выберите штрихкод нужного продукта';choices.append(hint);for(const code of codes){const button=document.createElement('button');button.type='button';button.className='workspace-secondary-button';button.textContent=code;button.disabled=busy;button.addEventListener('click',()=>lookupCode(code));choices.append(button);}}
+  }
+  async function lookupCode(code){
+    if(busy)return;syncBusy(true);status('Ищем продукт…');
+    try{
+      const body=new FormData();body.append('barcode',code);body.append('csrf_token',field('csrf_token').value);
+      const data=await jsonRequest('/products/catalog',body,8000);recognized.set('catalog:manual',data);resolved.set('barcode',code);autoFill();
+      const messages={not_found:'В каталоге нет карточки. Можно прочитать данные с этикетки.',unavailable:'Каталог недоступен. Можно прочитать данные с этикетки.',limited:'Каталог временно занят. Можно прочитать данные с этикетки.',offline:'Поиск без интернета: прочитайте этикетку или выберите сохранённый продукт.'};
+      status(messages[data.catalog_state] || 'Данные внесены в форму. Проверьте упаковку перед сохранением.');
+    }catch(error){status(error.name==='TimeoutError'?'Каталог не ответил. Сканирование этикетки остаётся доступным.':error.message,true);}
     finally{syncBusy(false);renderResults();}
-  });
+  }
+  $('[data-lookup-code]').addEventListener('click',()=>lookupCode($('[data-catalog-code]').value.trim()));
+  $('[data-catalog-code]').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();lookupCode(event.target.value.trim());}});
+  field('barcode').addEventListener('input',()=>{field('catalog_source').value='';touched.add('catalog_source');});
+  async function recognizeImage(image,rect){
+    const output=document.createElement('canvas');output.width=Math.round(rect.w);output.height=Math.round(rect.h);output.getContext('2d').drawImage(image.canvas,rect.x,rect.y,rect.w,rect.h,0,0,output.width,output.height);
+    const blob=await new Promise(resolve=>output.toBlob(resolve,'image/jpeg',.96));if(!blob)throw new Error('Не удалось подготовить снимок.');
+    const key=image.id+':'+[rect.x,rect.y,rect.w,rect.h].map(Math.round).join(',');
+    function body(phase){const data=new FormData();data.append('image',blob,'label.jpg');data.append('csrf_token',field('csrf_token').value);data.append('phase',phase);return data;}
+    let code='';
+    try{
+      const identified=await jsonRequest('/products/ocr',body('identify'),8000);
+      if(identified.barcodes?.length>1){recognized.set(key+':quick',identified);renderResults();throw new Error('На снимке несколько продуктов. Выберите один штрихкод или выделите одну упаковку.');}
+      if(identified.proposals?.barcode){code=identified.proposals.barcode;recognized.set(key+':quick',identified);autoFill();if(!identified.proposals.quantity && !touched.has('quantity') && field('quantity').value===defaults.quantity)field('quantity').value='';status('Карточка обработана. Читаем данные с упаковки…');}
+    }catch(error){if(error.message.startsWith('На снимке несколько продуктов'))throw error;}
+    // A second side of the same package can omit the barcode.
+    if(!code && !conflicts.barcode)code=field('barcode').value;
+    const requestBody=body('text');if(code)requestBody.append('barcode',code);
+    const data=await jsonRequest('/products/ocr',requestBody,95000);
+    recognized.delete(key+':quick');recognized.set(key,data);resolved.clear();
+  }
+  async function scan(all=false,first=0){
+    if(!images[active]||busy)return;syncBusy(true);await stopCamera();
+    const jobs=all?images.slice(first).map(image=>({image,rect:{x:0,y:0,w:image.canvas.width,h:image.canvas.height}})):
+      [{image:images[active],rect:crop||{x:0,y:0,w:images[active].canvas.width,h:images[active].canvas.height}}];
+    const problems=[];let done=0;
+    for(const [index,job] of jobs.entries()) {
+      status(all?`Читаем фото ${index+1} из ${jobs.length}…`:'Читаем этикетку…');
+      try{await recognizeImage(job.image,job.rect);done++;renderResults();}
+      catch(error){problems.push(error.name==='TimeoutError'?'Сканер не успел обработать фото. Попробуйте выделить область.':error.message);}
+    }
+    syncBusy(false);const filled=autoFill();
+    status(problems.length?`${done?'Часть снимков прочитана. ':''}${problems.join(' ')}`:
+      filled?'Данные внесены в форму. Проверьте их перед сохранением.':'Фото прочитано. Проверьте предложенные значения.',Boolean(problems.length));
+  }
+  $('[data-recognize]').addEventListener('click',()=>scan());
+  $('[data-recognize-all]').addEventListener('click',()=>scan(true));
   $('[data-apply-ocr]').addEventListener('click',()=>{
     const chosen=[...scanner.querySelectorAll('[data-proposal]:checked')];if(!chosen.length){status('Выберите значения для переноса.',true);return;}
     const keys=new Set(chosen.map(input=>input.dataset.proposal));
     for(const [a,b] of [['quantity','unit'],['shelf_value','shelf_unit']]) { if(proposals[a]&&proposals[b]&&keys.has(a)!==keys.has(b)){status('Количество и единицу, а также срок хранения и его единицу нужно переносить вместе.',true);return;} }
     const hasNutrients=['calories','protein','fat','carbs'].some(key=>keys.has(key));
     if(hasNutrients&&proposals.nutrition_basis&&!keys.has('nutrition_basis')&&field('nutrition_basis').value!==proposals.nutrition_basis){status('Выберите основание КБЖУ вместе со значениями, чтобы не смешать данные на 100 г, 100 мл и порцию.',true);return;}
-    for(const input of chosen){const target=field(input.dataset.proposal);target.value=proposals[input.dataset.proposal];const details=target.closest('details');if(details)details.open=true;}
-    field('ocr_used').value='yes';const confirm=form.querySelector('[data-ocr-confirm]');confirm.hidden=false;confirm.querySelector('input').required=true;confirm.querySelector('input').checked=false;dirty=true;updateDates();const missingBasis=['calories','protein','fat','carbs'].some(key=>field(key).value)&&!field('nutrition_basis').value;status(missingBasis?'Проверьте КБЖУ: укажите в форме, на 100 г, 100 мл или порцию приведены значения.':'Значения перенесены. Проверьте форму и подтвердите данные этикетки.');
+    if(keys.has('nutrition_basis') && field('nutrition_basis').value && field('nutrition_basis').value!==proposals.nutrition_basis && ['calories','protein','fat','carbs'].some(key=>field(key).value && !keys.has(key))){status('При смене основания КБЖУ замените все заполненные значения таблицы или очистите их.',true);return;}
+    for(const input of chosen){const target=field(input.dataset.proposal);target.value=proposals[input.dataset.proposal];touched.add(input.dataset.proposal);const details=target.closest('details');if(details)details.open=true;}
+    confirmNeeded();const missingBasis=['calories','protein','fat','carbs'].some(key=>field(key).value)&&!field('nutrition_basis').value;status(missingBasis?'Проверьте КБЖУ: укажите в форме, на 100 г, 100 мл или порцию приведены значения.':'Значения перенесены. Проверьте форму и подтвердите данные этикетки.');
   });
 })();

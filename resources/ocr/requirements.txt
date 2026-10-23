@@ -1,0 +1,2 @@
+# Install CPU PyTorch first: see README. Python 3.12 recommended.
+easyocr==1.7.2

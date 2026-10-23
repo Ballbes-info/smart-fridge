@@ -19,7 +19,7 @@ SHELF_UNITS = {'days': 'дней', 'months': 'месяцев', 'years': 'лет'
 NUTRIENTS = {'calories': 'Калории, ккал', 'protein': 'Белки, г', 'fat': 'Жиры, г', 'carbs': 'Углеводы, г'}
 FIELDS = ['name', 'brand', 'manufacturer', 'quantity', 'unit', 'expiry_date', 'manufactured_date',
           'shelf_value', 'shelf_unit', 'opened_date', 'price', 'note', 'ingredients',
-          'nutrition_basis', 'portion', 'calories', 'protein', 'fat', 'carbs', 'other_info']
+          'nutrition_basis', 'portion', 'calories', 'protein', 'fat', 'carbs', 'other_info', 'barcode', 'catalog_source']
 
 
 def clean(value):
@@ -62,6 +62,10 @@ def validate(form):
         if len(values[key]) > limit or any(unicodedata.category(c).startswith('C') for c in values[key]):
             errors[key] = f'Не более {limit} символов, без управляющих знаков.'
     if not values['name']: errors['name'] = 'Укажите название продукта.'
+    from services.product_catalog import valid_gtin
+    if values['barcode'] and not valid_gtin(values['barcode']):errors['barcode']='Проверьте штрихкод: нужны 8, 12, 13 или 14 цифр и правильная контрольная цифра.'
+    if values['catalog_source'] not in ['', 'openfoodfacts']:values['catalog_source']=''
+    if not values['barcode']:values['catalog_source']=''
     for key, limit in [('ingredients',3000),('note',1000),('other_info',3000)]:
         if len(values[key]) > limit: errors[key] = f'Не более {limit} символов.'
     for key in ['expiry_date','manufactured_date','opened_date']:
@@ -114,6 +118,8 @@ def validate(form):
                 if nutrition[key] and Decimal(nutrition[key]) > 100: errors[key] = 'На 100 г/мл значение не может превышать 100 г.'
     elif values['nutrition_basis'] and values['nutrition_basis'] not in BASES: errors['nutrition_basis'] = 'Выберите основание КБЖУ.'
     details = {key: values[key] for key in ['ingredients','nutrition_basis','portion','other_info']}
+    for key in ['barcode','catalog_source']:
+        if values[key]:details[key]=values[key]
     details.update(nutrition)
     parsed.update(dates, shelf_value=shelf, shelf_unit=values['shelf_unit'] if shelf else None, details=details)
     if form.get('ocr_used') == 'yes' and form.get('ocr_confirm') != 'yes':
@@ -128,7 +134,7 @@ class StorageMissing(Exception): pass
 def save(owner_id, storage_id, submission_key, values, parsed):
     details = parsed['details']
     identity = {key: clean(values[key]).casefold() for key in ['name','brand','manufacturer']}
-    identity.update(dimension=parsed['dimension'], details={key: clean(val).casefold() for key,val in details.items()})
+    identity.update(dimension=parsed['dimension'], details={key: clean(val).casefold() for key,val in details.items() if key!='catalog_source'})
     digest = lambda payload: hashlib.sha256(json.dumps(payload, sort_keys=True, ensure_ascii=False, default=str).encode()).hexdigest()
     payload_hash = digest(dict(storage_id=storage_id, values=values, parsed=parsed))
     with db_session.create_session() as ses:
@@ -147,6 +153,8 @@ def save(owner_id, storage_id, submission_key, values, parsed):
                                manufacturer=values['manufacturer'], dimension=parsed['dimension'], identity_key=key,
                                search_key=clean(values['name']+' '+values['brand']+' '+values['manufacturer']).casefold(), details=details)
             ses.add(group); ses.flush()
+        elif details.get('catalog_source')=='openfoodfacts' and group.details.get('catalog_source')!='openfoodfacts':
+            group.details={**group.details,'catalog_source':'openfoodfacts'}
         batch=ProductBatch(owner_id=owner_id, group_id=group.id, submission_key=submission_key, payload_hash=payload_hash,
                            quantity_micro=parsed['quantity_micro'], entered_quantity=parsed['entered_quantity'], unit=values['unit'],
                            expiry_date=parsed['expiry_date'], manufactured_date=parsed['manufactured_date'],
