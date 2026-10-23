@@ -86,3 +86,10 @@
 .billing-page .billing-choice, .billing-page select,
 .billing-page input[type=number] { border-radius:0; }
 .scan-pack-option{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:16px 0;border-top:1px solid var(--line)}
+.billing-ai-action{display:flex;align-items:center;gap:14px;width:100%;min-height:64px;margin:0 0 24px;padding:18px 20px;border:1px solid var(--button-bg);border-radius:0;background:var(--button-bg);color:var(--button-ink);text-decoration:none;font-size:14px;font-weight:600;line-height:1.5;transition:background .18s ease}
+.billing-ai-action:hover{background:var(--button-hover);border-color:var(--button-hover);color:var(--button-ink);text-decoration:none}
+.billing-ai-action span{flex:1;min-width:0}
+.billing-ai-action .icon{width:20px;height:20px;flex-shrink:0}
+.billing-ai-action-arrow{transition:transform .18s ease}
+.billing-ai-action:hover .billing-ai-action-arrow{transform:translateX(3px)}
+@media(prefers-reduced-motion:reduce){.billing-ai-action,.billing-ai-action-arrow{transition:none}.billing-ai-action:hover .billing-ai-action-arrow{transform:none}}

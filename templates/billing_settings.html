@@ -4,7 +4,7 @@
 {% block workspace_content %}
 <section class="billing-page billing-narrow">
   <header class="workspace-heading app-page-heading"><div><h1>Ваша подписка</h1><p>План, оплата и условия продления.</p></div></header>
-  <p><a class="billing-link" href="{{ url_for('billing.scan_limits') }}">Лимиты ИИ и пакеты распознаваний</a></p>
+  <a class="billing-ai-action" href="{{ url_for('billing.scan_limits') }}">{{ icon('scan') }}<span>Лимиты ИИ и пакеты распознаваний</span>{{ icon('chevron', 'billing-ai-action-arrow') }}</a>
   <div class="billing-panel">
     <p class="billing-eyebrow">{{ current_user.name }} · {{ current_user.email }}</p>
     <h2>{{ billing_plans[subscription.plan].name if subscription and subscription.plan else 'План не выбран' }}</h2>
