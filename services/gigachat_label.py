@@ -15,6 +15,7 @@ from data import db_session
 from data.product import ProductScanUsage
 from services.billing_service import get_subscription, PLANS
 from services.label_ocr import prepare_image
+from services import gigachat_tls
 from services.label_extraction import validate_nutrition
 from services.product_catalog import valid_gtin
 
@@ -96,7 +97,13 @@ def finish(key, success):
 
 def request_json(client, method, url, **kwargs):
     try:
-        with client.request(method,url,timeout=(8,50),allow_redirects=False,**kwargs) as response:
+        try:
+            response=client.request(method,url,timeout=(8,50),allow_redirects=False,**kwargs)
+        except requests.exceptions.SSLError as exc:
+            if not gigachat_tls.verification_failure(exc) or not gigachat_tls.repair(client):raise
+            # The first connection failed verification before sending the request.
+            response=client.request(method,url,timeout=(8,50),allow_redirects=False,**kwargs)
+        with response:
             if response.status_code==401:
                 with _token_lock:_token['expires']=0
                 raise ScanError('GigaChat отклонил авторизацию. Проверьте ключ API на сервере.',503)
@@ -109,7 +116,7 @@ def request_json(client, method, url, **kwargs):
             if not isinstance(result,dict):raise ValueError('Object expected')
             return result
     except requests.exceptions.SSLError as exc:
-        raise ScanError('Не удалось проверить сертификат GigaChat. Настройте GIGACHAT_CA_BUNDLE на сервере.',503) from exc
+        raise ScanError(gigachat_tls.error_message(exc),503) from exc
     except (requests.exceptions.RequestException, OSError) as exc:
         raise ScanError('Нет ответа от GigaChat. Проверьте интернет и повторите позже.',503) from exc
     except (ValueError,TypeError) as exc:raise ScanError('GigaChat вернул нечитаемый ответ.') from exc
@@ -179,7 +186,7 @@ def recognize(raw,user_id):
     key=reserve(user_id);success=False;file_id=None
     try:
         with requests.Session() as client:
-            client.verify=os.environ.get('GIGACHAT_CA_BUNDLE') or True
+            gigachat_tls.configure(client)
             token=access_token(client)
             client.headers.update(Authorization='Bearer '+token)
             try:
