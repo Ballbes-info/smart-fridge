@@ -98,7 +98,7 @@ def start_local_payment_worker():
 
 @app.before_request
 def limit_auth_requests():
-    if request.method != "POST":
+    if request.method != "POST" or request.endpoint not in {"login", "register", "reset_password", "resend", "verify", "reset_password_verify"}:
         return None
     ip = request.remote_addr or "unknown"
     email = request.form.get("email", "").lower().strip()
@@ -172,6 +172,8 @@ from services.storage import register_storage
 register_storage(app, subscription_required)
 from services.products import register_products
 register_products(app, subscription_required, login_required)
+from services.product_import_routes import register_imports
+register_imports(app, subscription_required)
 
 
 # --------------------------------------------------------------------------- #

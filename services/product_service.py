@@ -136,38 +136,44 @@ class StorageMissing(Exception): pass
 
 
 def save(owner_id, storage_id, submission_key, values, parsed):
+    with db_session.create_session() as ses:
+        ses.execute(text('BEGIN IMMEDIATE'))
+        result = save_in_session(ses, owner_id, storage_id, submission_key, values, parsed)
+        ses.commit()
+        return result
+
+
+def save_in_session(ses, owner_id, storage_id, submission_key, values, parsed):
+    """Caller owns the transaction; shared by single entry and atomic file imports."""
     details = parsed['details']
     identity = {key: clean(values[key]).casefold() for key in ['name','brand','manufacturer']}
     identity.update(dimension=parsed['dimension'], details={key: clean(val).casefold() for key,val in details.items() if key!='catalog_source'})
     digest = lambda payload: hashlib.sha256(json.dumps(payload, sort_keys=True, ensure_ascii=False, default=str).encode()).hexdigest()
     payload_hash = digest(dict(storage_id=storage_id, values=values, parsed=parsed))
-    with db_session.create_session() as ses:
-        # Serializes grouping, idempotency, additions and location deletion in SQLite.
-        ses.execute(text('BEGIN IMMEDIATE'))
-        if not ses.scalar(select(StorageLocation.id).where(StorageLocation.id==storage_id, StorageLocation.owner_id==owner_id)):
-            raise StorageMissing
-        old = ses.scalar(select(ProductBatch).where(ProductBatch.owner_id==owner_id, ProductBatch.submission_key==submission_key))
-        if old:
-            if old.payload_hash != payload_hash: raise ProductConflict
-            return old.group_id, False
-        if ses.scalar(select(ProductMutation.id).where(ProductMutation.owner_id==owner_id,ProductMutation.removed_submission_key==submission_key)):
-            raise ProductConflict
-        key = digest(identity) if values['brand'] else secrets.token_hex(32)
-        group = ses.scalar(select(ProductGroup).where(ProductGroup.owner_id==owner_id, ProductGroup.storage_id==storage_id, ProductGroup.identity_key==key))
-        if not group:
-            group=ProductGroup(owner_id=owner_id, storage_id=storage_id, name=values['name'], brand=values['brand'],
-                               manufacturer=values['manufacturer'], dimension=parsed['dimension'], identity_key=key,
-                               search_key=clean(values['name']+' '+values['brand']+' '+values['manufacturer']).casefold(), details=details)
-            ses.add(group); ses.flush()
-        elif details.get('catalog_source')=='openfoodfacts' and group.details.get('catalog_source')!='openfoodfacts':
-            group.details={**group.details,'catalog_source':'openfoodfacts'}
-        batch=ProductBatch(owner_id=owner_id, group_id=group.id, submission_key=submission_key, payload_hash=payload_hash,
-                           quantity_micro=parsed['quantity_micro'], entered_quantity=parsed['entered_quantity'], unit=values['unit'],
-                           expiry_date=parsed['expiry_date'], manufactured_date=parsed['manufactured_date'],
-                           shelf_value=parsed['shelf_value'], shelf_unit=parsed['shelf_unit'], opened_date=parsed['opened_date'],
-                           price_kopecks=parsed['price_kopecks'], note=values['note'])
-        ses.add(batch);ses.commit()
-        return group.id, True
+    if not ses.scalar(select(StorageLocation.id).where(StorageLocation.id==storage_id, StorageLocation.owner_id==owner_id)):
+        raise StorageMissing
+    old = ses.scalar(select(ProductBatch).where(ProductBatch.owner_id==owner_id, ProductBatch.submission_key==submission_key))
+    if old:
+        if old.payload_hash != payload_hash: raise ProductConflict
+        return old.group_id, False
+    if ses.scalar(select(ProductMutation.id).where(ProductMutation.owner_id==owner_id,ProductMutation.removed_submission_key==submission_key)):
+        raise ProductConflict
+    key = digest(identity) if values['brand'] else secrets.token_hex(32)
+    group = ses.scalar(select(ProductGroup).where(ProductGroup.owner_id==owner_id, ProductGroup.storage_id==storage_id, ProductGroup.identity_key==key))
+    if not group:
+        group=ProductGroup(owner_id=owner_id, storage_id=storage_id, name=values['name'], brand=values['brand'],
+                           manufacturer=values['manufacturer'], dimension=parsed['dimension'], identity_key=key,
+                           search_key=clean(values['name']+' '+values['brand']+' '+values['manufacturer']).casefold(), details=details)
+        ses.add(group); ses.flush()
+    elif details.get('catalog_source')=='openfoodfacts' and group.details.get('catalog_source')!='openfoodfacts':
+        group.details={**group.details,'catalog_source':'openfoodfacts'}
+    batch=ProductBatch(owner_id=owner_id, group_id=group.id, submission_key=submission_key, payload_hash=payload_hash,
+                       quantity_micro=parsed['quantity_micro'], entered_quantity=parsed['entered_quantity'], unit=values['unit'],
+                       expiry_date=parsed['expiry_date'], manufactured_date=parsed['manufactured_date'],
+                       shelf_value=parsed['shelf_value'], shelf_unit=parsed['shelf_unit'], opened_date=parsed['opened_date'],
+                       price_kopecks=parsed['price_kopecks'], note=values['note'])
+    ses.add(batch);ses.flush()
+    return group.id, True
 
 
 def quantity_text(micro, dimension):

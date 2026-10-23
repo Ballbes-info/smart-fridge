@@ -79,3 +79,16 @@ class ProductNotificationRead(SqlAlchemyBase):
     owner_id=sa.Column(sa.Integer,sa.ForeignKey('users.id'),primary_key=True)
     batch_id=sa.Column(sa.Integer,primary_key=True)
     signature=sa.Column(sa.String(64),nullable=False)
+
+
+class ProductImport(SqlAlchemyBase):
+    __tablename__ = 'product_imports'
+    id = sa.Column(sa.String(32), primary_key=True)
+    owner_id = sa.Column(sa.Integer, sa.ForeignKey('users.id'), nullable=False, index=True)
+    filename = sa.Column(sa.String(160), nullable=False)
+    created_at = sa.Column(sa.Float, nullable=False, default=time.time)
+    revision = sa.Column(sa.Integer, nullable=False, default=1)
+    status = sa.Column(sa.String(16), nullable=False, default='draft')
+    rows = sa.Column(sa.JSON, nullable=False)
+    warnings = sa.Column(sa.JSON, nullable=False, default=list)
+    result = sa.Column(sa.JSON, nullable=False, default=dict)

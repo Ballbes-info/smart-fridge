@@ -1,0 +1,4 @@
+{% extends 'workspace_base.html' %}
+{% block title %}Импорт завершён — SmartFridge{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static',filename='css/products.css') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/product-import.css') }}">{% endblock %}
+{% block workspace_content %}<header class="workspace-heading"><h1>Продукты добавлены</h1><p>{{ item.filename }} · добавлено поступлений: {{ item.result.count }}</p></header><section class="product-form-section"><ul class="import-drafts">{% for product in item.result.products %}<li><a href="{{ url_for('products.detail',group_id=product.group_id) }}">{{ product.name }}</a></li>{% endfor %}</ul></section><div class="product-save-bar"><a class="product-primary" href="{{ url_for('products.index') }}">Открыть продукты</a><a class="workspace-secondary-button" href="{{ url_for('product_import.upload') }}">Загрузить другой файл</a></div>{% endblock %}

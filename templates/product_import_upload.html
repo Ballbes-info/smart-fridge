@@ -1,0 +1,17 @@
+{% extends 'workspace_base.html' %}
+{% block title %}Добавить из файла — SmartFridge{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static',filename='css/products.css') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/product-import.css') }}">{% endblock %}
+{% block workspace_content %}
+<header class="workspace-heading"><h1>Добавить из файла</h1><p>Один продукт или список. Сначала проверьте данные, затем подтвердите добавление.</p></header>
+{% if not product_storages %}<section class="product-empty"><h2>Сначала создайте место хранения</h2><a class="workspace-secondary-button" href="{{ url_for('storage.create') }}">Создать место</a></section>{% else %}
+<div class="import-upload-layout"><section class="product-form-section">
+{% if import_error %}<p class="product-error-summary" role="alert">{{ import_error }}</p>{% endif %}
+<form method="post" enctype="multipart/form-data" class="import-upload-form">
+<input type="hidden" name="csrf_token" value="{{ product_csrf }}">
+<div class="product-field"><label for="import-file">Файл с продуктами</label><input id="import-file" name="document" type="file" accept=".xlsx,.xls,.csv,.tsv,.txt,.json,.docx,.doc,.pdf,.odt,.ods,.rtf" required aria-describedby="import-formats"><small id="import-formats">До 5 МБ и 100 продуктов за раз. Excel, CSV, TSV, TXT, JSON, DOCX, DOC, PDF, ODT, ODS, RTF.</small></div>
+<div class="product-field"><label for="import-storage">Куда добавить</label><select id="import-storage" name="storage_id" required>{% for place in product_storages %}<option value="{{ place.id }}" {% if selected_storage==place.id|string %}selected{% endif %}>{{ place.name }}</option>{% endfor %}</select><small>Для строк без места хранения. В предпросмотре место можно изменить для каждого продукта.</small></div>
+<button type="submit" class="product-primary">Открыть предпросмотр</button>
+</form></section>
+<aside class="product-form-section import-help"><h2>Подготовить файл</h2><p>Для таблицы первая строка — названия столбцов. Для списка — один продукт на строку, например «Молоко 900 мл».</p><p>Название, количество и единица нужны для добавления. Остальные поля можно оставить пустыми.</p><div class="import-template-links">{% for format in ['xlsx','csv','txt','json'] %}<a class="workspace-secondary-button" href="{{ url_for('product_import.template',format=format) }}">Шаблон {{ format|upper }}</a>{% endfor %}</div><details><summary>Word, PDF и другие документы</summary><p>Поддерживаются таблицы и списки, а также поля вида «Название: Молоко». PDF должен содержать выделяемый текст. Для старого DOC на сервере нужен antiword; без него сохраните файл в DOCX.</p><p>Свободное описание блюда и фото документа загружайте через OCR или ИИ. Импорт файла не использует ИИ и его лимиты.</p></details><p class="product-field-hint">Исходный файл не сохраняется. Предпросмотр доступен 24 часа.</p></aside></div>
+{% if drafts %}<section class="product-form-section"><h2>Незавершённые импорты</h2><ul class="import-drafts">{% for draft in drafts %}<li><a href="{{ url_for('product_import.review',import_id=draft.id) }}">{{ draft.filename }}</a><span>{{ draft.rows|length }} продуктов</span></li>{% endfor %}</ul></section>{% endif %}
+{% endif %}{% endblock %}

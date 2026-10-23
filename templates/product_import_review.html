@@ -1,0 +1,29 @@
+{% extends 'workspace_base.html' %}
+{% block title %}Проверить импорт — SmartFridge{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static',filename='css/products.css') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/product-import.css') }}">{% endblock %}
+{% macro input(i,key,row,errors) %}
+<div class="product-field"><label for="import-{{ i }}-{{ key }}">{{ import_labels[key] }}</label><input id="import-{{ i }}-{{ key }}" name="row.{{ i }}.{{ key }}" value="{{ row.get(key,'') }}" type="text" {% if key in ['quantity','price','protein','fat','carbs','calories'] %}inputmode="decimal"{% endif %}{% if errors.get(key) %} aria-invalid="true" aria-describedby="import-error-{{ i }}-{{ key }}"{% endif %}>{% if errors.get(key) %}<small class="product-error" id="import-error-{{ i }}-{{ key }}">{{ errors[key] }}</small>{% endif %}</div>
+{% endmacro %}
+{% macro dropdown(i,key,row,errors,options) %}
+<div class="product-field"><label for="import-{{ i }}-{{ key }}">{{ import_labels[key] }}</label><select id="import-{{ i }}-{{ key }}" name="row.{{ i }}.{{ key }}"{% if errors.get(key) %} aria-invalid="true" aria-describedby="import-error-{{ i }}-{{ key }}"{% endif %}><option value="">Не указано</option>{% if row.get(key) and row[key] not in options %}<option value="{{ row[key] }}" selected>{{ row[key] }} — проверьте</option>{% endif %}{% for value,label in options.items() %}<option value="{{ value }}" {% if row.get(key)==value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>{% if errors.get(key) %}<small class="product-error" id="import-error-{{ i }}-{{ key }}">{{ errors[key] }}</small>{% endif %}</div>
+{% endmacro %}
+{% block workspace_content %}
+<header class="workspace-heading"><h1>Проверить импорт</h1><p class="import-filename">{{ item.filename }} · {{ rows|length }} продуктов · выбрано {{ selected_count }}</p></header>
+{% for warning in item.warnings %}<p class="product-date-warning">{{ warning }}</p>{% endfor %}
+{% if import_error %}<p class="{{ 'product-error-summary' if row_errors.values()|select|list else 'product-field-hint' }}" role="status">{{ import_error }}</p>{% endif %}
+<form method="post" class="import-review-form">
+<input type="hidden" name="csrf_token" value="{{ product_csrf }}"><input type="hidden" name="revision" value="{{ item.revision }}">
+<p class="product-field-hint">Каждая выбранная строка сохранится отдельным поступлением. Продукты одной марки с одинаковыми сведениями объединятся по действующим правилам. Даты: ГГГГ-ММ-ДД.</p>
+{% for row in rows %}{% set i=loop.index0 %}{% set errors=row_errors[i] %}
+<section class="import-row{% if row.selected and errors %} has-errors{% endif %}" aria-labelledby="import-row-{{ i }}">
+<div class="import-row-heading"><label class="import-selection"><input type="checkbox" name="row.{{ i }}.selected" value="yes" {% if row.selected %}checked{% endif %}>Добавить</label><h2 id="import-row-{{ i }}">{{ loop.index }}. {{ row.get('name') or 'Без названия' }}</h2>{% if not row.get('expiry_date') %}<span class="product-date-warning">Срок не указан</span>{% endif %}</div>
+<div class="import-main-fields">{{ input(i,'name',row,errors) }}{{ input(i,'quantity',row,errors) }}{{ dropdown(i,'unit',row,errors,unit_options) }}
+<div class="product-field"><label for="import-{{ i }}-storage">Место хранения</label><select id="import-{{ i }}-storage" name="row.{{ i }}.storage_id"{% if errors.storage_id %} aria-invalid="true"{% endif %}><option value="">Выберите место</option>{% for place in product_storages %}<option value="{{ place.id }}" {% if row.storage_id==place.id|string %}selected{% endif %}>{{ place.name }}</option>{% endfor %}</select>{% if errors.storage_id %}<small class="product-error">{{ errors.storage_id }}</small>{% endif %}</div>
+{{ input(i,'expiry_date',row,errors) }}</div>
+<details class="import-row-details" {% if errors and row.selected %}open{% endif %}><summary>Все сведения{% if errors %} · проверьте поля{% endif %}</summary><div class="import-detail-grid">
+{% for key in ['brand','manufacturer','manufactured_date','opened_date','shelf_value','price','portion','calories','protein','fat','carbs','barcode'] %}{{ input(i,key,row,errors) }}{% endfor %}
+{{ dropdown(i,'category',row,errors,categories) }}{{ dropdown(i,'nutrition_basis',row,errors,nutrition_bases) }}{{ dropdown(i,'shelf_unit',row,errors,shelf_units) }}
+{% for key in ['ingredients','note','other_info'] %}<div class="product-field import-wide"><label for="import-{{ i }}-{{ key }}">{{ import_labels[key] }}</label><textarea id="import-{{ i }}-{{ key }}" name="row.{{ i }}.{{ key }}" rows="3" maxlength="{{ 1000 if key=='note' else 3000 }}">{{ row.get(key,'') }}</textarea>{% if errors.get(key) %}<small class="product-error">{{ errors[key] }}</small>{% endif %}</div>{% endfor %}</div></details>
+</section>{% endfor %}
+<div class="product-save-bar import-actions"><button class="product-primary" name="action" value="save" type="submit">Добавить выбранные</button><button class="workspace-secondary-button" name="action" value="check" type="submit">Проверить данные</button><button class="workspace-secondary-button" name="action" value="cancel" type="submit">Отменить импорт</button></div>
+</form>{% endblock %}

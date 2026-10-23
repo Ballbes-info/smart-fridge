@@ -11,7 +11,7 @@
 <label><input type="radio" name="entry_method" value="ocr"><span>OCR</span></label>
 <label><input type="radio" name="entry_method" value="gigachat"><span>Этикетка · ИИ</span></label>
 {% if product_vision_allowed %}<label><input type="radio" name="entry_method" value="product"><span>Продукт · ИИ</span></label>{% else %}<button type="button" class="product-vision-locked" data-locked data-locked-title="Распознать продукт" data-locked-plans="Премиум или Семейная премиум" data-locked-detail="Определение продукта или блюда по внешнему виду на фотографии.">{{ icon('lock') }} Продукт · ИИ</button>{% endif %}
-</fieldset>{% endif %}
+<a class="workspace-secondary-button" href="{{ url_for('product_import.upload',storage_id=selected_storage) }}">Из файла</a></fieldset>{% endif %}
 <div class="product-entry-layout is-manual">
 <form class="product-entry-form" method="post" action="{{ url_for('products.batch_action',batch_id=editing_batch.id,action='edit') if editing_batch is defined else url_for('products.create') }}" data-product-form>
 {% if editing_batch is defined %}<input type="hidden" name="expected_state" value="{{ expected_state }}">{% endif %}<input type="hidden" name="csrf_token" value="{{ product_csrf }}"><input type="hidden" name="submission_key" value="{{ submission_key }}"><input type="hidden" name="catalog_source" value="{{ values.catalog_source }}"><input type="hidden" name="ocr_used" value="{{ 'yes' if ocr_used else 'no' }}">
