@@ -1,6 +1,10 @@
 {% macro icon(name, class='') -%}
 <svg class="icon {{ class }}" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 {% if name == 'scan' %}<path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3M3 16v3a2 2 0 0 0 2 2h3m8 0h3a2 2 0 0 0 2-2v-3M3 12h18M8 8v1m4-2v2m4-1v1M8 15v2m4-2v3m4-3v2"/>
+{% elif name == 'info' %}<circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v.2"/>
+{% elif name == 'panel' %}<rect x="3" y="4" width="18" height="16" rx="1"/><path d="M9 4v16m6-11-3 3 3 3"/>
+{% elif name == 'back' %}<path d="M20 12H4m6-6-6 6 6 6"/>
+{% elif name == 'plus' %}<path d="M12 5v14M5 12h14"/>
 {% elif name == 'arrow' %}<path d="M4 12h16m-6-6 6 6-6 6"/>
 {% elif name == 'leaf' %}<path d="M20 4C9 2 3 7 5 14c2 7 15 5 15-10Z M4 21 15 10"/>
 {% elif name == 'clock' %}<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>
@@ -11,6 +15,21 @@
 {% elif name == 'lock' %}<rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2"/>
 {% elif name == 'check' %}<path d="m5 12 4 4L19 6"/>
 {% elif name == 'user' %}<circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>
+{% elif name == 'search' %}<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>
+{% elif name == 'menu' %}<path d="M4 6h16M4 12h16M4 18h16"/>
+{% elif name == 'close' %}<path d="m6 6 12 12M6 18 18 6"/>
+{% elif name == 'chevron' %}<path d="m9 5 7 7-7 7"/>
+{% elif name == 'basket' %}<path d="m3 9 2 12h14l2-12ZM8 9l4-6 4 6M9 13v4m6-4v4"/>
+{% elif name == 'book' %}<path d="M12 5C9 3 5 3 2 4v15c3-1 7-1 10 1 3-2 7-2 10-1V4c-3-1-7-1-10 1Zm0 0v15"/>
+{% elif name == 'users' %}<circle cx="9" cy="8" r="3"/><path d="M2 21v-3a7 7 0 0 1 14 0v3m0-17a3 3 0 0 1 0 6m3 4a5 5 0 0 1 3 5v2"/>
+{% elif name == 'chart' %}<path d="M4 3v18h17M9 16v-5m5 5V7m5 9V4"/>
+{% elif name == 'settings' %}<path d="m10 3-1 3-3 1-2 3 2 2-1 3 2 3 3-1 2 2 3-1 1-3 3-1 1-3-2-2 1-3-2-3-3 1-2-2Z"/><circle cx="12" cy="12" r="3"/>
+{% elif name == 'sun' %}<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/>
+{% elif name == 'moon' %}<path d="M20.5 13.2A8.5 8.5 0 0 1 10.8 3.5a8.5 8.5 0 1 0 9.7 9.7Z"/>
+{% elif name == 'screen' %}<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/>
+{% elif name == 'bell' %}<path d="M5 10a7 7 0 0 1 14 0v5l2 3H3l2-3Zm5 11h4"/>
+{% elif name == 'sliders' %}<path d="M4 7h5m4 0h7M4 17h9m4 0h3M9 4v6m4 4v6"/>
+{% elif name == 'logout' %}<path d="M9 4H4v16h5m5-13 5 5-5 5m-5-5h12"/>
 {% elif name == 'fridge' %}<rect x="5" y="2" width="14" height="20" rx="3"/><path d="M5 10h14M8 6v1m0 7v3"/>
 {% endif %}
 </svg>

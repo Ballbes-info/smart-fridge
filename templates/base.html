@@ -8,13 +8,18 @@
   <meta name="description" content="SmartFridge — умный подход к продуктам: контроль свежести, идеи блюд и порядок в холодильнике.">
   <script>
     (function () {
+      try { if (localStorage.getItem('smartfridge-sidebar') === 'collapsed') document.documentElement.dataset.sidebar = 'collapsed'; } catch (error) {}
+      try { if (localStorage.getItem('smartfridge-help') === 'hidden') document.documentElement.dataset.help = 'hidden'; } catch (error) {}
       var preference = null;
       try { preference = localStorage.getItem('smartfridge-theme'); } catch (error) {}
       if (preference !== 'light' && preference !== 'dark') preference = null;
       var system = window.matchMedia('(prefers-color-scheme: dark)');
       function apply(theme) {
         document.documentElement.dataset.theme = theme;
-        document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#121c18' : '#f4f7f2';
+        document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#191f1c' : '#f4f7f2';
+        document.querySelectorAll('[data-theme-choice]').forEach(function (choice) {
+          choice.setAttribute('aria-pressed', String(choice.dataset.themeChoice === (preference || 'system')));
+        });
         var button = document.getElementById('theme-toggle');
         if (button) {
           var label = theme === 'dark' ? 'Включить светлую тему' : 'Включить тёмную тему';
@@ -26,11 +31,19 @@
       apply(preference || (system.matches ? 'dark' : 'light'));
       document.addEventListener('DOMContentLoaded', function () {
         apply(document.documentElement.dataset.theme);
-        document.getElementById('theme-toggle').addEventListener('click', function () {
+        var toggle = document.getElementById('theme-toggle');
+        if (toggle) toggle.addEventListener('click', function () {
           preference = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
           try { localStorage.setItem('smartfridge-theme', preference); } catch (error) {}
           apply(preference);
         });
+      });
+      document.addEventListener('click', function (event) {
+        var choice = event.target.closest('[data-theme-choice]');
+        if (!choice) return;
+        preference = choice.dataset.themeChoice === 'system' ? null : choice.dataset.themeChoice;
+        try { if (preference) localStorage.setItem('smartfridge-theme', preference); else localStorage.removeItem('smartfridge-theme'); } catch (error) {}
+        apply(preference || (system.matches ? 'dark' : 'light'));
       });
       system.addEventListener('change', function (event) {
         if (!preference) apply(event.matches ? 'dark' : 'light');
@@ -43,25 +56,28 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/display.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+  <link rel="preload" href="{{ url_for('static', filename='fonts/onest-variable.ttf') }}" as="font" type="font/ttf" crossorigin>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/interface.css') }}">
+  {% if current_user %}<link rel="stylesheet" href="{{ url_for('static', filename='css/workspace.css') }}">{% endif %}
   {% block head %}{% endblock %}
 </head>
-<body{% if current_user %} class="is-authenticated"{% endif %}>
+<body{% if current_user %} class="is-authenticated{% if request.endpoint in ['workspace.home', 'workspace.section', 'workspace.feature', 'workspace.settings', 'profile', 'billing.settings'] %} has-workspace{% endif %}"{% endif %}>
   <a class="skip-link" href="#main-content">Перейти к содержимому</a>
   <header class="site-header">
     <div class="header-inner">
       <a class="brand" href="{{ url_for('index') }}" aria-label="SmartFridge — главная">
         <img class="brand-logo" src="{{ url_for('static', filename='logo.png') }}" alt="" width="40" height="40">
-        <span>SmartFridge</span>
+        <span translate="no">SmartFridge</span>
       </a>
       <nav class="nav" aria-label="Основная навигация">
-        {% if current_user and current_user.is_verified %}<a href="{{ url_for('billing.settings') }}">Настройки</a>{% endif %}
         {% if current_user %}
           {% if current_user.is_verified %}
-            <a class="nav-cta" href="{{ url_for('profile') }}" {% if request.endpoint == 'profile' %}aria-current="page"{% endif %}>Мой профиль {{ icon('user') }}</a>
+            {% if request.endpoint in ['workspace.home', 'workspace.section', 'workspace.feature', 'workspace.settings', 'profile', 'billing.settings'] %}<button class="sf-notifications-trigger" type="button" data-open-notifications aria-label="Уведомления" aria-haspopup="dialog" aria-controls="workspace-notifications" aria-expanded="false">{{ icon('bell') }}</button>{% endif %}
+            <a class="account-nav-button" title="Профиль" href="{{ url_for('profile') }}" {% if request.endpoint == 'profile' %}aria-current="page"{% endif %}>{{ icon('user') }}<span>Профиль</span></a>
+            <a class="account-nav-button" title="Настройки" href="{{ url_for('workspace.settings') }}" {% if request.endpoint in ['workspace.settings', 'billing.settings'] %}aria-current="page"{% endif %}>{{ icon('settings') }}<span>Настройки</span></a>
           {% else %}
             <a class="nav-cta" href="{{ url_for('verify') }}">Подтвердить почту</a>
           {% endif %}
-          <form action="{{ url_for('logout') }}" method="post" class="inline-form"><button class="nav-text-button" type="submit">Выйти</button></form>
         {% else %}
           <a href="{{ url_for('login') }}" {% if request.endpoint == 'login' %}aria-current="page"{% endif %}>Войти</a>
           <a class="nav-cta nav-register" href="{{ url_for('register') }}">Регистрация</a>
@@ -90,5 +106,6 @@
       <span class="footer-copy">&copy; 2026 SmartFridge</span>
     </div>
   </footer>
+{% if current_user %}<script src="{{ url_for('static', filename='js/workspace.js') }}" defer></script>{% endif %}
 </body>
 </html>

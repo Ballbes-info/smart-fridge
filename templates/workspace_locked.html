@@ -1,0 +1,9 @@
+{% extends 'workspace_base.html' %}
+{% block title %}{{ access_title }} — SmartFridge{% endblock %}
+{% block workspace_content %}
+<section class="sf-access-page">
+<span class="sf-help-emblem">{{ icon('lock') }}</span><h1>{{ access_title }}</h1><p>{{ requirement.detail }}</p>
+<h2>Доступно в подписке</h2><p>{{ requirement.plans }}</p>
+<a class="workspace-secondary-button" href="{{ url_for('billing.plans') }}">Посмотреть тарифы</a>
+</section>
+{% endblock %}

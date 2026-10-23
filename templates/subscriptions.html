@@ -26,7 +26,7 @@
       <p class="billing-price"><span data-price>{{ plan.month }}</span> ₽<small data-unit>/месяц</small></p>
       <p class="billing-saving" data-saving aria-live="polite">Первый месяц — {{ (plan.month * 0.7)|round|int }} ₽</p>
       {{ features(plan) }}
-      <p class="billing-benefit">{{ 'Все возможности базы + ИИ' if plan.premium else 'Можно начать с 7 бесплатных дней' }}</p>
+      <p class="billing-benefit">{{ 'Все возможности базы + ИИ' if plan.premium else 'Общий доступ для семьи' if plan.family else 'Можно начать с 7 бесплатных дней' }}</p>
       <form method="post" action="{{ url_for('billing.start') }}" data-plan-form data-month="{{ plan.month }}" data-year="{{ plan.year }}" data-seat="{{ 99 if plan.premium else 49 }}">
         <input type="hidden" name="plan" value="{{ key }}">
         <input type="hidden" name="interval" value="month">

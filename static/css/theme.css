@@ -10,21 +10,27 @@
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #121c18;
-  --surface: #1b2821;
-  --ink: #e5eddf;
-  --muted: #a7b6a6;
-  --green: #b6d49a;
-  --lime: #d7f58c;
-  --line: #314236;
-  --mint: #233428;
-  --accent-surface: #1c2c21;
-  --control-bg: #1a2820;
-  --control-border: #405340;
-  --button-bg: #c2dd9d;
-  --button-ink: #1c3021;
-  --button-hover: #d4ebae;
-  --soft-surface: #19271f;
+  --bg: #191f1c;
+  --surface: #222a25;
+  --ink: #d1dbd2;
+  --muted: #a2b0a5;
+  --green: #a4bf9e;
+  --lime: #b5ca91;
+  --line: #38463c;
+  --mint: #2b382e;
+  --accent-surface: #29342c;
+  --control-bg: #202923;
+  --control-border: #536656;
+  --button-bg: #a4bf9e;
+  --button-ink: #19261c;
+  --button-hover: #b5cdae;
+  --soft-surface: #252f28;
+}
+/* Explicit foreground prevents the light text from disappearing in a selection. */
+:root[data-theme="dark"] ::selection {
+  background: #405d4b;
+  color: #f1f5ef;
+  text-shadow: none;
 }
 .site-header {
   background: var(--bg);

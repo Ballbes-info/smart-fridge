@@ -78,7 +78,7 @@ def discount_allowed(sub, card):
 
 
 def trial_allowed(sub, card, plan):
-    return not PLANS[plan]['premium'] and not sub.trial_used and not sub.first_paid and not card.trial_used and not card.first_paid
+    return plan == 'basic' and not sub.trial_used and not sub.first_paid and not card.trial_used and not card.first_paid
 
 
 def quote(sub, card, plan, interval, extra, now=None):

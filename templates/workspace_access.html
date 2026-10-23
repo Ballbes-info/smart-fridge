@@ -1,0 +1,3 @@
+{% macro access_attrs(item) -%}
+{% if item.locked %}data-locked data-locked-title="{{ item.name }}" data-locked-plans="{{ item.requirement.plans }}" data-locked-detail="{{ item.requirement.detail }}" aria-haspopup="dialog" aria-controls="workspace-access"{% endif %}
+{%- endmacro %}

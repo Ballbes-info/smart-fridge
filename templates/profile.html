@@ -1,59 +1,10 @@
-{% extends "base.html" %}
+{% extends 'workspace_base.html' %}
 {% block title %}Профиль — SmartFridge{% endblock %}
-
-{% block content %}
-<section class="profile-page">
-  <div class="profile-heading">
-    <div>
-      <p class="section-tag"><i></i> ЛИЧНЫЙ КАБИНЕТ</p>
-      <h1>Ваше пространство.<br><em>Всё под рукой.</em></h1>
-      <p>Управление аккаунтом SmartFridge.</p>
-    </div>
-  </div>
-
-  <div class="profile-grid">
-    <section class="profile-card">
-      <div class="profile-card-icon">{{ icon('user') }}</div>
-      <h2>Данные пользователя</h2>
-
-      <dl class="profile-details">
-        <div>
-          <dt>Имя</dt>
-          <dd class="profile-name">{{ current_user.name }}</dd>
-        </div>
-        <div>
-          <dt>Электронная почта</dt>
-          <dd>{{ current_user.email }}</dd>
-        </div>
-
-        <div>
-          <dt>Статус почты</dt>
-          <dd>
-            {% if current_user.is_verified %}
-              <span class="status-pill status-ok">Подтверждена</span>
-            {% else %}
-              <span class="status-pill status-pending">Не подтверждена</span>
-            {% endif %}
-          </dd>
-        </div>
-      </dl>
-
-      {% if not current_user.is_verified %}
-        <a class="btn btn-primary action-wide" href="{{ url_for('verify') }}">
-          Подтвердить почту
-        </a>
-      {% endif %}
-    </section>
-
-    <section class="profile-card profile-info-card">
-      <div class="profile-card-icon">{{ icon('phone') }}</div>
-      <h2>Ваша подписка</h2>
-      <p>
-        {{ billing_plans[subscription.plan].name }} · подписка.
-        Доступ до {{ subscription.period_end|billing_date }}.
-      </p>
-      <a class="btn btn-secondary" href="{{ url_for('billing.settings') }}">Управлять подпиской</a>
-    </section>
-  </div>
-</section>
+{% block workspace_content %}
+<header class="workspace-heading app-page-heading"><div><h1>Профиль</h1><p>Ваши данные и доступ к SmartFridge.</p></div></header>
+<div class="workspace-profile-intro"><span class="workspace-avatar" aria-hidden="true">{{ current_user.name[:1]|upper }}</span><div><h2>{{ current_user.name }}</h2><p>Личный аккаунт</p></div></div>
+<div class="workspace-profile-grid">
+<section class="workspace-profile-card" aria-labelledby="profile-data-title"><h2 id="profile-data-title">Данные пользователя</h2><dl><div><dt>Имя</dt><dd>{{ current_user.name }}</dd></div><div><dt>Электронная почта</dt><dd>{{ current_user.email }}</dd></div><div><dt>Подтверждение почты</dt><dd><span class="status-pill status-ok">{{ icon('check') }}Подтверждена</span></dd></div></dl></section>
+<section class="workspace-profile-card workspace-subscription-card" aria-labelledby="profile-plan-title">{{ icon('lock') }}<h2 id="profile-plan-title">{{ billing_plans[subscription.plan].name }}</h2><p>Доступ до {{ subscription.period_end|billing_date }}.<br>{{ 'Семейный доступ' if billing_plans[subscription.plan].family else 'Личный доступ' }} · {{ 'Годовая оплата' if subscription.interval == 'year' else 'Месячная оплата' }}</p><a class="workspace-secondary-button" href="{{ url_for('billing.settings') }}">Управлять подпиской</a></section>
+</div>
 {% endblock %}

@@ -1,9 +1,9 @@
-{% extends 'base.html' %}
+{% extends 'workspace_base.html' %}
 {% block title %}Настройки подписки — SmartFridge{% endblock %}
 {% block head %}<link rel="stylesheet" href="{{ url_for('static',filename='css/billing.css') }}">{% endblock %}
-{% block content %}
+{% block workspace_content %}
 <section class="billing-page billing-narrow">
-  <p class="section-tag">НАСТРОЙКИ АККАУНТА</p><h1>Ваша подписка</h1>
+  <header class="workspace-heading app-page-heading"><div><h1>Ваша подписка</h1><p>План, оплата и условия продления.</p></div></header>
   <div class="billing-panel">
     <p class="billing-eyebrow">{{ current_user.name }} · {{ current_user.email }}</p>
     <h2>{{ billing_plans[subscription.plan].name if subscription and subscription.plan else 'План не выбран' }}</h2>

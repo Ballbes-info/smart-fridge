@@ -1,0 +1,16 @@
+{% extends 'workspace_base.html' %}
+{% block title %}Настройки — SmartFridge{% endblock %}
+{% block workspace_content %}
+<header class="workspace-heading app-page-heading"><div><h1>Настройки</h1><p>Оформление, аккаунт и параметры приложения.</p></div></header>
+<div class="workspace-settings-stack">
+<section class="workspace-panel" aria-labelledby="appearance-title"><div class="workspace-panel-heading">{{ icon('sun') }}<div><h2 id="appearance-title">Оформление</h2><p>Тема сохраняется в этом браузере.</p></div></div><div class="workspace-theme-options" role="group" aria-label="Цветовая тема"><button type="button" data-theme-choice="light" aria-pressed="false"><span class="theme-swatch theme-swatch-light" aria-hidden="true"></span>Светлая</button><button type="button" data-theme-choice="dark" aria-pressed="false"><span class="theme-swatch theme-swatch-dark" aria-hidden="true"></span>Тёмная</button><button type="button" data-theme-choice="system" aria-pressed="false"><span class="theme-swatch theme-swatch-system" aria-hidden="true"></span>Системная</button></div></section>
+<section class="workspace-panel" aria-labelledby="help-setting-title"><div class="workspace-panel-heading">{{ icon('info') }}<div><h2 id="help-setting-title">Пояснения к разделам</h2><p>Кнопки с кратким описанием рядом с названиями. Настройка сохраняется в этом браузере.</p></div></div><label class="sf-help-setting"><span>Показывать кнопки описания</span><input type="checkbox" data-help-preference checked><span class="sf-switch" aria-hidden="true"></span></label></section>
+<section class="workspace-panel" aria-labelledby="account-title"><div class="workspace-panel-heading">{{ icon('user') }}<div><h2 id="account-title">Аккаунт</h2><p>Личные данные и управление подпиской.</p></div></div><div class="workspace-setting-links"><a href="{{ url_for('profile') }}">Профиль {{ icon('chevron') }}</a><a href="{{ url_for('billing.settings') }}">Подписка и оплата {{ icon('chevron') }}</a></div></section>
+<section class="workspace-upcoming" aria-labelledby="upcoming-title"><h2 id="upcoming-title">Следующие возможности</h2>
+<div class="workspace-upcoming-row">{{ icon('bell') }}<div><h3>Уведомления</h3><p>Предупреждения о сроках и условиях хранения.</p></div><span>Скоро</span></div>
+<div class="workspace-upcoming-row">{{ icon('screen') }}<div><h3>Устройства и синхронизация</h3><p>Дисплеи, датчики и связь с телефоном.</p></div><span>Скоро</span></div>
+<div class="workspace-upcoming-row">{{ icon('sliders') }}<div><h3>Единицы измерения</h3><p>Вес, объём, количество продуктов и температура.</p></div><span>Скоро</span></div>
+</section>
+<section class="workspace-panel workspace-session"><div class="workspace-panel-heading">{{ icon('logout') }}<div><h2>Выход из аккаунта</h2><p>Только на этом устройстве. Ваши данные сохранятся.</p></div></div><form action="{{ url_for('logout') }}" method="post"><button class="workspace-logout" type="submit">Выйти из аккаунта {{ icon('logout') }}</button></form></section>
+</div>
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends 'workspace_base.html' %}
+{% from 'workspace_access.html' import access_attrs %}
+{% from 'workspace_graphics.html' import drawing %}
+{% macro help_button(id, name) %}<button class="sf-help-button" type="button" data-toggle-help aria-label="Описание: {{ name }}" aria-expanded="false" aria-controls="workspace-help" aria-haspopup="dialog" data-help-source="{{ id }}" data-help-title="{{ name }}" title="Описание">{{ icon('info') }}</button>{% endmacro %}
+{% block title %}{{ 'Главная' if active_section == 'home' else feature.name if feature is defined else section.name }} — SmartFridge{% endblock %}
+{% block workspace_content %}
+{% if active_section == 'home' %}
+<h1 class="visually-hidden">Главная</h1>
+<div class="sf-dashboard">
+<section class="sf-storage-card" aria-label="Холодильники">
+<div class="sf-storage-card-main"><a href="{{ url_for('workspace.section', section='fridges') }}" class="sf-storage-entry"><div><h2>Холодильники</h2><span>Места хранения и продукты</span></div>{{ drawing('fridges') }}{{ icon('chevron') }}</a>{{ help_button('help-fridges', 'Холодильники') }}</div>
+<p id="help-fridges" class="sf-help-copy" hidden>{{ workspace_sections['fridges'].help }}</p>
+<nav class="sf-storage-shortcuts" aria-label="Подразделы холодильников">{% for item in workspace_sections['fridges'].functions if item.slug != 'scan' %}<a href="{{ url_for('workspace.feature', section='fridges', feature=item.slug) }}">{{ icon('fridge' if loop.first else 'clock' if loop.index == 2 else 'arrow') }}<span>{{ item.name }}</span>{{ icon('chevron') }}</a>{% endfor %}<a class="sf-storage-add" href="{{ url_for('workspace.feature', section='fridges', feature='scan') }}">{{ icon('plus') }}<span>Добавить продукт</span>{{ icon('chevron') }}</a></nav>
+</section>
+<div class="sf-module-board">{% for key in ['shopping', 'recipes', 'nutrition', 'assistant', 'statistics', 'family'] %}{% set item = workspace_sections[key] %}
+<section class="sf-module-card sf-module-{{ key }}{% if item.locked %} sf-module-locked{% endif %}" aria-label="{{ item.name }}">
+<div class="sf-card-heading"><a href="{{ url_for('workspace.section', section=key) }}" {{ access_attrs(item) }}><h2>{{ item.name }}</h2>{% if item.locked %}{{ icon('lock') }}{% else %}{{ drawing(key) }}{% endif %}</a>{% if not item.locked %}{{ help_button('help-' ~ key, item.name) }}{% endif %}</div>
+{% if not item.locked %}<p class="sf-help-copy" id="help-{{ key }}" hidden>{{ item.help }}</p>
+<nav class="sf-card-links" aria-label="Подразделы: {{ item.name }}">{% for function in item.functions %}<a href="{{ url_for('workspace.feature', section=key, feature=function.slug) }}" {{ access_attrs(function) }}><span>{{ function.name }}</span>{{ icon('lock' if function.locked else 'chevron') }}</a>{% endfor %}</nav>{% endif %}
+</section>{% endfor %}</div>
+</div>
+{% else %}
+<nav class="workspace-breadcrumbs" aria-label="Путь к разделу"><ol><li><a href="{{ url_for('workspace.home') }}">Главная</a></li>{% if feature is defined %}<li><a href="{{ url_for('workspace.section', section=active_section) }}">{{ section.name }}</a></li><li aria-current="page">{{ feature.name }}</li>{% else %}<li aria-current="page">{{ section.name }}</li>{% endif %}</ol></nav>
+<header class="workspace-heading app-page-heading"><div><h1>{{ feature.name if feature is defined else section.name }}</h1><p>{{ feature.description if feature is defined else section.description }}</p></div></header>
+{% if feature is defined %}
+<section class="workspace-feature-empty"><span class="app-empty-symbol">{{ icon(section.icon) }}</span><span class="workspace-status">В разработке</span><h2>Функция ещё не подключена</h2><p>Работа с данными появится позже.</p></section>
+{% else %}
+<section class="app-module-notice"><span class="app-notice-icon">{{ icon('clock') }}</span><div><h2>Раздел в разработке</h2><p>Доступны страницы функций. Работа с данными ещё не подключена.</p></div></section>
+<div class="workspace-function-list">{% for item in section.functions %}<div class="sf-feature-row{% if item.locked %} sf-feature-locked{% endif %}"><div class="sf-feature-top"><a href="{{ url_for('workspace.feature', section=active_section, feature=item.slug) }}" {{ access_attrs(item) }}><span class="app-function-icon">{{ icon(item.icon|default(section.icon)) }}</span><strong>{{ item.name }}</strong>{{ icon('lock' if item.locked else 'chevron') }}</a>{{ help_button('help-' ~ item.slug, item.name) }}</div><p class="sf-help-copy" id="help-{{ item.slug }}" hidden>{{ item.description }}
+
+{{ section.help }}</p></div>{% endfor %}</div>
+{% endif %}
+{% endif %}
+{% endblock %}

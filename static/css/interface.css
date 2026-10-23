@@ -1,0 +1,21 @@
+@font-face { font-family: Onest; src: url('../fonts/onest-variable.ttf') format('truetype'); font-weight: 100 900; font-style: normal; font-display: swap; }
+body, button, input, select, textarea { font-family: Onest, 'Segoe UI', Arial, sans-serif; }
+html { scrollbar-gutter: stable; }
+h1, h2, h3 { text-wrap: balance; }
+p { text-wrap: pretty; }
+button, a, input, select, textarea, summary { -webkit-tap-highlight-color: transparent; }
+button:disabled { cursor: not-allowed; opacity: .55; }
+:root { --danger: #9f3c36; --focus: #47794b; }
+:root[data-theme='dark'] { --danger: #e6a49c; --focus: #a4bf9e; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
+.brand { font-weight: 650; letter-spacing: -.045em; }
+.field input { min-height: 48px; }
+.btn, .nav a, .text-action { min-height: 44px; }
+.billing-price, .billing-summary dd, .plan-price { font-variant-numeric: tabular-nums; }
+@media(prefers-reduced-motion:reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation: none !important; transition: none !important; } }
+/* Shared component geometry across sign-in, checkout and the workspace. */
+.auth-card, .auth-card .field input, .auth-card .btn,
+.billing-card, .billing-panel, .billing-notice,
+.billing-page .billing-choice, .billing-page select, .billing-page input[type=number],
+.btn-primary, .nav .nav-cta, .theme-toggle { border-radius:0; }
+.auth-card { box-shadow:none; }

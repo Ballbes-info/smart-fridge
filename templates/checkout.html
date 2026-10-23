@@ -47,7 +47,7 @@
   {% elif order.status == 'succeeded' %}
     <p class="billing-eyebrow">ОФОРМЛЕНО</p><h2>{{ 'Пробная неделя началась' if order.wants_trial else 'План активирован' }}</h2>
     <p>Доступ до {{ subscription.period_end|billing_date }}.</p>
-    <a class="btn btn-primary" href="{{ url_for('profile') }}">Перейти в профиль</a>
+    <a class="btn btn-primary" href="{{ url_for('workspace.home') }}">На главную</a>
     <a class="billing-link" href="{{ url_for('billing.settings') }}">Управлять подпиской</a>
   {% elif order.status in ['canceled','rejected'] %}
     <h2>{{ order.error or "Оформление не завершено" }}</h2><p>Подписка по этой операции не активирована. При неудачном продлении функции недоступны, но данные сохранены.</p><a class="btn btn-primary" href="{{ url_for('billing.plans') }}">Выбрать тариф</a>

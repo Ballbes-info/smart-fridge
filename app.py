@@ -166,19 +166,25 @@ def subscription_required(view):
     return wrapped
 
 
+from services.workspace import register_workspace
+register_workspace(app, login_required, subscription_required)
+
+
 # --------------------------------------------------------------------------- #
 # Маршруты
 # --------------------------------------------------------------------------- #
 
 @app.route("/")
 def index():
+    if session.get("user_id") is not None:
+        return redirect(url_for("workspace.home"))
     return render_template("index.html")
 
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if session.get("user_id") is not None:
-        return redirect(url_for("profile"))
+        return redirect(url_for("workspace.home"))
 
     errors = []
 
@@ -230,10 +236,10 @@ def register():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if session.get("user_id") is not None:
-        return redirect(url_for("profile"))
+        return redirect(url_for("workspace.home"))
 
     errors = []
-    next_url = request.args.get("next") or url_for("profile")
+    next_url = request.args.get("next") or url_for("workspace.home")
 
     if request.method == "POST":
         email = request.form.get("email", "").strip()
@@ -282,7 +288,7 @@ def verify():
         return redirect(url_for("register"))
 
     if user.is_verified:
-        return redirect(url_for("profile"))
+        return redirect(url_for("workspace.home"))
 
     if request.method == "POST":
         code = request.form.get("code", "")
@@ -318,7 +324,7 @@ def resend():
 @app.route("/reset-password", methods=["GET", "POST"])
 def reset_password():
     if session.get("user_id") is not None:
-        return redirect(url_for("profile"))
+        return redirect(url_for("workspace.home"))
 
     errors = []
 

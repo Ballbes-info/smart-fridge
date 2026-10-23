@@ -52,6 +52,10 @@
       <button class="text-action" type="submit">Отправить код повторно</button>
     </form>
 
+    <form method="post" action="{{ url_for('logout') }}" class="industrial-form">
+      <button class="text-action" type="submit">Выйти из аккаунта</button>
+    </form>
+
     <div class="auth-bottom">
       <a href="{{ url_for('index') }}">← Вернуться на главную</a>
     </div>

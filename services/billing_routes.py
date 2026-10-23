@@ -61,7 +61,7 @@ def plans():
     return render_template('subscriptions.html', plans=service.PLANS)
 
 
-@billing.route('/settings')
+@billing.route('/settings/subscription')
 @verified
 def settings():
     sub = service.get_subscription(session['user_id'])

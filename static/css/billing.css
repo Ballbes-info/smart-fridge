@@ -80,3 +80,8 @@
   .billing-card form { padding-top: 8px; border-top: 1px solid var(--line); }
 }
 @media (prefers-reduced-motion:reduce) { .billing-period span { transition: none; } }
+
+/* Same component geometry as account forms and the signed-in application. */
+.billing-card, .billing-panel, .billing-notice,
+.billing-page .billing-choice, .billing-page select,
+.billing-page input[type=number] { border-radius:0; }
