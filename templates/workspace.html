@@ -2,7 +2,7 @@
 {% from 'workspace_access.html' import access_attrs %}
 {% from 'workspace_graphics.html' import drawing %}
 {% macro help_button(id, name) %}<button class="sf-help-button" type="button" data-toggle-help aria-label="Описание: {{ name }}" aria-expanded="false" aria-controls="workspace-help" aria-haspopup="dialog" data-help-source="{{ id }}" data-help-title="{{ name }}" title="Описание">{{ icon('info') }}</button>{% endmacro %}
-{% block title %}{{ 'Главная' if active_section == 'home' else feature.name if feature is defined else section.name }} — SmartFridge{% endblock %}
+{% block title %}{{ 'Главная' if active_section == 'home' else feature.name if feature is defined else section.name }} — СмартФридж{% endblock %}
 {% block workspace_content %}
 {% if active_section == 'home' %}
 <h1 class="visually-hidden">Главная</h1>

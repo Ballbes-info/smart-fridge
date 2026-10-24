@@ -1,6 +1,6 @@
 {% extends 'workspace_base.html' %}
 {% from 'workspace_graphics.html' import drawing %}
-{% block title %}Рецепты — SmartFridge{% endblock %}
+{% block title %}Рецепты — СмартФридж{% endblock %}
 {% block head %}<link rel="stylesheet" href="{{ url_for('static',filename='css/products.css') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/recipes.css') }}">{% endblock %}
 {% block workspace_content %}
 <header class="workspace-heading recipe-page-heading"><div><h1>Рецепты</h1><p>Каталог блюд на русском языке</p></div>{% if catalog.count %}<div class="recipe-catalog-count"><strong>{{ '{:,}'.format(catalog.count)|replace(',',' ') }}</strong><span>в базе · {{ '{:,}'.format(catalog.complete)|replace(',',' ') }} со шагами</span></div>{% endif %}</header>
@@ -18,6 +18,6 @@
 {% else %}<section class="recipe-empty"><h2>Рецептов по этим условиям нет</h2><p>Попробуйте другое название или уберите часть фильтров.</p><a class="workspace-secondary-button" href="{{ url_for('recipes.index',content='all') }}">Показать все записи</a></section>{% endif %}
 {% if pages>1 %}<nav class="product-pagination" aria-label="Страницы рецептов">{% if page>1 %}<a href="{{ previous_url }}">Предыдущая</a>{% endif %}<span>{{ page }} / {{ pages }}</span>{% if page<pages %}<a href="{{ next_url }}">Следующая</a>{% endif %}</nav>{% endif %}
 {% else %}<section class="recipe-empty recipe-library-empty"><div class="recipe-empty-art" aria-hidden="true">{{ drawing('recipes') }}</div><h2>База рецептов ещё не загружена</h2><p>Здесь появится каталог после загрузки русскоязычной базы.</p></section>{% endif %}
-{% if catalog.count %}<details class="recipe-source-note"><summary>О базе рецептов</summary><p>Рецепты загружены из внешнего набора. Ссылка на источник есть в каждой карточке. Время, порции и количество ингредиентов показываются только при наличии в данных. Неполные записи отмечены отдельно.</p><p>Текст каталога хранится на сервере SmartFridge. Фотографии загружаются с сайтов-источников и могут быть недоступны без интернета.</p></details>{% endif %}
+{% if catalog.count %}<details class="recipe-source-note"><summary>О базе рецептов</summary><p>Рецепты загружены из внешнего набора. Ссылка на источник есть в каждой карточке. Время, порции и количество ингредиентов показываются только при наличии в данных. Неполные записи отмечены отдельно.</p><p>Текст каталога хранится на сервере СмартФридж. Фотографии загружаются с сайтов-источников и могут быть недоступны без интернета.</p></details>{% endif %}
 <script src="{{ url_for('static',filename='js/recipes.js') }}" defer></script>
 {% endblock %}

@@ -39,14 +39,14 @@ def generate_code() -> str:
 
 
 def _subject(purpose="verify") -> str:
-    return "Сброс пароля SmartFridge" if purpose == "reset" else "Код подтверждения SmartFridge"
+    return "Сброс пароля СмартФридж" if purpose == "reset" else "Код подтверждения СмартФридж"
 
 
 def _body(code: str, purpose="verify") -> str:
     minutes = _config()["ttl_minutes"]
     action = "сброса пароля" if purpose == "reset" else "подтверждения почты"
     return (
-        f"Ваш код для {action} SmartFridge:\n\n"
+        f"Ваш код для {action} СмартФридж:\n\n"
         f"    {code}\n\n"
         f"Код действует {minutes} минут и подходит только один раз.\n"
         "Если вы не запрашивали этот код, письмо можно удалить.\n"
@@ -64,7 +64,7 @@ def send_code(recipient: str, code: str, purpose="verify") -> None:
 
     message = EmailMessage()
     message["Subject"] = _subject(purpose)
-    message["From"] = formataddr(("SmartFridge", cfg["sender"]))
+    message["From"] = formataddr(("СмартФридж", cfg["sender"]))
     message["To"] = recipient
     message.set_content(_body(code, purpose))
 

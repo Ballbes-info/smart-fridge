@@ -1,6 +1,6 @@
 {% extends 'workspace_base.html' %}
 {% from 'product_batches.html' import batch_rows %}
-{% block title %}{{ group.name }} — SmartFridge{% endblock %}
+{% block title %}{{ group.name }} — СмартФридж{% endblock %}
 {% block head %}<link rel="stylesheet" href="{{ url_for('static',filename='css/products.css') }}">{% endblock %}
 {% block workspace_content %}
 <header class="workspace-heading"><h1>{{ group.name }}</h1><p>{{ group.brand or 'Марка не указана' }} · {{ place.name }}</p></header>

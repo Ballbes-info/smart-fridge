@@ -1,6 +1,6 @@
 {% extends 'workspace_base.html' %}
 {% from 'workspace_graphics.html' import drawing %}
-{% block title %}{{ recipe.title }} — SmartFridge{% endblock %}
+{% block title %}{{ recipe.title }} — СмартФридж{% endblock %}
 {% block head %}<link rel="stylesheet" href="{{ url_for('static',filename='css/products.css') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/recipes.css') }}"><script src="{{ url_for('static',filename='js/recipes.js') }}" defer></script>{% endblock %}
 {% block workspace_content %}
 <header class="workspace-heading"><p class="recipe-category">{{ recipe.category or 'Рецепт' }}{% if recipe.cuisine %} · {{ recipe.cuisine }}{% endif %}</p><h1>{{ recipe.title }}</h1><div class="recipe-facts">{% if recipe.minutes %}<span>{{ icon('clock') }}{{ recipe.minutes }} мин</span>{% endif %}{% if recipe.servings %}<span>Порций в источнике: {{ recipe.servings }}</span>{% endif %}<a href="{{ recipe.source_url }}" target="_blank" rel="noopener noreferrer">Открыть источник ↗</a></div></header>

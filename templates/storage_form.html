@@ -1,5 +1,5 @@
 {% extends 'workspace_base.html' %}
-{% block title %}{{ 'Редактирование места' if item else 'Новое место хранения' }} — SmartFridge{% endblock %}
+{% block title %}{{ 'Редактирование места' if item else 'Новое место хранения' }} — СмартФридж{% endblock %}
 {% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/storage.css') }}"><script src="{{ url_for('static', filename='js/storage.js') }}" defer></script>{% endblock %}
 {% block workspace_content %}
 <header class="workspace-heading"><h1>{{ 'Редактирование места' if item else 'Новое место хранения' }}</h1><p>Название и тип обязательны. Расположение и заметку можно добавить позже.</p></header>

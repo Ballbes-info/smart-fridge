@@ -145,7 +145,7 @@ def start_payment(order_id, gateway, return_url):
         if order.created_at < time.time() - 23*3600:
             raise PaymentError('Срок операции истёк. Свяжитесь с поддержкой для проверки платежа.')
         payload = {'amount': {'value': f'{order.amount / 100:.2f}', 'currency': 'RUB'},
-            'capture': True, 'description': 'SmartFridge: проверка карты (1 ₽ с возвратом)' if order.kind == 'bind' else 'SmartFridge: пакет распознаваний' if order.kind=='scan_pack' else 'SmartFridge: подписка',
+            'capture': True, 'description': 'СмартФридж: проверка карты (1 ₽ с возвратом)' if order.kind == 'bind' else 'СмартФридж: пакет распознаваний' if order.kind=='scan_pack' else 'СмартФридж: подписка',
             'metadata': {'order_id': order.id, 'user_id': str(order.user_id)}}
         if order.kind == 'bind':
             payload.update(payment_method_data={'type':'bank_card'}, save_payment_method=True,

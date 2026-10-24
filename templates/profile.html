@@ -1,7 +1,7 @@
 {% extends 'workspace_base.html' %}
-{% block title %}Профиль — SmartFridge{% endblock %}
+{% block title %}Профиль — СмартФридж{% endblock %}
 {% block workspace_content %}
-<header class="workspace-heading app-page-heading"><div><h1>Профиль</h1><p>Ваши данные и доступ к SmartFridge.</p></div></header>
+<header class="workspace-heading app-page-heading"><div><h1>Профиль</h1><p>Ваши данные и доступ к СмартФридж.</p></div></header>
 <div class="workspace-profile-intro"><span class="workspace-avatar" aria-hidden="true">{{ current_user.name[:1]|upper }}</span><div><h2>{{ current_user.name }}</h2><p>Личный аккаунт</p></div></div>
 <div class="workspace-profile-grid">
 <section class="workspace-profile-card" aria-labelledby="profile-data-title"><h2 id="profile-data-title">Данные пользователя</h2><dl><div><dt>Имя</dt><dd>{{ current_user.name }}</dd></div><div><dt>Электронная почта</dt><dd>{{ current_user.email }}</dd></div><div><dt>Подтверждение почты</dt><dd><span class="status-pill status-ok">{{ icon('check') }}Подтверждена</span></dd></div></dl></section>

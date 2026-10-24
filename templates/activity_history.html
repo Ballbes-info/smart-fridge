@@ -1,5 +1,5 @@
 {% extends 'workspace_base.html' %}
-{% block title %}История — SmartFridge{% endblock %}
+{% block title %}История — СмартФридж{% endblock %}
 {% block head %}<link rel="stylesheet" href="{{ url_for('static',filename='css/products.css') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/activity.css') }}">{% endblock %}
 {% block workspace_content %}
 <header class="workspace-heading activity-heading"><div><h1>История</h1><p>Событий по выбранным условиям: {{ total }}</p></div><div class="activity-export"><a class="workspace-secondary-button" href="{{ export_xlsx }}">Экспорт Excel</a><a class="workspace-secondary-button" href="{{ export_csv }}">Экспорт CSV</a></div></header>

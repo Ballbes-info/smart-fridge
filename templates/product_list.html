@@ -1,6 +1,6 @@
 {% extends 'workspace_base.html' %}
 {% from 'product_batches.html' import batch_rows %}
-{% block title %}Продукты — SmartFridge{% endblock %}
+{% block title %}Продукты — СмартФридж{% endblock %}
 {% block head %}<link rel="stylesheet" href="{{ url_for('static',filename='css/products.css') }}">{% endblock %}
 {% block workspace_content %}
 <header class="workspace-heading app-page-heading"><div><h1>Продукты</h1><a class="product-history-link" href="{{ url_for('products.history') }}">История продуктов</a></div><a class="product-primary" href="{{ url_for('products.create',storage_id=selected_storage) }}">{{ icon('plus') }}Добавить продукт</a></header>

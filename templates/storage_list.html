@@ -1,5 +1,5 @@
 {% extends 'workspace_base.html' %}
-{% block title %}Места хранения — SmartFridge{% endblock %}
+{% block title %}Места хранения — СмартФридж{% endblock %}
 {% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/storage.css') }}">{% endblock %}
 {% block workspace_content %}
 <header class="workspace-heading app-page-heading"><div><h1>Места хранения</h1><p id="storage-quota">Места: {{ storage_used }} / {{ storage_limit }}</p></div>{% if storage_full %}<button class="storage-primary" type="button" disabled aria-describedby="storage-quota" title="Достигнут лимит тарифа">{{ icon('plus') }}Создать место</button>{% else %}<a class="storage-primary" href="{{ url_for('storage.create') }}">{{ icon('plus') }}Создать место</a>{% endif %}</header>

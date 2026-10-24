@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Пакет распознаваний — SmartFridge{% endblock %}
+{% block title %}Пакет распознаваний — СмартФридж{% endblock %}
 {% block head %}<link rel="stylesheet" href="{{ url_for('static',filename='css/billing.css') }}">{% endblock %}
 {% block content %}<section class="billing-page billing-narrow"><a class="billing-link" href="{{ url_for('billing.scan_limits') }}">← Лимиты ИИ</a><h1>{{ kind_name }}</h1><p class="billing-lead">{{ pack.quantity }} распознаваний · {{ order.amount|rubles }}</p><div class="billing-panel">
 {% if order.status=='ready' %}<h2>Разовая покупка</h2><p>Пакет начислится после успешной оплаты. Остаток переносится в следующие периоды. Подписка и её автопродление не изменятся.</p>

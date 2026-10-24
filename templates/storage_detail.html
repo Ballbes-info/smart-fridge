@@ -1,5 +1,5 @@
 {% extends 'workspace_base.html' %}
-{% block title %}{{ item.name }} — SmartFridge{% endblock %}
+{% block title %}{{ item.name }} — СмартФридж{% endblock %}
 {% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/storage.css') }}">{% endblock %}
 {% block workspace_content %}
 <header class="workspace-heading app-page-heading"><div><h1>{{ item.name }}</h1><p>{{ storage_kinds[item.kind] }}</p></div><a class="workspace-secondary-button" href="{{ url_for('storage.edit', location_id=item.id) }}">Редактировать</a></header>

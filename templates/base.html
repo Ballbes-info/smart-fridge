@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f4f7f2">
-  <meta name="description" content="SmartFridge — умный подход к продуктам: контроль свежести, идеи блюд и порядок в холодильнике.">
+  <meta name="description" content="СмартФридж — умный подход к продуктам: контроль свежести, идеи блюд и порядок в холодильнике.">
   <script>
     (function () {
       try { if (localStorage.getItem('smartfridge-sidebar') === 'collapsed') document.documentElement.dataset.sidebar = 'collapsed'; } catch (error) {}
@@ -50,7 +50,7 @@
       });
     })();
   </script>
-  <title>{% block title %}SmartFridge{% endblock %}</title>
+  <title>{% block title %}СмартФридж{% endblock %}</title>
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/display.css') }}">
@@ -65,9 +65,9 @@
   <a class="skip-link" href="#main-content">Перейти к содержимому</a>
   <header class="site-header">
     <div class="header-inner">
-      <a class="brand" href="{{ url_for('index') }}" aria-label="SmartFridge — главная">
+      <a class="brand" href="{{ url_for('index') }}" aria-label="СмартФридж — главная">
         <img class="brand-logo" src="{{ url_for('static', filename='logo.png') }}" alt="" width="40" height="40">
-        <span translate="no">SmartFridge</span>
+        <span translate="no">СмартФридж</span>
       </a>
       <nav class="nav" aria-label="Основная навигация">
         {% if current_user %}
@@ -101,9 +101,9 @@
   </main>
   <footer class="site-footer">
     <div class="footer-inner">
-      <span class="footer-brand">SmartFridge</span>
+      <span class="footer-brand">СмартФридж</span>
       <p>Забота о продуктах. В ритме вашей жизни.</p>
-      <span class="footer-copy">&copy; 2026 SmartFridge</span>
+      <span class="footer-copy">&copy; 2026 СмартФридж</span>
     </div>
   </footer>
 {% if current_user %}<script src="{{ url_for('static', filename='js/workspace.js') }}" defer></script>{% endif %}

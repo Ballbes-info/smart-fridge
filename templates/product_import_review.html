@@ -1,5 +1,5 @@
 {% extends 'workspace_base.html' %}
-{% block title %}Проверить импорт — SmartFridge{% endblock %}
+{% block title %}Проверить импорт — СмартФридж{% endblock %}
 {% block head %}<link rel="stylesheet" href="{{ url_for('static',filename='css/products.css') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/product-import.css') }}">{% endblock %}
 {% macro input(i,key,row,errors) %}
 <div class="product-field"><label for="import-{{ i }}-{{ key }}">{{ import_labels[key] }}</label><input id="import-{{ i }}-{{ key }}" name="row.{{ i }}.{{ key }}" value="{{ row.get(key,'') }}" type="text" {% if key in ['quantity','price','protein','fat','carbs','calories'] %}inputmode="decimal"{% endif %}{% if errors.get(key) %} aria-invalid="true" aria-describedby="import-error-{{ i }}-{{ key }}"{% endif %}>{% if errors.get(key) %}<small class="product-error" id="import-error-{{ i }}-{{ key }}">{{ errors[key] }}</small>{% endif %}</div>

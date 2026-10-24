@@ -1,6 +1,6 @@
 {% extends 'workspace_base.html' %}
 {% from 'product_fields.html' import field %}
-{% block title %}{{ action_names[action] }} — SmartFridge{% endblock %}
+{% block title %}{{ action_names[action] }} — СмартФридж{% endblock %}
 {% block head %}<link rel="stylesheet" href="{{ url_for('static',filename='css/products.css') }}"><script src="{{ url_for('static',filename='js/product-operations.js') }}" defer></script>{% endblock %}
 {% block workspace_content %}
 <header class="workspace-heading"><h1>{{ action_names[action] }}</h1><p>{{ group.name }} · {{ place.name }}</p></header>

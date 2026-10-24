@@ -35,7 +35,7 @@
     $('[data-method-hint]').textContent=value==='product'?'Сфотографируйте один продукт или блюдо. ИИ предложит название и категорию; количество — если предметы можно пересчитать. Вес укажите сами.':value==='gigachat'?'Загрузите этикетку и нажмите «Распознать этикетку». Один снимок — одно обращение.':'OCR читает текст на сервере. Сложные этикетки могут потребовать исправлений.';
     $('[data-giga-quota]').hidden=!isAI();$('[data-quota-link]').hidden=!isAI();
     if(isAI())renderQuota();
-    $('[data-scan-privacy]').textContent=isAI()?'При нажатии кнопки выбранное фото отправляется в GigaChat. После обработки сервер запрашивает удаление загруженного файла.':'Фото OCR обрабатывается на сервере SmartFridge. В Open Food Facts передаётся только штрихкод.';
+    $('[data-scan-privacy]').textContent=isAI()?'При нажатии кнопки выбранное фото отправляется в GigaChat. После обработки сервер запрашивает удаление загруженного файла.':'Фото OCR обрабатывается на сервере СмартФридж. В Open Food Facts передаётся только штрихкод.';
     $('.product-code-search').hidden=value==='product';
     $('.product-ocr-results h3').textContent=value==='product'?'Продукт на фото':'Данные с этикетки';
     $('[data-recognize]').textContent=recognizeCaption();
