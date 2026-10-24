@@ -15,14 +15,14 @@ from services import product_history as stock_history
 from services import product_service as stock
 from services.billing_service import PLANS
 
-CATEGORIES={'products':'Продукты','ai':'Распознавания и токены','payments':'Оплата и пакеты','subscription':'Подписка','storage':'Места хранения','account':'Аккаунт и настройки'}
-ACTIONS={**stock_history.ACTIONS,'recognition':'Распознавание','ocr_read':'Чтение этикетки OCR','barcode_lookup':'Поиск по штрихкоду','history_exported':'Экспорт истории','import_preview':'Предпросмотр файла','import_canceled':'Отмена импорта','payment':'Оплата',
+CATEGORIES={'recipes':'Рецепты','products':'Продукты','ai':'Распознавания и токены','payments':'Оплата и пакеты','subscription':'Подписка','storage':'Места хранения','account':'Аккаунт и настройки'}
+ACTIONS={**stock_history.ACTIONS,'recipe_favorite':'Избранное','recipe_note':'Заметка к рецепту','recipe_steps':'Шаги готовки','recipe_nutrition':'Расчёт КБЖУ','recipe_nutrition_reset':'Сброс расчёта','recipe_steps_reset':'Сброс шагов','recipe_generated':'Создание рецепта с ИИ','recognition':'Распознавание','ocr_read':'Чтение этикетки OCR','barcode_lookup':'Поиск по штрихкоду','history_exported':'Экспорт истории','import_preview':'Предпросмотр файла','import_canceled':'Отмена импорта','payment':'Оплата',
  'storage_created':'Создание места','storage_changed':'Изменение места','storage_deleted':'Удаление места',
  'subscription_created':'Подписка создана','subscription_changed':'Изменение подписки','subscription_deleted':'Подписка удалена',
  'default_storage_created':'Место по умолчанию','default_storage_changed':'Место по умолчанию','default_storage_deleted':'Сброс места по умолчанию',
  'account_created':'Регистрация','account_changed':'Изменение аккаунта','account_deleted':'Удаление аккаунта','login':'Вход в аккаунт','logout':'Выход из аккаунта'}
 STATUSES={'used':'Успешно','failed':'Ошибка','pending':'В обработке','interrupted':'Прервано','succeeded':'Успешно','canceled':'Отменено','rejected':'Отклонено','ready':'Не оплачено','created':'Создано','waiting_for_capture':'Ожидает подтверждения'}
-KINDS={'label':'Этикетка по фото','product':'Продукт по внешнему виду','ocr':'Чтение этикетки OCR','barcode':'Поиск по штрихкоду'}
+KINDS={'recipe':'Рецепт с ИИ','label':'Этикетка по фото','product':'Продукт по внешнему виду','ocr':'Чтение этикетки OCR','barcode':'Поиск по штрихкоду'}
 FIELD_LABELS={'name':'Название','kind':'Тип','location':'Расположение','note':'Заметка','plan':'Тариф','interval':'Период оплаты','extra_seats':'Дополнительные места','status':'Статус','period_start':'Начало периода','period_end':'Доступ до','cycle_amount':'Следующее списание, ₽','auto_renew':'Автопродление','card_last4':'Карта','default_storage_id':'Место по умолчанию (ID)','email':'Почта','is_verified':'Почта подтверждена','password_changed':'Пароль изменён','filename':'Файл','count':'Количество продуктов','format':'Формат экспорта','events':'Событий в экспорте'}
 
 

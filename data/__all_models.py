@@ -8,3 +8,4 @@ from .product import ProductGroup, ProductBatch, ProductPreferences, ProductScan
 from .scan_credits import ScanRequest, ScanCreditPack
 
 from .activity import ActivityEvent
+from .recipe import RecipeState, RecipeGeneration

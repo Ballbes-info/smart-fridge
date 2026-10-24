@@ -311,17 +311,23 @@ def filters(args):
                 sort=choice('sort',['match','expiry','time'],'match'),servings=servings,urgent=args.get('urgent')=='1'),error
 
 
-def browse(owner_id,args):
+def context(owner_id,args):
     f,error=filters(args);snap=stock_snapshot(owner_id,args)
     with catalog.connection() as base:
         status=catalog.info(base)
         categories=[tuple(r) for r in base.execute("SELECT category,count(*) FROM recipes WHERE category<>'' GROUP BY category ORDER BY category")] if base else []
     result=dict(filters=f,filter_error=error,snapshot=snap,catalog=status,categories=categories,recipes=[],total=0,page=1,pages=1,
                 counts={'ready':0,'almost':0,'check':0},unscaled=0)
-    if not status['count'] or not snap['valid'] or error:return result
+    return result
+
+
+def browse(owner_id,args,*,cache_file=None,progress=None):
+    result=context(owner_id,args);f=result['filters'];snap=result['snapshot'];status=result['catalog']
+    if not status['count'] or not snap['valid'] or result['filter_error']:return result
     terms={b['identity'][0] for b in snap['batches']}|set(snap['pantry'])
     if terms & {'sunflower_oil','olive_oil'}:terms.add('vegetable_oil')
     if not terms:return result
+    if progress:progress('index',0,0)
     path=ensure_index()
     chosen=int(f['servings']) if f['servings'] else None
     total=0
@@ -338,25 +344,48 @@ def browse(owner_id,args):
             where.append('e.search_text LIKE ?');params.append('%'+token+'%')
         # Scores live only in this request's TEMP database, not in the shared/public index.
         # This keeps pagination exact without retaining 150,000 recipe cards in Python memory.
-        con.execute('CREATE TEMP TABLE scores(id INTEGER PRIMARY KEY,state_rank INTEGER,missing INTEGER,coverage INTEGER,checks INTEGER,urgent INTEGER,summary TEXT,needs TEXT)')
-        pending=[]
+        if cache_file:
+            con.execute('ATTACH DATABASE ? AS private_cache',(str(cache_file),))
+            score_table='private_cache.scores'
+        else:score_table='temp.scores'
+        con.execute('CREATE TABLE '+score_table+'(id INTEGER PRIMARY KEY,state_rank INTEGER,missing INTEGER,coverage INTEGER,checks INTEGER,urgent INTEGER,summary TEXT,needs TEXT)')
+        candidate_total=con.execute('SELECT count(*) FROM entries e WHERE '+' AND '.join(where),params).fetchone()[0]
+        processed=0
+        pending=[];partial_sent=False
         for row in con.execute('SELECT * FROM entries e WHERE '+' AND '.join(where),params):
+            processed+=1
+            if progress and processed%250==0:progress('matching',processed,candidate_total)
             ingredients=json.loads(row['ingredients'])
             assessment=assess(ingredients,snap,row['servings'],chosen)
             if not assessment['matched']:continue
-            if f['urgent'] and not assessment['urgent']:continue
+            if not cache_file and f['urgent'] and not assessment['urgent']:continue
             if chosen and not row['servings']:result['unscaled']+=1
             if assessment['state'] in result['counts']:result['counts'][assessment['state']]+=1
-            if f['availability']!='all' and assessment['state']!=f['availability']:continue
+            if not cache_file and f['availability']!='all' and assessment['state']!=f['availability']:continue
             total+=1
             summary={k:v for k,v in assessment.items() if k!='rows'}
             needs=[r['name'] for r in assessment['rows'] if not r['optional'] and r['status'] in {'missing','short'}][:3]
             pending.append((row['id'],0 if assessment['ready'] else 1 if assessment['state']=='check' else 2,
                 assessment['missing'],assessment['coverage'],assessment['check'],assessment['urgent'],
                 json.dumps(summary,separators=(',',':')),json.dumps(needs,ensure_ascii=False)))
-            if len(pending)>=500:
-                con.executemany('INSERT INTO scores VALUES(?,?,?,?,?,?,?,?)',pending);pending=[]
-        if pending:con.executemany('INSERT INTO scores VALUES(?,?,?,?,?,?,?,?)',pending)
+            if len(pending)>=(500 if partial_sent else 64):
+                con.executemany('INSERT INTO '+score_table+' VALUES(?,?,?,?,?,?,?,?)',pending);pending=[]
+                if progress and not partial_sent:
+                    cond=[]
+                    if f['availability']=='ready':cond.append('s.state_rank=0')
+                    elif f['availability']=='check':cond.append('s.state_rank=1')
+                    elif f['availability']=='almost':cond.append('s.missing BETWEEN 1 AND 2')
+                    if f['urgent']:cond.append('s.urgent>0')
+                    restriction=' WHERE '+' AND '.join(cond) if cond else ''
+                    preview=[]
+                    for r in con.execute('SELECT e.*,s.summary,s.needs FROM '+score_table+' s JOIN entries e ON e.id=s.id'+restriction+' ORDER BY s.state_rank,s.missing,s.coverage DESC,s.urgent DESC LIMIT 24'):
+                        preview.append(dict(key=r['public_id'],title=r['title'],category=r['category'],minutes=r['minutes'],servings=r['servings'],image=r['image'],complete=True,
+                            ingredients=[dict(name=i['name']) for i in json.loads(r['ingredients'])],needs=json.loads(r['needs']),match=json.loads(r['summary'])))
+                    if preview:
+                        preliminary=dict(result,recipes=preview,total=len(preview),page=1,pages=1,counts=dict(result['counts']),partial=True)
+                        progress('partial',processed,candidate_total,preliminary);partial_sent=True
+        if pending:con.executemany('INSERT INTO '+score_table+' VALUES(?,?,?,?,?,?,?,?)',pending)
+        if cache_file:con.commit()
         pages=max(1,math.ceil(total/24))
         try:page=max(1,min(pages,int(args.get('page','1'))))
         except (TypeError,ValueError):page=1
@@ -366,13 +395,53 @@ def browse(owner_id,args):
                'expiry':'s.urgent DESC,'+readiness+','+tail,
                'time':'e.minutes IS NULL,e.minutes,'+readiness+',s.urgent DESC,e.title,e.public_id'}[f['sort']]
         cards=[]
-        for row in con.execute('SELECT e.*,s.summary,s.needs FROM scores s JOIN entries e ON e.id=s.id ORDER BY '+order+' LIMIT 24 OFFSET ?',((page-1)*24,)):
+        for row in con.execute('SELECT e.*,s.summary,s.needs FROM '+score_table+' s JOIN entries e ON e.id=s.id ORDER BY '+order+' LIMIT 24 OFFSET ?',((page-1)*24,)):
             cards.append(dict(key=row['public_id'],title=row['title'],category=row['category'],minutes=row['minutes'],
                 servings=row['servings'],image=row['image'],complete=True,ingredients=[dict(name=i['name']) for i in json.loads(row['ingredients'])],
                 needs=json.loads(row['needs']),match=json.loads(row['summary'])))
-    result.update(total=total,page=page,pages=pages,recipes=cards)
+    result.update(total=total,page=page,pages=pages,recipes=cards,index_path=str(path))
     return result
 
 
 def recipe_assessment(recipe,snapshot):
     return assess([compile_ingredient(i) for i in recipe['ingredients']],snapshot,recipe['servings'],recipe['chosen_servings'])
+
+
+def fast_preview(owner_id,args):
+    """Real preliminary matches via the catalog's existing FTS, before derived indexing.
+
+    The small preview is explicitly preliminary. The background job still scores
+    the entire catalog; this limit never defines the final result set.
+    """
+    result=context(owner_id,args);snap=result['snapshot'];f=result['filters']
+    if result['filter_error'] or not snap['valid'] or not snap['batches']:return None
+    tokens=[]
+    for b in snap['batches']:
+        for word in re.findall('[а-яa-z]{4,}',text(b['name'])):
+            if word in ['соль','вода','сахар','перец','масло','свежий','свежее','замороженный','питьевое']:continue
+            token=word[:5]
+            if token not in tokens:tokens.append(token)
+    if not tokens:return None
+    cards=[]
+    with catalog.connection() as con:
+        if con is None:return None
+        conditions=['r.complete=1'];params=[]
+        if result['catalog']['fts']:
+            conditions.append('r.id IN (SELECT rowid FROM recipes_fts WHERE recipes_fts MATCH ?)');params.append(' OR '.join('"'+t+'"*' for t in tokens[:16]))
+        else:
+            conditions.append('('+' OR '.join('r.search_text LIKE ?' for _ in tokens[:8])+')');params.extend('%'+t+'%' for t in tokens[:8])
+        if f['category']:conditions.append('r.category=?');params.append(f['category'])
+        if f['time']:conditions.append('r.minutes<=?');params.append(int(f['time']))
+        for t in re.findall(r'[^\W_]+',f['q'].casefold().replace('ё','е'))[:8]:conditions.append('r.search_text LIKE ?');params.append('%'+t+'%')
+        for row in con.execute('SELECT data FROM recipes r WHERE '+' AND '.join(conditions)+' LIMIT 128',params):
+            r=json.loads(row[0]);assessment=assess([compile_ingredient(i) for i in r['ingredients']],snap,r['servings'],int(f['servings']) if f['servings'] else None)
+            if not assessment['matched'] or f['urgent'] and not assessment['urgent']:continue
+            if f['availability']!='all' and f['availability']!=assessment['state']:continue
+            r['match']={k:v for k,v in assessment.items() if k!='rows'}
+            r['needs']=[i['name'] for i in assessment['rows'] if not i['optional'] and i['status'] in ['missing','short']][:3]
+            cards.append(r)
+    cards.sort(key=lambda r:(0 if r['match']['ready'] else 1 if r['match']['state']=='check' else 2,r['match']['missing'],-r['match']['coverage'],-r['match']['urgent'],r['title']))
+    if not cards:return None
+    counts={k:sum(r['match']['state']==k for r in cards) for k in ['ready','almost','check']}
+    result.update(recipes=cards[:24],total=min(24,len(cards)),counts=counts,partial=True)
+    return result

@@ -1,0 +1,8 @@
+{% extends 'workspace_base.html' %}
+{% block title %}Пищевая ценность рецептов — СмартФридж{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static',filename='css/products.css') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/recipes.css') }}"><script src="{{ url_for('static',filename='js/recipes.js') }}" defer></script>{% endblock %}
+{% block workspace_content %}<header class="workspace-heading"><h1>Состав и КБЖУ</h1><p>Выберите блюдо для расчёта пищевой ценности</p></header>
+<form class="recipe-filters" method="get"><div class="product-field recipe-query"><label for="nutrition-query">Блюдо или ингредиент</label><input id="nutrition-query" name="q" type="search" value="{{ filters.q }}" maxlength="120"></div><div class="recipe-filter-actions"><button class="product-primary" type="submit">Найти блюдо</button></div></form>
+<p class="recipe-small-note">Расчёт использует КБЖУ ваших продуктов, справочные оценки и ваши уточнения. Если данных недостаточно, итог блюда не подменяется частичным расчётом.</p>
+{% if recipes %}{% include 'recipe_cards.html' %}{% else %}<section class="recipe-empty"><h2>Блюда не найдены</h2><a href="{{ url_for('recipes.index') }}">Открыть каталог</a></section>{% endif %}
+{% if pages>1 %}<nav class="product-pagination" aria-label="Страницы блюд">{% if page>1 %}<a href="{{ previous_url }}">Предыдущая</a>{% endif %}<span>{{ page }} / {{ pages }}</span>{% if page<pages %}<a href="{{ next_url }}">Следующая</a>{% endif %}</nav>{% endif %}{% endblock %}
