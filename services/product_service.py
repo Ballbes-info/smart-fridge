@@ -104,9 +104,7 @@ def validate(form, *, allow_zero=False):
             try:
                 calculated = add_shelf(dates['manufactured_date'], shelf, values['shelf_unit'])
                 if calculated.year > 2200: raise ValueError
-                if dates['expiry_date'] and dates['expiry_date'] != calculated:
-                    errors['expiry_date'] = 'Дата не совпадает с расчётом по изготовлению и сроку хранения. Проверьте одно из значений.'
-                else: dates['expiry_date'] = calculated
+                dates['expiry_date'] = min(dates['expiry_date'], calculated) if dates['expiry_date'] else calculated
             except (ValueError, OverflowError): errors['shelf_value'] = 'Получилась дата за пределами допустимого диапазона.'
     if dates['expiry_date'] and dates['manufactured_date'] and dates['expiry_date'] < dates['manufactured_date']:
         errors['expiry_date'] = 'Срок годности раньше даты изготовления.'

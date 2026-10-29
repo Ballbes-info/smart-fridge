@@ -72,15 +72,21 @@
     form.querySelector('[data-pack-hint]').hidden = field('unit').value !== 'pack';
     const warning = form.querySelector('[data-expiry-warning]'); let expiry = field('expiry_date').value;
     const manufactured = field('manufactured_date').value, length = Number(field('shelf_value').value);
-    if (!expiry && manufactured && Number.isInteger(length) && length > 0) {
+    if (manufactured && Number.isInteger(length) && length > 0 && length <= 9999) {
       const [year,month,day] = manufactured.split('-').map(Number); let calculated;
       if (field('shelf_unit').value === 'days') calculated = new Date(Date.UTC(year,month-1,day+length));
       else {
         const first = new Date(Date.UTC(year,month-1+length*(field('shelf_unit').value==='years'?12:1),1));
         calculated = new Date(Date.UTC(first.getUTCFullYear(),first.getUTCMonth(),Math.min(day,new Date(Date.UTC(first.getUTCFullYear(),first.getUTCMonth()+1,0)).getUTCDate())));
       }
-      if (!Number.isNaN(calculated.getTime())) expiry = calculated.toISOString().slice(0,10);
+      if (!Number.isNaN(calculated.getTime()) && calculated.getUTCFullYear()<=2200) {
+        const candidate=calculated.toISOString().slice(0,10);
+        if (!expiry || candidate<expiry) expiry=candidate;
+      }
     }
+    const effective=form.querySelector('[data-effective-expiry]');
+    effective.hidden=!(expiry && expiry!==field('expiry_date').value);
+    if (!effective.hidden) { const [y,m,d]=expiry.split('-');effective.textContent=`Учитывается срок до ${d}.${m}.${y}`; }
     warning.hidden = Boolean(expiry && expiry >= todayKey()); warning.classList.toggle('is-expired',Boolean(expiry && expiry < todayKey()));
     warning.textContent = expiry ? 'Указанный срок уже истёк. Проверьте дату перед сохранением.' : 'Срок не указан';
   }
