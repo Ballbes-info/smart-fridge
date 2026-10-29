@@ -359,7 +359,12 @@ def browse(args):
             try:page=max(1,min(pages,int(args.get('page','1'))))
             except (ValueError,TypeError):pass
             order='r.minutes IS NULL,r.minutes,r.title,r.id' if sort=='time' else 'r.title,r.id'
-            rows=[json.loads(r['data'])|{'id':r['id']} for r in con.execute('SELECT r.id,r.data FROM recipes r'+sql+' ORDER BY '+order+' LIMIT 24 OFFSET ?',[*params,(page-1)*24])]
+            # Sort only IDs/titles, never the large recipe JSON/instructions.
+            ids=[r[0] for r in con.execute('SELECT r.id FROM recipes r'+sql+' ORDER BY '+order+' LIMIT 24 OFFSET ?',[*params,(page-1)*24])]
+            if ids:
+                found={r['id']:json.loads(r['data'])|{'id':r['id']} for r in con.execute('SELECT id,data FROM recipes WHERE id IN ('+','.join('?' for _ in ids)+')',ids)}
+                rows=[found[key] for key in ids]
+
     return dict(recipes=rows,total=total,page=page,pages=pages,catalog=status,categories=categories,filters=dict(q=query,category=category,sort=sort,content=content,time=limit))
 
 
@@ -383,3 +388,20 @@ def detail(recipe_id,requested_servings=None):
             item['scaled']=chosen!=base
     recipe.update(chosen_servings=chosen,portion_error=error)
     return recipe
+
+
+def prepare_read_indexes():
+    """Optional background indexes for existing catalogs; leaves recipe content intact."""
+    path=catalog_path()
+    if not path.is_file():return
+    con=sqlite3.connect(str(path),timeout=2)
+    try:
+        existing={r[1] for r in con.execute('PRAGMA index_list(recipes)')}
+        statements={
+            'ix_recipe_browse_name':'CREATE INDEX IF NOT EXISTS ix_recipe_browse_name ON recipes(complete,title,id)',
+            'ix_recipe_browse_time':'CREATE INDEX IF NOT EXISTS ix_recipe_browse_time ON recipes(complete,(minutes IS NULL),minutes,title,id)',
+            'ix_recipe_browse_category':'CREATE INDEX IF NOT EXISTS ix_recipe_browse_category ON recipes(category,complete,title,id)'}
+        for key,sql in statements.items():
+            if key not in existing:con.execute(sql)
+        con.commit()
+    finally:con.close()

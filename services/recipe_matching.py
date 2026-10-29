@@ -275,6 +275,7 @@ def ensure_index():
     sig=signature(source)
     if current(sig):return target
     with _INDEX_LOCK:
+        sig=signature(source)
         if current(sig):return target
         fd,tmp=tempfile.mkstemp(prefix='recipes-match-',suffix='.incoming',dir=source.parent);os.close(fd)
         try:
@@ -385,7 +386,10 @@ def browse(owner_id,args,*,cache_file=None,progress=None):
                         preliminary=dict(result,recipes=preview,total=len(preview),page=1,pages=1,counts=dict(result['counts']),partial=True)
                         progress('partial',processed,candidate_total,preliminary);partial_sent=True
         if pending:con.executemany('INSERT INTO '+score_table+' VALUES(?,?,?,?,?,?,?,?)',pending)
-        if cache_file:con.commit()
+        if cache_file:
+            con.execute('CREATE INDEX private_cache.ix_scores_match ON scores(state_rank,missing,coverage DESC,checks,urgent DESC,id)')
+            con.execute('CREATE INDEX private_cache.ix_scores_urgent ON scores(urgent,state_rank,missing)')
+            con.commit()
         pages=max(1,math.ceil(total/24))
         try:page=max(1,min(pages,int(args.get('page','1'))))
         except (TypeError,ValueError):page=1

@@ -37,6 +37,12 @@ def start(owner,args):
                 try:os.unlink(j['file'])
                 except OSError:pass
                 del _jobs[k]
+        if key in _jobs and _jobs[key]['status']=='ready' and _jobs[key].get('result',{}).get('index_path'):
+            cached=_jobs[key]
+            if not Path(cached['file']).is_file() or not Path(cached['result']['index_path']).is_file():
+                try:os.unlink(cached['file'])
+                except OSError:pass
+                del _jobs[key]
         if key in _jobs and _jobs[key]['status']=='failed' and args.get('retry')=='1':
             try:os.unlink(_jobs[key]['file'])
             except OSError:pass
@@ -91,10 +97,13 @@ def page(job,args):
         tail='e.minutes IS NULL,e.minutes,e.title,e.public_id'
         order={'match':readiness+',s.urgent DESC,'+tail,'expiry':'s.urgent DESC,'+readiness+','+tail,
                'time':'e.minutes IS NULL,e.minutes,'+readiness+',s.urgent DESC,e.title,e.public_id'}[f['sort']]
-        cards=[]
-        for row in con.execute('SELECT e.*,s.summary,s.needs FROM scores s JOIN public_index.entries e ON e.id=s.id'+condition+' ORDER BY '+order+' LIMIT 24 OFFSET ?',[*params,(p-1)*24]):
-            cards.append(dict(key=row['public_id'],title=row['title'],category=row['category'],minutes=row['minutes'],servings=row['servings'],image=row['image'],complete=True,
-                ingredients=[dict(name=i['name']) for i in json.loads(row['ingredients'])],needs=json.loads(row['needs']),match=json.loads(row['summary'])))
+        ids=[r[0] for r in con.execute('SELECT s.id FROM scores s JOIN public_index.entries e ON e.id=s.id'+condition+' ORDER BY '+order+' LIMIT 24 OFFSET ?',[*params,(p-1)*24])]
+        found={}
+        if ids:
+            for row in con.execute('SELECT e.*,s.summary,s.needs FROM scores s JOIN public_index.entries e ON e.id=s.id WHERE s.id IN ('+','.join('?' for _ in ids)+')',ids):
+                found[row['id']]=dict(key=row['public_id'],title=row['title'],category=row['category'],minutes=row['minutes'],servings=row['servings'],image=row['image'],complete=True,
+                    ingredients=[dict(name=i['name']) for i in json.loads(row['ingredients'])],needs=json.loads(row['needs']),match=json.loads(row['summary']))
+        cards=[found[key] for key in ids]
     result.update(recipes=cards,total=n,pages=pages,page=p)
     return result
 
@@ -102,7 +111,8 @@ def page(job,args):
 def warmup():
     if catalog.catalog_path().is_file():
         def run():
-            try:matching.ensure_index()
+            try:
+                matching.ensure_index()
             except Exception:
                 import logging
                 logging.getLogger(__name__).exception('Recipe index warmup failed')
@@ -114,3 +124,12 @@ for stale in Path(tempfile.gettempdir()).glob('smartfridge-recipes-*.sqlite3'):
     try:
         if time.time()-stale.stat().st_mtime>86400:stale.unlink()
     except OSError:pass
+
+
+def discard(job):
+    """A missing/corrupted disposable cache is recoverable, not a broken recipe page."""
+    with _lock:
+        key=job.get('key')
+        if key and _jobs.get(key) is job:_jobs.pop(key,None)
+        try:os.unlink(job['file'])
+        except (OSError,KeyError):pass

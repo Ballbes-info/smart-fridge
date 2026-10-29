@@ -22,7 +22,7 @@
 </div></form>
 {% if filter_error %}<p class="product-error" id="match-error" role="alert">{{ filter_error }}</p>{% endif %}
 {% if not snapshot.valid %}<p class="product-error" role="alert">Это место хранения недоступно. Выберите своё место из списка.</p>{% endif %}
-<div data-recipe-match data-poll-url="{{ poll_url }}"{% if job and job.status in ['pending','busy'] %} data-pending="true"{% endif %}{% if partial|default(false) %} data-preview="true"{% endif %}>
+<noscript><p class="recipe-notice">Подбор можно обновить кнопкой ниже.</p><a class="workspace-secondary-button" href="{{ request.full_path }}">Обновить подбор</a></noscript><div data-recipe-match data-poll-url="{{ poll_url }}"{% if job and job.status in ['pending','busy'] %} data-pending="true"{% endif %}{% if partial|default(false) %} data-preview="true"{% endif %}>
 {% if job and job.status in ['pending','busy'] and not recipes %}<div class="recipe-loading" role="status"><span class="recipe-spinner" aria-hidden="true"></span><div><strong>Подбираем рецепты</strong><p data-match-progress>Сравниваем ингредиенты с вашими запасами…</p></div><a href="{{ url_for('recipes.index') }}">Открыть каталог</a></div><div class="recipe-skeleton" aria-hidden="true"><span></span><span></span><span></span></div>
 {% elif job and job.status=='failed' %}<p role="alert">Не удалось выполнить подбор. <a href="{{ url_for('recipes.available',retry='1') }}">Повторить</a></p>
 {% else %}{% include 'recipe_match_results.html' %}{% endif %}</div>

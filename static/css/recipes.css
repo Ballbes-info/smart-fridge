@@ -12,3 +12,9 @@
 @media print{.site-header,.sf-sidebar,.workspace-back,.recipe-toolbar,.recipe-stock-scope,.recipe-detail-stock,.recipe-ingredient-stock,.recipe-notes,.recipe-calculator,.workspace-footnote,.site-footer,.recipe-portions,.recipe-cooking-form>button{display:none!important}.workspace-main{margin:0!important;padding:0!important}.recipe-detail-layout{display:block}.recipe-ingredients{break-inside:avoid}.recipe-hero-photo{max-height:230px}.recipe-steps li{break-inside:avoid}}
 
 .recipe-reset-form{margin-top:14px}@media print{:root{--ink:#111;--muted:#444;--surface:#fff;--app-soft:#fff;--line:#aaa;--green:#284d38}body{background:#fff!important;color:#111!important}.recipe-reset-form{display:none!important}}
+
+.recipe-update-banner{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:14px 18px;border:1px solid var(--line);background:var(--surface);margin:16px 0;font-size:13px;line-height:1.7}.recipe-update-banner button{min-height:44px}.recipe-results-updating{display:flex;align-items:center;gap:12px;font-size:12px;color:var(--muted);margin:16px 0}.recipe-results-updating[hidden],.recipe-loading[hidden],.recipe-skeleton[hidden],.recipe-spinner[hidden]{display:none}.recipe-action-status{font-size:12px;line-height:1.7;color:var(--green);margin:10px 0}.recipe-action-status.is-error{color:var(--ink);border-left:2px solid var(--muted);padding-left:10px}.recipe-toolbar form{flex-wrap:wrap}.recipe-toolbar [data-action-status]{flex-basis:100%}@media print{.recipe-update-banner,.recipe-action-status{display:none!important}}
+
+#nutrition,#cooking,#recipe-personal{scroll-margin-top:100px}
+
+.recipe-toolbar{align-items:flex-start}.recipe-toolbar form .recipe-action-status{max-width:240px;margin:6px 0 0}
