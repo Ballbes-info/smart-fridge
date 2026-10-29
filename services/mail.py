@@ -16,21 +16,29 @@ class MailError(Exception):
     """Не удалось отправить письмо."""
 
 
+def _integer(name,default,minimum,maximum):
+    try:
+        value=int(os.environ.get(name,str(default)))
+        if not minimum<=value<=maximum:raise ValueError
+        return value
+    except ValueError:raise MailError(f'Проверьте настройку {name} на сервере.') from None
+
+
 def _config():
     """Настройки SMTP из окружения (.env)."""
     user = os.environ.get("SMTP_USER", "").strip()
     return {
         "host": os.environ.get("SMTP_HOST", "smtp.gmail.com").strip(),
-        "port": int(os.environ.get("SMTP_PORT", "587")),
+        "port": _integer("SMTP_PORT",587,1,65535),
         "user": user,
         "password": os.environ.get("SMTP_PASSWORD", "").strip(),
         "sender": os.environ.get("SMTP_SENDER", "").strip() or user,
-        "ttl_minutes": int(os.environ.get("CODE_TTL_MINUTES", "15")),
+        "ttl_minutes": _integer("CODE_TTL_MINUTES",15,1,60),
     }
 
 
 def code_ttl_seconds() -> int:
-    return _config()["ttl_minutes"] * 60
+    return _integer("CODE_TTL_MINUTES",15,1,60)*60
 
 
 def generate_code() -> str:
@@ -62,6 +70,8 @@ def send_code(recipient: str, code: str, purpose="verify") -> None:
             "SMTP не настроен. Заполните SMTP_USER и SMTP_PASSWORD в файле .env."
         )
 
+    if any("\n" in v or "\r" in v for v in [recipient,cfg["sender"]]):
+        raise MailError("Некорректный адрес отправителя или получателя.")
     message = EmailMessage()
     message["Subject"] = _subject(purpose)
     message["From"] = formataddr(("СмартФридж", cfg["sender"]))
@@ -69,11 +79,15 @@ def send_code(recipient: str, code: str, purpose="verify") -> None:
     message.set_content(_body(code, purpose))
 
     try:
-        with smtplib.SMTP(cfg["host"], cfg["port"], timeout=20) as server:
+        use_ssl=cfg['port']==465 or os.environ.get('SMTP_USE_SSL','').lower() in ['1','true','yes']
+        transport=smtplib.SMTP_SSL if use_ssl else smtplib.SMTP
+        kwargs={'timeout':20}
+        if use_ssl:kwargs['context']=ssl.create_default_context()
+        with transport(cfg['host'],cfg['port'],**kwargs) as server:
             server.ehlo()
-            if server.has_extn("starttls"):
-                server.starttls(context=ssl.create_default_context())
-                server.ehlo()
+            if not use_ssl:
+                if not server.has_extn('starttls'):raise MailError('Почтовый сервер не поддерживает защищённое соединение STARTTLS. Проверьте порт SMTP.')
+                server.starttls(context=ssl.create_default_context());server.ehlo()
             server.login(cfg["user"], cfg["password"])
             server.send_message(message)
     except smtplib.SMTPAuthenticationError as exc:
@@ -81,5 +95,5 @@ def send_code(recipient: str, code: str, purpose="verify") -> None:
             "SMTP отклонил логин или пароль. Проверьте SMTP_USER и SMTP_PASSWORD "
             "в .env — для Gmail нужен пароль приложения, не обычный пароль."
         ) from exc
-    except (smtplib.SMTPException, OSError) as exc:
-        raise MailError(f"Не удалось отправить письмо: {exc}") from exc
+    except (smtplib.SMTPException,OSError,ValueError) as exc:
+        raise MailError('Не удалось отправить письмо. Проверьте соединение с почтовым сервером и настройки SMTP. Аккаунт сохранён; код можно запросить повторно.') from exc

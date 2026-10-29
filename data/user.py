@@ -18,6 +18,7 @@ class User(SqlAlchemyBase):
         default=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds"),
     )
     is_verified = sqlalchemy.Column(sqlalchemy.Boolean, default=False, nullable=False)
+    auth_version = sqlalchemy.Column(sqlalchemy.Integer, nullable=False, default=0, server_default="0")
     verify_code_hash = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     verify_code_expires = sqlalchemy.Column(sqlalchemy.String, nullable=True)
 

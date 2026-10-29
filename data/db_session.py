@@ -29,6 +29,12 @@ def global_init(db_file: str) -> None:
     from . import __all_models
 
     SqlAlchemyBase.metadata.create_all(engine)
+    # Additive migration for account databases created before session invalidation.
+    with engine.begin() as conn:
+        conn.exec_driver_sql("BEGIN IMMEDIATE")
+        columns={row[1] for row in conn.exec_driver_sql('PRAGMA table_info(users)')}
+        if 'auth_version' not in columns:
+            conn.exec_driver_sql('ALTER TABLE users ADD COLUMN auth_version INTEGER NOT NULL DEFAULT 0')
     from services.activity_audit import install
     install()
 

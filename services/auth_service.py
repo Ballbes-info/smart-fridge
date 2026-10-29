@@ -1,6 +1,7 @@
 """Коды разных назначений и сохраняемые в SQLite лимиты запросов."""
 import hashlib
 import math
+import re
 import time
 from sqlalchemy.dialects.sqlite import insert
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -39,7 +40,8 @@ def issue_code(email, purpose='verify'):
     if purpose not in ('verify', 'reset'):
         raise ValueError('Неизвестное назначение кода')
     with db_session.create_session() as ses:
-        user = ses.query(User).filter(User.email == email.lower().strip()).first()
+        from sqlalchemy import func
+        user = ses.query(User).filter(func.lower(func.trim(User.email)) == email.lower().strip()).order_by(User.id).first()
         if user is None:
             return False, 'Аккаунт не найден.'
         if purpose == 'verify' and user.is_verified:
@@ -56,6 +58,11 @@ def issue_code(email, purpose='verify'):
         try:
             mail.send_code(user.email, code, purpose=purpose)
         except mail.MailError as exc:
+            # A failed send must not prevent retrying after fixing SMTP.
+            # Keep the hourly limit, and preserve any previously delivered code.
+            cooldown='mail-cooldown:'+hashlib.sha256(str(user.id).encode()).hexdigest()
+            ses.query(AuthRateLimit).filter(AuthRateLimit.key==cooldown).delete(synchronize_session=False)
+            ses.commit()
             return False, str(exc)
         # Failed delivery leaves both account status and the previous code intact.
         ses.merge(AuthCode(user_id=user.id, purpose=purpose, code_hash=code_hash,
@@ -68,7 +75,8 @@ def complete_code(user_id, code, purpose='verify', password=None):
     """Validate once and apply the action and code consumption in one transaction."""
     if purpose not in ('verify', 'reset'):
         raise ValueError('Неизвестное назначение кода')
-    if purpose == 'reset' and (password is None or len(password) < 8):
+    if not re.fullmatch(r'[0-9]{6}', str(code).strip()):return False
+    if purpose == 'reset' and (password is None or not 8 <= len(password) <= 256 or password.isspace()):
         return False
     # Begin with a write lock so two requests cannot consume the same code.
     with db_session.create_session() as ses:
@@ -86,6 +94,7 @@ def complete_code(user_id, code, purpose='verify', password=None):
             return False
         if purpose == 'reset':
             user.set_password(password)
+            user.auth_version=(user.auth_version or 0)+1
         user.is_verified = True
         # Successful ownership confirmation also invalidates an older verify code.
         if purpose == 'reset':
@@ -94,3 +103,22 @@ def complete_code(user_id, code, purpose='verify', password=None):
             ses.delete(entry)
         ses.commit()
         return True
+
+
+def code_ready(user_id,purpose='verify'):
+    with db_session.create_session() as ses:
+        entry=ses.get(AuthCode,(user_id,purpose))
+        return bool(entry and entry.expires_at>time.time() and entry.failed_attempts<CODE_ATTEMPTS)
+
+
+def change_password(user_id,current,password):
+    if not 8<=len(password)<=256 or password.isspace():return False,'Пароль должен содержать от 8 до 256 символов и не состоять только из пробелов.',None
+    with db_session.create_session() as ses:
+        from sqlalchemy import text
+        ses.execute(text('BEGIN IMMEDIATE'))
+        user=ses.get(User,user_id)
+        if not user or not user.is_verified or not user.check_password(current):return False,'Текущий пароль неверен.',None
+        if user.check_password(password):return False,'Новый пароль должен отличаться от текущего.',None
+        user.set_password(password);user.auth_version=(user.auth_version or 0)+1
+        ses.query(AuthCode).filter(AuthCode.user_id==user_id).delete(synchronize_session=False)
+        version=user.auth_version;ses.commit();return True,'',version

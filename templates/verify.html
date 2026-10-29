@@ -7,15 +7,14 @@
   <div class="auth-aside">
     <p class="section-tag"><i></i> ПОДТВЕРЖДЕНИЕ ПОЧТЫ</p>
     <h1>Ещё один шаг.<br><em>И вы дома.</em></h1>
-    <p>Мы отправили шестизначный код на вашу электронную почту.</p>
+    <p>Подтвердите адрес электронной почты, чтобы завершить регистрацию.</p>
     {{ display('display-compact') }}
   </div>
 
   <div class="auth-card">
     <h2>Введите код</h2>
     <p class="auth-description">
-      Мы отправили код на <strong>{{ email }}</strong>.
-      Введите его ниже. Срок действия кода ограничен.
+      Адрес: <strong>{{ email }}</strong>.<br>{% if code_sent %}Введите код из письма. Срок его действия ограничен.{% else %}Действующего кода нет. Нажмите «Отправить код повторно».{% endif %}
     </p>
 
     {% if errors %}
@@ -26,7 +25,7 @@
       </div>
     {% endif %}
 
-    <form method="post" class="industrial-form">
+    <form method="post" class="industrial-form"><input type="hidden" name="auth_csrf" value="{{ auth_csrf }}">
       <label class="field">
         <span>Код из письма</span>
         <input
@@ -48,11 +47,11 @@
       </button>
     </form>
 
-    <form method="post" action="{{ url_for('resend') }}" class="industrial-form">
+    <form method="post" action="{{ url_for('resend') }}" class="industrial-form"><input type="hidden" name="auth_csrf" value="{{ auth_csrf }}">
       <button class="text-action" type="submit">Отправить код повторно</button>
     </form>
 
-    <form method="post" action="{{ url_for('logout') }}" class="industrial-form">
+    <form method="post" action="{{ url_for('logout') }}" class="industrial-form"><input type="hidden" name="auth_csrf" value="{{ auth_csrf }}">
       <button class="text-action" type="submit">Выйти из аккаунта</button>
     </form>
 

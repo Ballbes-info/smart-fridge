@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "display.html" import display %}
+{% from "password_field.html" import password_field %}
 {% block title %}Вход — СмартФридж{% endblock %}
 
 {% block content %}
@@ -23,18 +24,14 @@
       </div>
     {% endif %}
 
-    <form method="post" action="{{ url_for('login', next=next_url) }}" class="industrial-form">
+    <form method="post" action="{{ url_for('login', next=next_url) }}" class="industrial-form"><input type="hidden" name="auth_csrf" value="{{ auth_csrf }}">
       <label class="field">
         <span>Электронная почта</span>
-        <input type="email" name="email" autocomplete="email"
+        <input type="email" name="email" autocomplete="email" maxlength="254" value="{{ email|default('') }}"
                placeholder="name@example.com" required>
       </label>
 
-      <label class="field">
-        <span>Пароль</span>
-        <input type="password" name="password" autocomplete="current-password"
-               placeholder="Введите пароль" required>
-      </label>
+      {{ password_field('auth-password','password','Пароль','current-password',none) }}
 
       <button class="btn btn-primary action-wide" type="submit">
         <span>Войти в аккаунт</span> {{ icon('arrow') }}
