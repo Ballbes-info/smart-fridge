@@ -1,5 +1,6 @@
 """Private recipe state and reproducible, explicitly estimated nutrition."""
 import copy
+import re
 import time
 from decimal import Decimal,InvalidOperation
 from sqlalchemy import select,func,or_
@@ -158,3 +159,20 @@ def nutrition(owner,recipe,edits):
 
 def json_key(d):
     return tuple(str(d.get(k)) for k in [*NUTRIENTS,'nutrition_basis'])
+
+
+def cooking_steps(recipe):
+    """Display-only formatting; preserve source step indices and cooking facts."""
+    rows=[]
+    for index,step in enumerate(recipe.get('steps',[])):
+        body=step.get('text','').strip()
+        body=re.sub(r'^\s*(?:шаг\s*)?\d+[.)](?:\s+|$)','',body,flags=re.I)
+        sentences=[s.strip() for s in re.split(r'(?<=[.!?])\s+(?=[А-ЯЁA-Z«])|[\r\n]+|\s+(?=\d+[.)]\s+[А-ЯЁA-Z])',body) if s.strip()]
+        title=catalog.clean(step.get('title'),100)
+        if title and sentences and title.rstrip('.!?').casefold()==sentences[0].rstrip('.!?').casefold():sentences.pop(0)
+        # Do not invent titles, durations or temperatures for old catalog records.
+        if not title and len(sentences)>1 and len(sentences[0])<=90:
+            title=sentences.pop(0)
+        paragraphs=[' '.join(sentences[i:i+2]) for i in range(0,len(sentences),2)]
+        rows.append(dict(index=index,title=title,paragraphs=paragraphs or ([body] if body and not title else []),image=step.get('image','')))
+    return rows

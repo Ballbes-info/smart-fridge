@@ -71,6 +71,16 @@
       retryMatching(root,'Полный подбор ещё не готов. Уже найденные рецепты доступны.');
     }finally{delete root.dataset.polling}
   }
+  function cookingProgress(){
+    const checks=[...document.querySelectorAll('.recipe-cooking-form [name=checked]')];
+    if(!checks.length)return;
+    const done=checks.filter(input=>input.checked).length;
+    const label=document.querySelector('[data-cooking-progress]'),fill=document.querySelector('[data-cooking-fill]');
+    if(label)label.textContent=`Отмечено ${done} из ${checks.length}`;
+    if(fill)fill.style.width=`${done*100/checks.length}%`;
+    checks.forEach(input=>input.closest('.recipe-cooking-step')?.classList.toggle('is-complete',input.checked));
+  }
+  document.addEventListener('change',event=>{if(event.target.matches('.recipe-cooking-form [name=checked]'))cookingProgress()});
   function messageFor(form,message,error=false){
     let node=form.querySelector('[data-action-status]');
     if(!node){node=document.createElement('p');node.dataset.actionStatus='';node.className='recipe-action-status';node.setAttribute('role','status');form.append(node)}
@@ -92,7 +102,7 @@
         form.querySelector('[name=value]').value=data.favorite?'0':'1';
         if(button){button.dataset.savedLabel=data.favorite?'Убрать из избранного':'В избранное';button.setAttribute('aria-pressed',String(data.favorite))}
       }
-      if(action==='steps_reset')document.querySelectorAll('.recipe-cooking-form [name=checked]').forEach(input=>input.checked=false);
+      if(action==='steps_reset'){document.querySelectorAll('.recipe-cooking-form [name=checked]').forEach(input=>input.checked=false);cookingProgress()}
       if(data.nutrition_html){
         const old=document.getElementById('nutrition'),wasOpen=old?.querySelector('details')?.open;
         if(old){const holder=document.createElement('template');holder.innerHTML=data.nutrition_html;old.replaceWith(holder.content);const details=document.querySelector('#nutrition details');if(details)details.open=wasOpen;const status=document.createElement('p');status.setAttribute('role','status');status.className='recipe-action-status';status.textContent='Расчёт сохранён';document.getElementById('nutrition').prepend(status);document.querySelector('#nutrition [type=submit]')?.focus({preventScroll:true})}
@@ -122,5 +132,5 @@
   for(const form of document.querySelectorAll('[data-generation-form]'))form.addEventListener('submit',()=>{const button=form.querySelector('[type=submit]');button.dataset.originalLabel=button.textContent;button.disabled=true;button.textContent='Отправляем…'});
   window.addEventListener('pageshow',()=>document.querySelectorAll('[data-generation-form] [type=submit][data-original-label]').forEach(button=>{button.disabled=false;button.textContent=button.dataset.originalLabel;delete button.dataset.originalLabel}));
   document.addEventListener('click',event=>{if(event.target.closest('[data-recipe-print]'))window.print()});
-  photos();
+  photos();cookingProgress();
 })();

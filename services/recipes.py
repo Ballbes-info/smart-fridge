@@ -202,14 +202,14 @@ def register_recipes(app,subscription_required):
         for source,slug in [('/home/recipes/saved','saved'),('/home/recipes/nutrition','nutrition'),('/home/recipes/generate','generate')]:
             if origin and urlsplit(origin).path==source:ctx['feature']=feature(slug)
         return render_template('recipe_detail.html',**ctx,recipe=recipe,assessment=assessment,snapshot=snapshot,stock_context=context,from_stock=from_stock,
-            personal=personal,nutrition=library.nutrition(session['user_id'],recipe,personal['nutrition']),nutrient_names=library.NUTRIENTS),422 if recipe['portion_error'] else 200
+            personal=personal,cooking_steps=library.cooking_steps(recipe),nutrition=library.nutrition(session['user_id'],recipe,personal['nutrition']),nutrient_names=library.NUTRIENTS),422 if recipe['portion_error'] else 200
 
     @recipes.route('/recipes/item/<recipe_key>/export')
     @subscription_required
     def export(recipe_key):
         r=library.recipe(session['user_id'],recipe_key,request.args.get('servings'))
         if r is None:abort(404)
-        body=r['title']+'\n\nИнгредиенты:\n'+'\n'.join(i['name']+' — '+i['display'] for i in r['ingredients'])+'\n\nПриготовление:\n'+'\n'.join(str(n+1)+'. '+step['text'] for n,step in enumerate(r['steps']))
+        body=r['title']+'\n\nИнгредиенты:\n'+'\n'.join(i['name']+' — '+i['display'] for i in r['ingredients'])+'\n\nПриготовление:\n'+'\n'.join(str(n+1)+'. '+((step.get('title')+'\n') if step.get('title') else '')+step['text'] for n,step in enumerate(r['steps']))
         if r.get('source_url'):body+='\n\nИсточник: '+r['source_url']
         elif r.get('generated'):body+='\n\nСоздано GigaChat. Проверьте ингредиенты и готовность блюда.'
         return Response(body,content_type='text/plain; charset=utf-8',headers={'Content-Disposition':'attachment; filename="recipe.txt"','Cache-Control':'no-store'})
