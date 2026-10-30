@@ -1544,6 +1544,14 @@ main:focus {
   transform: rotate(-45deg);
 }
 
+
+.landing-app-link { max-width: var(--page); margin: 0 auto; padding: 36px 32px; display: flex; align-items: center; justify-content: space-between; gap: 24px; border-bottom: 1px solid var(--line); }
+.landing-app-link h2 { margin: 0 0 8px; font-size: clamp(23px, 3vw, 32px); line-height: 1.2; letter-spacing: -.7px; }
+.landing-app-link p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.6; }
+.landing-app-link .btn { flex-shrink: 0; background: var(--lime); color: #1b302c; border-color: #8ea85f; }
+.landing-app-link .btn:hover { background: #c5e779; }
+.landing-app-link .btn:focus-visible { outline: 3px solid var(--green); outline-offset: 4px; }
+@media (max-width: 600px) { .landing-app-link { padding: 28px 20px; align-items: stretch; flex-direction: column; gap: 20px; } .landing-app-link .btn { width: 100%; } }
 </style>
   <style>
 /* Дисплей СмартФридж */
@@ -3003,10 +3011,14 @@ main:focus {
 
   </main>
   <footer class="site-footer">
+    <section class="landing-app-link" aria-labelledby="app-link-title">
+      <div><h2 id="app-link-title">Откройте СмартФридж</h2><p>Перейдите в приложение, чтобы войти или создать аккаунт.</p></div>
+      <a class="btn" href="https://smartfridge-sasasa2777.mia0.amvera.tech/" target="_blank" rel="noopener noreferrer">Перейти на сайт <span aria-hidden="true">↗</span></a>
+    </section>
+
     <div class="footer-inner">
       <span class="footer-brand">СмартФридж</span>
       <p>Запасы, сроки и рецепты для вашей семьи.</p>
-      <a href="https://smartfridge-sasasa2777.mia0.amvera.tech/" target="_blank" rel="noopener noreferrer">Открыть СмартФридж ↗</a>
       <span class="footer-copy">&copy; 2026 СмартФридж</span>
     </div>
   </footer>
