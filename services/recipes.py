@@ -69,6 +69,13 @@ def premium():
     if state['locked']:return render_template('workspace_locked.html',access_title='Создать с ИИ',requirement=state['requirement'],**common('generate')),403
 
 
+def nutrition_wishes():
+    from services.nutrition_service import profile
+    goals,_=profile(session['user_id'])
+    return dict(wish='Блюдо для персонального меню. '+goals['preferences']+(' Дневная норма: '+goals['calories']+' ккал; это одно блюдо, не весь день.' if goals['calories'] else ''),
+                exclude=goals['excluded'],goal={'maintain':'maintain','lose':'weight_loss','gain':'mass_gain'}[goals['goal']],servings='1',minutes='30',use_stock='0')
+
+
 def register_recipes(app,subscription_required):
     @recipes.route('/home/recipes/catalog')
     @subscription_required
@@ -148,7 +155,7 @@ def register_recipes(app,subscription_required):
                     if row.status=='pending' and row.created_at<time.time()-600:row.status='failed';row.error='Запрос прерван. Повторите создание.';s.commit()
                     job=dict(status=row.status,error=row.error,id=row.id)
         return render_template('recipe_generate.html',**common('generate'),quota=generation.quota(session['user_id']),error=error,job=job,
-            request_id=secrets.token_hex(16),values=request.form if error else {}),422 if error else 200
+            request_id=secrets.token_hex(16),values=request.form if error else nutrition_wishes() if request.args.get('nutrition')=='1' else {}),422 if error else 200
 
     @recipes.route('/recipes/generation/<job_id>')
     @subscription_required

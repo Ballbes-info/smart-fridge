@@ -233,6 +233,8 @@ from services.activity_routes import register_activity
 register_activity(app, login_required)
 from services.recipes import register_recipes
 register_recipes(app, subscription_required)
+from services.nutrition_routes import register_nutrition
+register_nutrition(app, subscription_required)
 
 
 # --------------------------------------------------------------------------- #

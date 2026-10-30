@@ -1,0 +1,13 @@
+{% extends 'workspace_base.html' %}
+{% block title %}Питание — СмартФридж{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static',filename='css/products.css') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/nutrition.css') }}"><script src="{{ url_for('static',filename='js/nutrition.js') }}" defer></script>{% endblock %}
+{% block workspace_content %}
+<div class="nt-app">
+<header class="nt-heading"><div><p class="nt-eyebrow">Личное питание</p><h1>{% block nutrition_title %}Дневник питания{% endblock %}</h1></div>{% block nutrition_action %}{% endblock %}</header>
+<nav class="nt-tabs" aria-label="Разделы питания">{% for slug,label in [('diary','Дневник'),('nutrients','Калории и БЖУ'),('goals','Мои цели'),('menu','Меню')] %}<a href="{{ url_for('nutrition.'+slug) }}" {% if feature.slug==slug %}aria-current="page"{% endif %}>{{ label }}{% if slug=='menu' %}<small>Премиум</small>{% endif %}</a>{% endfor %}</nav>
+{% block nutrition_content %}{% endblock %}
+</div>
+{% endblock %}
+{% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ nutrition_csrf }}">{% endmacro %}
+{% macro field(name,label,value='',type='text',required=false,min='',max='',step='any') %}<div class="product-field"><label for="nt-{{ name }}">{{ label }}</label><input id="nt-{{ name }}" name="{{ name }}" type="{{ type }}" value="{{ value }}" {% if required %}required{% endif %} {% if type=='number' %}min="{{ min }}" max="{{ max }}" step="{{ step }}"{% endif %}{% if type=='text' %}maxlength="160"{% endif %}></div>{% endmacro %}
+{% macro totals(data) %}<div class="nt-metrics">{% for key,label in nutrient_names.items() %}<div class="nt-metric nt-{{ key }}"><span>{{ label }}{% if key!='calories' %}, г{% endif %}</span><strong>{{ data.totals[key]|replace('.',',') }}</strong><small>{% if data.goals[key] %}из {{ data.goals[key]|replace('.',',') }}{% else %}Цель не задана{% endif %}</small><div class="nt-meter" aria-hidden="true"><i style="width:{{ data.progress[key] }}%"></i></div>{% if data.missing[key] %}<small class="nt-warning">Без данных: {{ data.missing[key] }} записей</small>{% endif %}</div>{% endfor %}</div>{% endmacro %}
