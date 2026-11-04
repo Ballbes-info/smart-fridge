@@ -166,8 +166,9 @@ def register_products(app, subscription_required, login_required):
             place=own_storage(group.storage_id,ses)
             if not place:abort(404)
             batches=list(ses.scalars(select(ProductBatch).where(ProductBatch.group_id==group.id,ProductBatch.owner_id==session['user_id']).order_by(ProductBatch.added_at.desc())))
+        from services.statistics_service import return_path
         return context_page('product_detail.html',active_feature='products',group=group,place=place,batches=batches,
-                            today=service.today(),workspace_back_url=url_for('products.index',storage_id=place.id))
+                            today=service.today(),workspace_back_url=return_path(request.args.get('return_to')) or url_for('products.index',storage_id=place.id))
 
     @products.route('/products/batches/<int:batch_id>/<action>',methods=['GET','POST'])
     @subscription_required

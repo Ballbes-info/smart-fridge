@@ -60,7 +60,7 @@ class ProductScanUsage(SqlAlchemyBase):
 class ProductMutation(SqlAlchemyBase):
     """Idempotent stock operations and an audit snapshot surviving batch deletion."""
     __tablename__='product_mutations'
-    __table_args__=(sa.UniqueConstraint('owner_id','submission_key',name='uq_stock_operation'),)
+    __table_args__=(sa.UniqueConstraint('owner_id','submission_key',name='uq_stock_operation'),sa.Index('ix_stock_owner_time','owner_id','created_at'))
     id=sa.Column(sa.Integer,primary_key=True)
     owner_id=sa.Column(sa.Integer,sa.ForeignKey('users.id'),nullable=False,index=True)
     batch_id=sa.Column(sa.Integer,nullable=False,index=True)

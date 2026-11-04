@@ -220,6 +220,7 @@ def register_family(app, login_required):
     @family.route('/family/storage/<int:storage_id>',methods=['GET','POST'])
     @login_required
     def inventory(storage_id):
+        from services.statistics_service import return_path
         uid=session['user_id'];error=None;status=200
         values={key:'' for key in ps.FIELDS};values.update(quantity='1',unit='pcs',shelf_unit='days')
         submission=request.form.get('submission_key','') if request.method=='POST' else secrets.token_hex(24)
@@ -266,7 +267,7 @@ def register_family(app, login_required):
                 for product,batch in rows:
                     snapshot=ops.snapshot(batch,product,place)
                     entries.append(dict(product=product,batch=batch,group_total=group_totals.get(product.id,0),expected=ops.digest(snapshot),key=secrets.token_hex(24)))
-                return render_template('family_inventory.html',**(common('access') | {'workspace_back_url':url_for('family.screen',tab='access')}),place=place,entries=entries,
+                return render_template('family_inventory.html',**(common('access') | {'workspace_back_url':return_path(request.args.get('return_to')) or url_for('family.screen',tab='access')}),place=place,entries=entries,
                     query=query,today=ps.today(),total=total,page=page,pages=pages,state=state,
                     can_edit=fs.effective_permission(ses,uid,place,shared)=='edit',
                     units=ps.UNITS,values=values,error=error,submission_key=submission),status

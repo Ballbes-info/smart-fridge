@@ -53,6 +53,8 @@ def global_init(db_file: str) -> None:
             'source':"JSON NOT NULL DEFAULT '{}'"}
         for name,definition in additions.items():
             if name not in shopping_columns:conn.exec_driver_sql('ALTER TABLE family_shopping_items ADD COLUMN '+name+' '+definition)
+    with engine.begin() as conn:
+        conn.exec_driver_sql('CREATE INDEX IF NOT EXISTS ix_stock_owner_time ON product_mutations(owner_id,created_at)')
     from services.activity_audit import install
     install()
 

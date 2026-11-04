@@ -243,6 +243,8 @@ from services.family_routes import register_family
 register_family(app, login_required)
 from services.shopping_routes import register_shopping
 register_shopping(app, subscription_required, login_required)
+from services.statistics_routes import register_statistics
+register_statistics(app, subscription_required)
 
 
 # --------------------------------------------------------------------------- #
