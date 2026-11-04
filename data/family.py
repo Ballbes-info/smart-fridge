@@ -54,8 +54,16 @@ class FamilyShoppingItem(SqlAlchemyBase):
 
 class FamilyEvent(SqlAlchemyBase):
     __tablename__ = 'family_events'
+    storage_id = sa.Column(sa.Integer, nullable=True, index=True)
     id = sa.Column(sa.Integer, primary_key=True)
     family_id = sa.Column(sa.Integer, index=True, nullable=False)
     actor_id = sa.Column(sa.Integer, nullable=False)
     description = sa.Column(sa.String(300), nullable=False)
     created_at = sa.Column(sa.Float, default=time.time, nullable=False)
+
+
+class FamilyStorageAccess(SqlAlchemyBase):
+    __tablename__ = 'family_storage_access'
+    storage_id = sa.Column(sa.Integer, sa.ForeignKey('storage_locations.id'), primary_key=True)
+    user_id = sa.Column(sa.Integer, sa.ForeignKey('users.id'), primary_key=True)
+    permission = sa.Column(sa.String(8), nullable=False)  # none, view, edit

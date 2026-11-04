@@ -166,12 +166,15 @@ def stock_snapshot(owner_id, args):
     now = product_service.today()
     with db_session.create_session() as ses:
         storages = list(ses.scalars(select(StorageLocation).where(StorageLocation.owner_id==owner_id).order_by(StorageLocation.name_key)))
+        from services.family_service import accessible_places
+        shared=[place for _,place,_ in accessible_places(ses,owner_id) if place.owner_id!=owner_id]
+        storages=sorted(storages+shared,key=lambda place:(place.name_key,place.id))
         ids = {str(s.id) for s in storages}
         selected = str(args.get('storage',''))
         # A foreign/nonexistent place selects nothing, never falls back to all stock.
         valid = not selected or selected in ids
         pairs = ses.execute(select(ProductGroup,ProductBatch).join(ProductBatch,ProductBatch.group_id==ProductGroup.id)
-            .where(ProductGroup.owner_id==owner_id,ProductBatch.owner_id==owner_id,ProductBatch.quantity_micro>0)).all()
+            .where(ProductGroup.storage_id.in_([p.id for p in storages]),ProductBatch.owner_id==ProductGroup.owner_id,ProductBatch.quantity_micro>0)).all()
     batches=[]; expired=unknown=0
     for g,b in pairs:
         if not valid or (selected and str(g.storage_id)!=selected): continue

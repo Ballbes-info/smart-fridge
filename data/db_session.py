@@ -35,6 +35,14 @@ def global_init(db_file: str) -> None:
         columns={row[1] for row in conn.exec_driver_sql('PRAGMA table_info(users)')}
         if 'auth_version' not in columns:
             conn.exec_driver_sql('ALTER TABLE users ADD COLUMN auth_version INTEGER NOT NULL DEFAULT 0')
+    # Old family events had no scope. Keep legacy details visible to their actor only.
+    with engine.begin() as conn:
+        conn.exec_driver_sql('BEGIN IMMEDIATE')
+        family_columns={row[1] for row in conn.exec_driver_sql('PRAGMA table_info(family_events)')}
+        if 'storage_id' not in family_columns:
+            conn.exec_driver_sql('ALTER TABLE family_events ADD COLUMN storage_id INTEGER')
+            conn.exec_driver_sql('UPDATE family_events SET storage_id=0')
+        conn.exec_driver_sql('CREATE INDEX IF NOT EXISTS ix_family_events_storage_id ON family_events(storage_id)')
     from services.activity_audit import install
     install()
 

@@ -71,9 +71,9 @@ def pending(ses, family):
         FamilyInvitation.status == 'pending', FamilyInvitation.expires_at > time.time()).order_by(FamilyInvitation.id)))
 
 
-def event(ses, family, uid, description):
+def event(ses, family, uid, description, *, storage_id=None):
     from data.activity import ActivityEvent
-    ses.add(FamilyEvent(family_id=family.id, actor_id=uid, description=description[:300]))
+    ses.add(FamilyEvent(family_id=family.id, actor_id=uid, description=description[:300],storage_id=storage_id))
     ses.add(ActivityEvent(owner_id=uid,category='family',action='family_changed',before={},after={'description':description[:300]}))
 
 
@@ -105,11 +105,11 @@ def invite(ses, uid, email):
     token = secrets.token_urlsafe(32)
     invitation = FamilyInvitation(family_id=family.id, email=email,
         token_hash=hashlib.sha256(token.encode()).hexdigest(), expires_at=time.time()+7*86400)
-    ses.add(invitation); event(ses, family, uid, 'Создано приглашение для '+email)
+    ses.add(invitation); event(ses, family, uid, 'Создано приглашение для '+email,storage_id=0)
     return token
 
 
-def accept(ses, uid, invitation):
+def accept(ses, uid, invitation, *, renewal_choice=None, subscription_expected=None):
     user = ses.get(User, uid)
     if not invitation or invitation.status != 'pending' or invitation.expires_at <= time.time():
         raise FamilyError('Приглашение истекло, отменено или уже принято.')
@@ -122,7 +122,17 @@ def accept(ses, uid, invitation):
         raise FamilyError('Семейная подписка владельца неактивна.')
     if len(members(ses, family)) >= capacity(ses, family):
         raise FamilyError('В семье больше нет свободных мест.')
+    personal=ses.get(Subscription,uid)
+    if personal and personal.auto_renew:
+        if renewal_choice not in ('keep','disable'):
+            raise FamilyError('Перед вступлением выберите, сохранять ли автопродление личной подписки.')
+        if subscription_signature(personal)!=subscription_expected:
+            raise FamilyError('Личная подписка изменилась. Снова откройте условия вступления.')
+        if renewal_choice=='disable':stop_personal_renewal(ses,uid,subscription_expected)
     invitation.status = 'accepted'
+    # One account can join only one family; free reservations in other families.
+    for other in ses.scalars(select(FamilyInvitation).where(FamilyInvitation.email==user.email.casefold(),FamilyInvitation.status=='pending',FamilyInvitation.id!=invitation.id)):
+        other.status='declined'
     ses.add(FamilyMember(user_id=uid, family_id=family.id))
     event(ses, family, uid, 'Присоединился к семье')
     return family
@@ -137,7 +147,9 @@ def storage_access(ses, uid, storage_id, *, write=False):
     place = ses.get(StorageLocation, storage_id)
     if not shared or shared.family_id != family.id or not place or not ses.get(FamilyMember, place.owner_id) or family_for(ses, place.owner_id).id != family.id:
         raise FamilyError('Общий доступ к этому месту закрыт.')
-    if write and shared.permission != 'edit' and place.owner_id != uid:
+    permission=effective_permission(ses,uid,place,shared)
+    if permission=='none':raise FamilyError('Доступ к этому месту для вас закрыт.')
+    if write and permission != 'edit':
         raise FamilyError('Для этого места доступен только просмотр.')
     return family, place, shared
 
@@ -147,7 +159,11 @@ def remove_member(ses, family, uid, target):
     if not member or member.family_id != family.id or target == family.owner_id:
         raise FamilyError('Участник не найден или является владельцем.')
     # Unshare their inventory immediately; their products remain in their account.
+    from data.family import FamilyStorageAccess
     locations = select(StorageLocation.id).where(StorageLocation.owner_id == target)
+    family_places=select(FamilyStorage.storage_id).where(FamilyStorage.family_id==family.id)
+    ses.execute(delete(FamilyStorageAccess).where(FamilyStorageAccess.storage_id.in_(family_places),FamilyStorageAccess.user_id==target))
+    ses.execute(delete(FamilyStorageAccess).where(FamilyStorageAccess.storage_id.in_(locations)))
     ses.execute(delete(FamilyStorage).where(FamilyStorage.family_id == family.id, FamilyStorage.storage_id.in_(locations)))
     ses.delete(member)
     event(ses, family, uid, 'Участник покинул семью: '+ses.get(User, target).name)
@@ -159,3 +175,67 @@ def has_invitation(uid):
         return bool(user and ses.scalar(select(FamilyInvitation.id).where(
             FamilyInvitation.email==user.email.casefold(),FamilyInvitation.status=='pending',
             FamilyInvitation.expires_at>time.time()).limit(1)))
+
+
+def subscription_signature(sub):
+    payload=None if sub is None else {key:getattr(sub,key) for key in
+        ('plan','status','period_start','period_end','auto_renew','revision','pending_order_id')}
+    from services.product_operations import digest
+    return digest(payload)
+
+
+def stop_personal_renewal(ses, uid, signature):
+    from data.billing import BillingOrder
+    sub=ses.get(Subscription,uid)
+    if subscription_signature(sub)!=signature:
+        raise FamilyError('Личная подписка изменилась. Проверьте обновлённые условия перед подтверждением.')
+    if sub and sub.auto_renew:
+        inflight=ses.scalar(select(BillingOrder.id).where(BillingOrder.user_id==uid,
+            BillingOrder.kind.in_(['bind','purchase','renewal']),BillingOrder.status.in_(['created','pending'])).limit(1))
+        if inflight:
+            raise FamilyError('Платёж личной подписки уже обрабатывается. Дождитесь его результата и повторите действие; текущий платёж здесь отменить нельзя.')
+        sub.auto_renew=False
+        sub.consent_at=time.time()
+    return sub
+
+
+def effective_permission(ses,uid,place,shared):
+    from data.family import FamilyStorageAccess
+    if place.owner_id==uid:return 'edit'
+    if shared is None:return 'none'
+    override=ses.get(FamilyStorageAccess,(place.id,uid))
+    return override.permission if override else shared.permission
+
+
+def accessible_places(ses,uid,*,write=False):
+    group=family_for(ses,uid)
+    if not group or not entitled(ses,group,uid):return []
+    rows=ses.execute(select(FamilyStorage,StorageLocation,User.name).join(StorageLocation,StorageLocation.id==FamilyStorage.storage_id)
+        .join(User,User.id==StorageLocation.owner_id).where(FamilyStorage.family_id==group.id).order_by(StorageLocation.name_key)).all()
+    return [(shared,place,name) for shared,place,name in rows if effective_permission(ses,uid,place,shared) in (['edit'] if write else ['edit','view'])]
+
+
+def change_version(ses,uid):
+    """Opaque revision; never return private product names or another user's billing data."""
+    from data.product import ProductMutation
+    group=family_for(ses,uid)
+    inbox=ses.scalar(select(func.count()).select_from(FamilyInvitation).where(FamilyInvitation.email==ses.get(User,uid).email.casefold(),
+        FamilyInvitation.status=='pending',FamilyInvitation.expires_at>time.time()))
+    payload={'inbox':inbox,'family':group.id if group else None,'personal':subscription_signature(ses.get(Subscription,uid))}
+    if group:
+        places=accessible_places(ses,uid)
+        ids=[p.id for _,p,_ in places]
+        from sqlalchemy import or_
+        latest=ses.scalar(select(func.max(ProductMutation.id)).where(or_(
+            ProductMutation.before['storage_id'].as_integer().in_(ids),ProductMutation.after['storage_id'].as_integer().in_(ids)))) if ids else None
+        payload.update(seats=capacity(ses,group),reserved=[i.id for i in pending(ses,group)],members=[m.user_id for m in members(ses,group)],
+            event=ses.scalar(select(func.max(FamilyEvent.id)).where(FamilyEvent.family_id==group.id)),
+            stock=latest,places=[(p.id,p.revision,effective_permission(ses,uid,p,share)) for share,p,_ in places])
+    from services.product_operations import digest
+    return digest(payload)
+
+
+def history_scope(ses,uid,group):
+    from sqlalchemy import or_
+    allowed=[place.id for _,place,_ in accessible_places(ses,uid)]
+    return (FamilyEvent.family_id==group.id,or_(FamilyEvent.storage_id.is_(None),FamilyEvent.storage_id.in_(allowed),FamilyEvent.actor_id==uid))

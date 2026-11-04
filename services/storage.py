@@ -211,7 +211,9 @@ def register_storage(app, subscription_required):
                     if product_count:
                         return page('storage_delete.html', item=item, error='В этом месте есть продукты. Удаление недоступно.',
                                     product_count=product_count, workspace_back_url=url_for('storage.detail',location_id=location_id)),409
-                    from data.family import FamilyStorage
+                    from data.family import FamilyStorage,FamilyStorageAccess,FamilyEvent
+                    ses.execute(update(FamilyEvent).where(FamilyEvent.storage_id==location_id).values(storage_id=0))
+                    ses.execute(delete(FamilyStorageAccess).where(FamilyStorageAccess.storage_id==location_id))
                     ses.execute(delete(FamilyStorage).where(FamilyStorage.storage_id==location_id))
                     pref=ses.get(ProductPreferences,session['user_id'])
                     if pref and pref.default_storage_id==location_id:pref.default_storage_id=None

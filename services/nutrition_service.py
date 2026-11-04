@@ -2,7 +2,7 @@
 import re
 from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
-from sqlalchemy import select, text
+from sqlalchemy import select, text, or_
 from data import db_session
 from data.nutrition import NutritionProfile, NutritionEntry, NutritionMeasure, NutritionMenu
 from data.product import ProductBatch, ProductGroup, ProductMutation
@@ -87,19 +87,35 @@ def save_profile(owner,form):
 
 def stock_options(owner,q=''):
     with db_session.create_session() as s:
+        from services.family_service import accessible_places
+        shared={p.id:p for _,p,_ in accessible_places(s,owner) if p.owner_id!=owner}
         query=select(ProductBatch,ProductGroup).join(ProductGroup,ProductGroup.id==ProductBatch.group_id).where(
-            ProductBatch.owner_id==owner,ProductGroup.owner_id==owner,ProductBatch.quantity_micro>0,
+            ProductBatch.owner_id==ProductGroup.owner_id,or_(ProductGroup.owner_id==owner,ProductGroup.storage_id.in_(shared)),ProductBatch.quantity_micro>0,
             (ProductBatch.expiry_date.is_(None)) | (ProductBatch.expiry_date>=stock.today()))
         if q:query=query.where(ProductGroup.search_key.contains(stock.clean(q).casefold(),autoescape=True))
         rows=s.execute(query.order_by(ProductGroup.name,ProductBatch.expiry_date.is_(None),ProductBatch.expiry_date,ProductBatch.id).limit(50)).all()
-        return [dict(id=b.id,name=g.name,brand=g.brand,quantity=b.entered_quantity,unit=stock.UNITS[b.unit][0],date=b.expiry_date) for b,g in rows]
+        return [dict(id=b.id,name=g.name,brand=g.brand,quantity=b.entered_quantity,unit=stock.UNITS[b.unit][0],date=b.expiry_date,shared=g.owner_id!=owner,storage=shared[g.storage_id].name if g.owner_id!=owner else '') for b,g in rows]
+
+
+def stock_source(ses,reader,batch_id,*,write=False):
+    batch=ses.get(ProductBatch,batch_id)
+    if not batch:raise operations.OperationError('Продукт не найден.',404)
+    if batch.owner_id==reader:return operations.owned(ses,reader,batch_id)
+    from services.family_service import storage_access
+    product=ses.get(ProductGroup,batch.group_id)
+    if not product or product.owner_id!=batch.owner_id:raise operations.OperationError('Продукт не найден.',404)
+    from services.family_service import FamilyError
+    try:_,place,_=storage_access(ses,reader,product.storage_id,write=write)
+    except FamilyError:raise operations.OperationError('Продукт недоступен или нет прав на это действие.',404)
+    if place.owner_id!=product.owner_id:raise operations.OperationError('Продукт не найден.',404)
+    return batch,product,place
 
 
 def source_values(owner,kind,key):
     if kind=='manual':return dict(name='',quantity='100',unit='g',basis='100g',**{k:'' for k in NAMES}),{}
     if kind=='stock':
         with db_session.create_session() as s:
-            b,g,p=operations.owned(s,owner,ident(key))
+            b,g,p=stock_source(s,owner,ident(key))
             if b.quantity_micro<=0 or b.expiry_date and b.expiry_date<stock.today():raise ValueError('У продукта нет остатка или его срок истёк.')
             d=g.details;unit={'mass':'g','volume':'ml','pieces':'pcs','packs':'portion'}[g.dimension]
             values=dict(name=g.name,quantity='100' if unit in ['g','ml'] else '1',unit=unit,basis=d.get('nutrition_basis','100g'),**{k:str(d[k]) if d.get(k) is not None else '' for k in NAMES})
@@ -108,7 +124,10 @@ def source_values(owner,kind,key):
             portion=str(d.get('portion','') or '')
             match=re.fullmatch(r'\s*(\d+(?:[.,]\d+)?)\s*(г|мл|g|ml)\s*',portion,re.I)
             values['basis_quantity']=match.group(1).replace(',','.') if match and ((unit=='g' and match.group(2).lower() in ['г','g']) or (unit=='ml' and match.group(2).lower() in ['мл','ml'])) else ''
-            return values,dict(kind='stock',key=str(b.id),label='Из запасов',stock_name=g.name)
+            from services.family_service import effective_permission
+            from data.family import FamilyStorage
+            read_only=g.owner_id!=owner and effective_permission(s,owner,p,s.get(FamilyStorage,p.id))!='edit'
+            return values,dict(kind='stock',key=str(b.id),label=p.name,stock_name=g.name,read_only=read_only)
     if kind=='recipe':
         if not re.fullmatch('[a-f0-9]{24}',str(key)):raise ValueError('Рецепт не найден.')
         r=library.recipe(owner,key)
@@ -166,10 +185,11 @@ def save_entry(owner,form,entry_id=None):
                 if old.source.get('submission_hash')!=fingerprint:raise ValueError('Эта форма уже отправлена с другими значениями. Откройте новую запись.')
                 return old.id
             if s.scalar(select(NutritionEntry.id).where(NutritionEntry.owner_id==owner,NutritionEntry.day==day,NutritionEntry.deleted.is_(False)).offset(499).limit(1)):raise ValueError('На эту дату уже есть 500 записей.')
+            if kind=='stock':stock_source(s,owner,ident(source_key))
             row=NutritionEntry(owner_id=owner,submission_key=key,source=source,stock_deducted=False)
             if form.get('deduct')=='yes':
                 if kind!='stock':raise ValueError('Списывать можно только выбранное поступление из запасов.')
-                b,g,p=operations.owned(s,owner,ident(source_key));before=operations.snapshot(b,g,p)
+                b,g,p=stock_source(s,owner,ident(source_key),write=True);before=operations.snapshot(b,g,p)
                 if b.expiry_date and b.expiry_date<stock.today():raise ValueError('Срок продукта истёк. Выберите другое поступление.')
                 mapping={'g':'mass','ml':'volume','pcs':'pieces','portion':'packs'}
                 if mapping[values['unit']]!=g.dimension:raise ValueError('Единица не соответствует поступлению из запасов.')
@@ -178,8 +198,11 @@ def save_entry(owner,form,entry_id=None):
                 cost=None if b.price_kopecks is None else int((Decimal(b.price_kopecks)*micro/b.quantity_micro).quantize(Decimal(1),rounding=ROUND_HALF_UP))
                 operations.update_amount(b,b.quantity_micro-micro)
                 if cost is not None:b.price_kopecks-=cost
-                after=operations.snapshot(b,g,p)|dict(operation_quantity_micro=micro,operation_cost_kopecks=cost,operation_note='Запись в дневник питания',reason='')
-                s.add(ProductMutation(owner_id=owner,batch_id=b.id,action='use',submission_key=key,payload_hash=operations.digest({'nutrition':key}),before=before,after=after,result_group_id=g.id))
+                after=operations.snapshot(b,g,p)|dict(operation_quantity_micro=micro,operation_cost_kopecks=cost,operation_note='Запись в дневник питания' if b.owner_id==owner else 'Расход продукта участником семьи',reason='')
+                s.add(ProductMutation(owner_id=b.owner_id,batch_id=b.id,action='use',submission_key=key,payload_hash=operations.digest({'nutrition':key}),before=before,after=after,result_group_id=g.id))
+                if b.owner_id!=owner:
+                    from services.family_service import family_for,event as family_event
+                    family_event(s,family_for(s,owner),owner,'Расход: '+g.name+' · '+stock.quantity_text(micro,g.dimension),storage_id=p.id)
                 row.stock_deducted=True
         if not entry_id:s.add(row)
         row.day=day;row.meal=values['meal'];row.name=values['name'];row.quantity=shown(number(values['quantity'],'Количество'));row.unit=values['unit'];row.nutrients=nutrients;row.note=values['note']

@@ -11,3 +11,4 @@ from .activity import ActivityEvent
 from .recipe import RecipeState, RecipeGeneration
 from .nutrition import NutritionProfile, NutritionEntry, NutritionMeasure, NutritionMenu
 from .family import Family, FamilyMember, FamilyInvitation, FamilyStorage, FamilyShoppingItem, FamilyEvent
+from .family import FamilyStorageAccess

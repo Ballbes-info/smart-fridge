@@ -5,7 +5,7 @@ import re
 import secrets
 from decimal import Decimal,ROUND_HALF_UP
 from datetime import timedelta
-from sqlalchemy import select,text,func
+from sqlalchemy import select,text,func,or_,delete
 from data import db_session
 from data.product import ProductGroup,ProductBatch,ProductMutation,ProductNotificationRead
 from data.storage import StorageLocation
@@ -101,8 +101,7 @@ def apply(owner,batch_id,action,key,expected,params,*,authorize=None):
         if action=='delete':
             if params.get('confirm')!='yes':raise OperationError('Подтвердите удаление поступления.')
             removed=batch.submission_key
-            seen=ses.get(ProductNotificationRead,(owner,batch.id))
-            if seen:ses.delete(seen)
+            ses.execute(delete(ProductNotificationRead).where(ProductNotificationRead.batch_id==batch.id))
             ses.delete(batch)
         elif action=='edit':
             values,parsed=params['values'],params['parsed'];destination=params['storage_id']
@@ -158,16 +157,18 @@ def apply(owner,batch_id,action,key,expected,params,*,authorize=None):
 def notifications(owner):
     today=service.today();until=today+timedelta(days=3)
     with db_session.create_session() as ses:
+        from services.family_service import accessible_places
+        shared_ids=[place.id for _,place,_ in accessible_places(ses,owner) if place.owner_id!=owner]
         rows=ses.execute(select(ProductBatch,ProductGroup,StorageLocation).join(ProductGroup,ProductGroup.id==ProductBatch.group_id)
-                         .join(StorageLocation,StorageLocation.id==ProductGroup.storage_id).where(ProductBatch.owner_id==owner,
-                         ProductGroup.owner_id==owner,StorageLocation.owner_id==owner,ProductBatch.quantity_micro>0,
+                         .join(StorageLocation,StorageLocation.id==ProductGroup.storage_id).where(ProductBatch.owner_id==ProductGroup.owner_id,
+                         ProductGroup.owner_id==StorageLocation.owner_id,or_(StorageLocation.owner_id==owner,StorageLocation.id.in_(shared_ids)),ProductBatch.quantity_micro>0,
                          ProductBatch.expiry_date<=until).order_by(ProductBatch.expiry_date,ProductBatch.id)).all()
         seen={r.batch_id:r.signature for r in ses.scalars(select(ProductNotificationRead).where(ProductNotificationRead.owner_id==owner))}
     items=[]
     for batch,group,place in rows:
         days=(batch.expiry_date-today).days;state='expired' if days<0 else 'today' if days==0 else 'soon'
-        signature=digest(dict(date=batch.expiry_date,state=state))
-        items.append(dict(batch_id=batch.id,group_id=group.id,name=group.name,place=place.name,date=batch.expiry_date.strftime('%d.%m.%Y'),
+        signature=digest(dict(date=batch.expiry_date,state=state,batch_key=batch.submission_key,storage_id=place.id))
+        items.append(dict(batch_id=batch.id,group_id=group.id,storage_id=place.id,shared=place.owner_id!=owner,name=group.name,place=place.name,date=batch.expiry_date.strftime('%d.%m.%Y'),
                           text='Срок истёк' if days<0 else 'Срок истекает сегодня' if days==0 else 'Срок истекает через '+str(days)+' дн.',
                           state=state,signature=signature,unread=seen.get(batch.id)!=signature))
     return dict(items=items[:50],unread=sum(i['unread'] for i in items),total=len(items),all_items=items)
