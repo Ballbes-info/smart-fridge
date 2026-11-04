@@ -49,6 +49,7 @@
 </dialog>
 <dialog id="workspace-notifications" class="sf-notifications" aria-labelledby="notifications-title">
   <div class="sf-notifications-heading"><h2 id="notifications-title">Уведомления</h2><button class="app-compact-search" type="button" data-close-notifications aria-label="Закрыть уведомления">{{ icon('close') }}</button></div>
+  {% if family_invitation_count %}<a class="sf-notification-item is-unread" data-family-notice href="{{ url_for('family.screen') }}"><strong>Приглашение в семью</strong><span>Ожидают ответа: {{ family_invitation_count }}</span><small>Посмотреть приглашения →</small></a>{% endif %}
   {% if product_notifications['items'] %}
   <p class="sf-notification-explainer">Сроки на сегодня и ближайшие 3 дня</p>
   <div class="sf-notification-list">{% for item in product_notifications['items'] %}<a class="sf-notification-item {{ 'is-unread' if item.unread else '' }} {{ 'is-expired' if item.state=='expired' else '' }}" href="{{ url_for('products.detail',group_id=item.group_id) }}#batch-{{ item.batch_id }}"><strong>{{ item.name }}</strong><span>{{ item.text }} · {{ item.date }}</span><small>{{ item.place }}</small></a>{% endfor %}</div>

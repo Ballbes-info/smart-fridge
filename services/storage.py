@@ -24,10 +24,15 @@ class StorageLimitReached(Exception):
 
 
 def quota(ses):
-    sub = ses.get(Subscription, session['user_id'])
+    from services.family_service import access_subscription
+    sub = access_subscription(session['user_id'],ses)
     limit = PLANS.get(sub.plan, {}).get('storage_limit', 0) if active(sub) else 0
-    count = ses.scalar(select(func.count()).select_from(StorageLocation).where(
-        StorageLocation.owner_id == session['user_id']))
+    from services.family_service import family_for,plan_for
+    from data.family import FamilyMember
+    family=family_for(ses,session['user_id'])
+    if family and plan_for(ses,family):limit=PLANS[plan_for(ses,family).plan]['storage_limit']
+    owners=select(FamilyMember.user_id).where(FamilyMember.family_id==family.id) if family and plan_for(ses,family) else [session['user_id']]
+    count = ses.scalar(select(func.count()).select_from(StorageLocation).where(StorageLocation.owner_id.in_(owners)))
     return count, limit
 
 
@@ -206,6 +211,8 @@ def register_storage(app, subscription_required):
                     if product_count:
                         return page('storage_delete.html', item=item, error='В этом месте есть продукты. Удаление недоступно.',
                                     product_count=product_count, workspace_back_url=url_for('storage.detail',location_id=location_id)),409
+                    from data.family import FamilyStorage
+                    ses.execute(delete(FamilyStorage).where(FamilyStorage.storage_id==location_id))
                     pref=ses.get(ProductPreferences,session['user_id'])
                     if pref and pref.default_storage_id==location_id:pref.default_storage_id=None
                     result = ses.execute(delete(StorageLocation).where(

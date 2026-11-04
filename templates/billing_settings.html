@@ -5,12 +5,13 @@
 <section class="billing-page billing-narrow">
   <header class="workspace-heading app-page-heading"><div><h1>Ваша подписка</h1><p>План, оплата и условия продления.</p></div></header>
   <a class="billing-ai-action" href="{{ url_for('billing.scan_limits') }}">{{ icon('scan') }}<span>Лимиты ИИ и пакеты распознаваний</span>{{ icon('chevron', 'billing-ai-action-arrow') }}</a>
+  {% if family_subscription %}<div class="billing-panel"><h2>Доступ по семейной подписке</h2><p>{{ billing_plans[family_subscription.plan].name }} · до {{ family_subscription.period_end|billing_date }}. Оплатой управляет владелец семьи.</p><a href="{{ url_for('family.screen') }}">Открыть семью →</a><p>Личная подписка и её автопродление показаны ниже и не отменяются при вступлении в семью.</p></div>{% endif %}
   <div class="billing-panel">
     <p class="billing-eyebrow">{{ current_user.name }} · {{ current_user.email }}</p>
     <h2>{{ billing_plans[subscription.plan].name if subscription and subscription.plan else 'План не выбран' }}</h2>
     {% if subscription and subscription.plan %}
       <p>{{ '7 пробных дней' if subscription.status=='trialing' and subscription_active else 'Подписка активна' if subscription_active else 'Доступ приостановлен' }}.</p>
-      <dl class="billing-summary"><div><dt>Оплаченный или пробный период до</dt><dd>{{ subscription.period_end|billing_date }}</dd></div><div><dt>Период оплаты</dt><dd>{{ 'Год' if subscription.interval=='year' else 'Месяц' }}</dd></div>{% if billing_plans[subscription.plan].family %}<div><dt>Участники</dt><dd>{{ 5+subscription.extra_seats }} мест · семейные функции ещё не подключены</dd></div>{% endif %}<div><dt>Карта</dt><dd>•••• {{ subscription.card_last4 }}</dd></div><div><dt>Автопродление</dt><dd>{{ 'Включено' if subscription.auto_renew else 'Отключено' }}</dd></div></dl>
+      <dl class="billing-summary"><div><dt>Оплаченный или пробный период до</dt><dd>{{ subscription.period_end|billing_date }}</dd></div><div><dt>Период оплаты</dt><dd>{{ 'Год' if subscription.interval=='year' else 'Месяц' }}</dd></div>{% if billing_plans[subscription.plan].family %}<div><dt>Участники</dt><dd>{{ 5+subscription.extra_seats }} мест · <a href="{{ url_for('family.screen') }}">Управлять семьёй</a></dd></div>{% endif %}<div><dt>Карта</dt><dd>•••• {{ subscription.card_last4 }}</dd></div><div><dt>Автопродление</dt><dd>{{ 'Включено' if subscription.auto_renew else 'Отключено' }}</dd></div></dl>
       {% if subscription.auto_renew %}<p>Следующий платёж: {{ next_amount|rubles }}. Дата: {{ subscription.period_end|billing_date }}.</p>{% endif %}
       {% if not subscription_active %}<p>Данные сохранены. Для доступа к функциям оплатите подписку.</p>{% endif %}
     {% else %}<p>Выбор плана обязателен для завершения регистрации.</p>{% endif %}

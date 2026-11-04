@@ -8,6 +8,7 @@
   <h1>Выберите свой<br><em>план на кухню.</em></h1>
   <p class="billing-lead">Для себя или всей семьи. База — учёт продуктов, премиум — ещё и помощь ИИ.</p>
   {% if subscription and subscription.pending_order_id %}<div class="billing-notice">У вас есть незавершённое оформление. <a href="{{ url_for('billing.checkout',order_id=subscription.pending_order_id) }}">Продолжить →</a></div>{% endif %}
+  {% if family_invitation_count %}<div class="billing-notice">Вас пригласили в семью. <a href="{{ url_for('family.screen') }}">Принять приглашение без отдельной подписки →</a></div>{% elif family_subscription %}<div class="billing-notice">У вас уже есть доступ по семейной подписке. <a href="{{ url_for('workspace.home') }}">Перейти в приложение →</a></div>{% endif %}
   <div class="billing-toolbar">
     <fieldset class="billing-period" data-billing-period>
       <legend>Как часто оплачивать</legend>

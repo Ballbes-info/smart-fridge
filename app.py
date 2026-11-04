@@ -214,9 +214,13 @@ def subscription_required(view):
     @login_required
     @wraps(view)
     def wrapped(*args, **kwargs):
-        from services.billing_service import active, get_subscription
-        if not active(get_subscription(session["user_id"])):
-            return redirect(url_for("billing.plans"))
+        from services.billing_service import active
+        from services.family_service import access_subscription
+        if request.path.startswith("/home/family"):
+            return view(*args, **kwargs)
+        if not active(access_subscription(session["user_id"])):
+            from services.family_service import has_invitation
+            return redirect(url_for("family.screen" if has_invitation(session["user_id"]) else "billing.plans"))
         return view(*args, **kwargs)
     return wrapped
 
@@ -235,6 +239,8 @@ from services.recipes import register_recipes
 register_recipes(app, subscription_required)
 from services.nutrition_routes import register_nutrition
 register_nutrition(app, subscription_required)
+from services.family_routes import register_family
+register_family(app, login_required)
 
 
 # --------------------------------------------------------------------------- #
@@ -387,6 +393,10 @@ def verify():
     if request.method == "POST":
         code = request.form.get("code", "")
         if complete_code(user.id, code, "verify"):
+            from services.family_service import has_invitation
+            if has_invitation(user.id):
+                flash("Почта подтверждена. Вас пригласили в семью.", "success")
+                return redirect(url_for("family.screen"))
             flash("Почта подтверждена. Выберите тариф, чтобы завершить регистрацию.", "success")
             return redirect(url_for("billing.plans"))
         flash("Неверный или истёкший код либо превышен лимит попыток.", "error")

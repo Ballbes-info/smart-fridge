@@ -53,7 +53,10 @@ def billing_date(value):
 @billing.app_context_processor
 def billing_context():
     sub = service.get_subscription(session['user_id']) if session.get('user_id') else None
-    return {'subscription':sub, 'subscription_active':service.active(sub), 'billing_plans':service.PLANS}
+    from services.family_service import access_subscription
+    inherited=access_subscription(session['user_id']) if session.get('user_id') else None
+    return {'subscription':sub, 'subscription_active':service.active(sub), 'billing_plans':service.PLANS,
+            'family_subscription':inherited if inherited and inherited.user_id!=session.get('user_id') else None}
 
 
 @billing.route('/subscriptions')
@@ -185,7 +188,8 @@ def renew():
 def scan_limits():
     from services import scan_credits,recipe_generation
     session.setdefault('storage_csrf',secrets.token_hex(32))
-    sub=service.get_subscription(session['user_id'])
+    from services.family_service import access_subscription
+    sub=access_subscription(session['user_id'])
     premium=bool(service.active(sub) and service.PLANS[sub.plan]['premium'])
     return render_template('scan_limits.html',quotas={k:scan_credits.allowance(session['user_id'],k) for k in ['label','product']},
                            packages=scan_credits.PACKAGES,kind_names=scan_credits.NAMES,premium=premium,recipe_quota=recipe_generation.quota(session['user_id']),

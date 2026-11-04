@@ -11,7 +11,8 @@ import uuid
 from datetime import date
 
 import requests
-from services.billing_service import get_subscription, PLANS, active
+from services.billing_service import PLANS, active
+from services.family_service import access_subscription as get_subscription
 from services.label_ocr import prepare_image
 from services import gigachat_tls
 from services.label_extraction import validate_nutrition

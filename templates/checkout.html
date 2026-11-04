@@ -11,7 +11,7 @@
     <p class="billing-eyebrow">ЧТО ВХОДИТ В ПЛАН</p>
     {{ features(billing_plans[order.plan], true) }}
     {% if billing_plans[order.plan].family %}<p>Выбрано мест: {{ 5+order.extra_seats }}. Дополнительное место — {{ (99 if billing_plans[order.plan].premium else 49) * (10 if order.interval=='year' else 1) }} ₽ за {{ 'год' if order.interval=='year' else 'месяц' }}.</p>{% else %}<p>Подписка для одного человека.</p>{% endif %}
-    <p class="billing-small">Дисплей приобретается отдельно. С ним семейная база бесплатна, премиум оплачивается отдельно. Семейные функции и ИИ пока в разработке.</p>
+    <p class="billing-small">Дисплей приобретается отдельно. С ним семейная база бесплатна, премиум оплачивается отдельно.</p>
   </div>
   <div class="billing-panel">
   {% if order.status == 'ready' and not quote %}

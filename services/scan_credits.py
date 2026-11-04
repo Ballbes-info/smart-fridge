@@ -1,4 +1,5 @@
 """Atomic per-mode allowances, subscription anniversaries and paid extra credits."""
+from services.family_service import access_subscription
 import calendar
 import os
 import re
@@ -48,7 +49,7 @@ def allowance(user_id,kind='label',*,ses=None):
     if kind not in DEFAULTS:raise ValueError('Unknown recognition mode')
     if ses is None:
         with db_session.create_session() as db:return allowance(user_id,kind,ses=db)
-    now=time.time();sub=ses.get(Subscription,user_id);plan=sub.plan if sub and sub.plan in PLANS else 'basic'
+    now=time.time();sub=access_subscription(user_id,ses);plan=sub.plan if sub and sub.plan in PLANS else 'basic'
     eligible=active(sub,now) and (kind=='label' or PLANS[plan]['premium'])
     key=('GIGACHAT_LIMIT_' if kind=='label' else 'GIGACHAT_PRODUCT_LIMIT_')+plan.upper()
     try:limit=max(0,min(10000,int(os.environ.get(key,DEFAULTS[kind][plan]))))
@@ -123,7 +124,7 @@ def new_order(user_id,package_id,submission):
         if old:
             if old.package_id!=package_id:raise PaymentError('Эта форма уже использована для другого пакета.')
             return old.order_id
-        sub=ses.get(Subscription,user_id)
+        sub=access_subscription(user_id,ses)
         if not active(sub):raise PaymentError('Для покупки пакета нужна активная подписка.')
         if package['kind']=='product' and not PLANS[sub.plan]['premium']:raise PaymentError('Пакеты продуктов по фото доступны только с Премиумом.')
         # Resume an existing unfinished checkout rather than creating accidental duplicates.
@@ -150,7 +151,7 @@ def confirm_order(order_id,user_id,card,expected_amount,gateway,return_url):
         if order.status in ['created','pending','succeeded']:return order.id
         if order.created_at<time.time()-23*3600:raise PaymentError('Срок покупки истёк. Отмените покупку и выберите пакет снова.')
         if order.status!='ready' or order.amount!=expected_amount:raise PaymentError('Условия операции изменились. Проверьте сумму.')
-        sub=ses.get(Subscription,user_id)
+        sub=access_subscription(user_id,ses)
         if not active(sub) or (pack.kind=='product' and not PLANS[sub.plan]['premium']):raise PaymentError('Для этого пакета нужна активная подходящая подписка.')
         order.method_id=card;order.card_last4=selected['last4'];order.status='created';ses.commit()
     start_payment(order_id,gateway,return_url)

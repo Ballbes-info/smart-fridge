@@ -82,16 +82,20 @@ def target_group(ses,owner,storage_id,values,parsed,source):
     return group
 
 
-def apply(owner,batch_id,action,key,expected,params):
+def apply(owner,batch_id,action,key,expected,params,*,authorize=None):
     if action not in ACTIONS or not re.fullmatch('[a-f0-9]{48}',key):raise OperationError('Форма устарела. Откройте её заново.',400)
     payload=digest(dict(batch_id=batch_id,action=action,expected=expected,params=params))
     with db_session.create_session() as ses:
         ses.execute(text('BEGIN IMMEDIATE'))
+        if authorize is not None:
+            secured_batch,secured_group,secured_place=owned(ses,owner,batch_id)
+            authorize(ses,secured_batch,secured_group,secured_place,False)
         old=ses.scalar(select(ProductMutation).where(ProductMutation.owner_id==owner,ProductMutation.submission_key==key))
         if old:
             if old.payload_hash!=payload:raise OperationError('Эта форма уже отправлена с другими данными. Откройте новую.',409)
             return old.result_group_id,False
         batch,group,place=owned(ses,owner,batch_id);before=snapshot(batch,group,place)
+        if authorize is not None:authorize(ses,batch,group,place,True)
         if expected!=digest(before):raise OperationError('Поступление уже изменилось в другой вкладке. Обновите страницу перед действием.',409)
         original_group=group.id;removed=None;after={};result_group=None
         if action=='delete':

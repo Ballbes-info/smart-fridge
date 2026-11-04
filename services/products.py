@@ -77,7 +77,8 @@ def register_products(app, subscription_required, login_required):
 
     @products.app_context_processor
     def expiry_notifications():
-        from services.billing_service import get_subscription,active
+        from services.billing_service import active
+        from services.family_service import access_subscription as get_subscription
         if not session.get('user_id') or not active(get_subscription(session['user_id'])):
             return dict(product_notifications={'items':[],'unread':0,'total':0})
         session.setdefault('storage_csrf',secrets.token_hex(32))

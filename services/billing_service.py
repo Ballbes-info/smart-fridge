@@ -227,7 +227,7 @@ def refresh_order(order_id, gateway, secret, return_url):
             saved.error = {'insufficient_funds':'Недостаточно средств', 'declined':'Платёж отклонён', 'canceled_by_user':'Платёж отменён'}.get(obj.get('cancellation_details',{}).get('reason'), 'Оплата не завершена')
             if saved.kind == 'renewal' and sub.period_end <= time.time():
                 sub.status = 'past_due'
-            if sub.pending_order_id == saved.id:
+            if sub and sub.pending_order_id == saved.id:
                 sub.pending_order_id = None
             card = ses.get(CardPromotion, saved.card_key) if saved.card_key else None
             if card and card.reserved_order_id == saved.id:

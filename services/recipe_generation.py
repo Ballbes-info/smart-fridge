@@ -29,7 +29,8 @@ SCHEMA={'type':'object','properties':{'title':{'type':'string'},'description':{'
 def quota(owner,s=None):
     if s is None:
         with db_session.create_session() as s:return quota(owner,s)
-    sub=s.get(Subscription,owner);allowed=bool(active(sub) and PLANS.get(sub.plan,{}).get('premium'))
+    from services.family_service import access_subscription
+    sub=access_subscription(owner,s);allowed=bool(active(sub) and PLANS.get(sub.plan,{}).get('premium'))
     start,end=period(sub,time.time());limit=100 if sub and sub.plan=='premium' else 300
     try:limit=max(0,min(10000,int(os.environ.get('GIGACHAT_RECIPE_LIMIT_'+(sub.plan.upper() if sub else 'BASIC'),limit))))
     except ValueError:pass
