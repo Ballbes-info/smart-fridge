@@ -241,6 +241,8 @@ from services.nutrition_routes import register_nutrition
 register_nutrition(app, subscription_required)
 from services.family_routes import register_family
 register_family(app, login_required)
+from services.shopping_routes import register_shopping
+register_shopping(app, subscription_required, login_required)
 
 
 # --------------------------------------------------------------------------- #

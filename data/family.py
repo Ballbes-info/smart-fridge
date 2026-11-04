@@ -3,6 +3,7 @@ import time
 import secrets
 import sqlalchemy as sa
 from .db_session import SqlAlchemyBase
+from .shopping import ShoppingDetails
 
 
 class Family(SqlAlchemyBase):
@@ -38,7 +39,7 @@ class FamilyStorage(SqlAlchemyBase):
     permission = sa.Column(sa.String(8), nullable=False, default='edit')
 
 
-class FamilyShoppingItem(SqlAlchemyBase):
+class FamilyShoppingItem(ShoppingDetails,SqlAlchemyBase):
     __tablename__ = 'family_shopping_items'
     __table_args__ = (sa.UniqueConstraint('family_id','submission_key',name='uq_family_shopping_submission'),)
     id = sa.Column(sa.Integer, primary_key=True)

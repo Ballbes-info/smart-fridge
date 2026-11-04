@@ -169,6 +169,10 @@ def stock_snapshot(owner_id, args):
         from services.family_service import accessible_places
         shared=[place for _,place,_ in accessible_places(ses,owner_id) if place.owner_id!=owner_id]
         storages=sorted(storages+shared,key=lambda place:(place.name_key,place.id))
+        if args.get('shared_only')=='1':
+            from services.family_service import accessible_places
+            allowed={place.id for _,place,_ in accessible_places(ses,owner_id)}
+            storages=[place for place in storages if place.id in allowed]
         ids = {str(s.id) for s in storages}
         selected = str(args.get('storage',''))
         # A foreign/nonexistent place selects nothing, never falls back to all stock.

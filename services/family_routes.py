@@ -40,7 +40,7 @@ def common(tab='members'):
     session.setdefault('storage_csrf', secrets.token_hex(32))
     return dict(active_section='family', section=SECTIONS['family'],
         feature=next(f for f in SECTIONS['family']['functions'] if f['slug']==tab), family_csrf=session['storage_csrf'],
-        tabs=TABS, tab=tab, shopping_key=secrets.token_hex(24), workspace_back_url=url_for('workspace.home'))
+        tabs=TABS, tab=tab, workspace_back_url=url_for('workspace.home'))
 
 
 def register_family(app, login_required):
@@ -64,6 +64,7 @@ def register_family(app, login_required):
     @family.route('/home/family/<any(members,invitations,access,shopping):tab>')
     @login_required
     def screen(tab='members'):
+        if tab=='shopping':return app.view_functions['shopping.shared']()
         uid = session['user_id']; context = common(tab) | {'now':time.time()}
         with db_session.create_session() as ses:
             group = fs.family_for(ses, uid)
@@ -83,8 +84,6 @@ def register_family(app, login_required):
                 invitations=fs.pending(ses,group) if group.owner_id==uid else []
                 shares=fs.accessible_places(ses,uid)
                 own=list(ses.scalars(select(StorageLocation).where(StorageLocation.owner_id==uid).order_by(StorageLocation.name_key)))
-                shopping=list(ses.scalars(select(FamilyShoppingItem).where(FamilyShoppingItem.family_id==group.id)
-                    .order_by(FamilyShoppingItem.bought,FamilyShoppingItem.created_at.desc()).limit(500))) if seats and fs.entitled(ses,group,uid) else []
                 history_count=ses.scalar(select(func.count()).select_from(FamilyEvent).where(*fs.history_scope(ses,uid,group)))
                 history_pages=max(1,(history_count+24)//25)
                 try:history_page=max(1,min(history_pages,int(request.args.get('history_page',1))))
@@ -92,7 +91,7 @@ def register_family(app, login_required):
                 events=list(ses.execute(select(FamilyEvent, User.name).join(User, User.id==FamilyEvent.actor_id)
                     .where(*fs.history_scope(ses,uid,group)).order_by(FamilyEvent.id.desc()).offset((history_page-1)*25).limit(25)))
                 context.update(seats=seats, members=member_rows, users=users, invitations=invitations,
-                    shares=shares, own_places=own, shopping=shopping,bought_snapshot=[[item.id,item.revision] for item in shopping if item.bought], shared_ids={share.storage_id for share,_,_ in shares},
+                    shares=shares, own_places=own, shared_ids={share.storage_id for share,_,_ in shares},
                     overrides={(o.storage_id,o.user_id):o.permission for o in ses.scalars(select(FamilyStorageAccess).where(FamilyStorageAccess.storage_id.in_([p.id for _,p,_ in shares if p.owner_id==uid])))},
                     permissions={p.id:fs.effective_permission(ses,uid,p,share) for share,p,_ in shares},
                     invitation_history=list(ses.scalars(select(FamilyInvitation).where(FamilyInvitation.family_id==group.id).order_by(FamilyInvitation.id.desc()).limit(30))) if group.owner_id==uid else [],
@@ -104,6 +103,7 @@ def register_family(app, login_required):
     @login_required
     def action():
         check_form(); uid=session['user_id']; command=request.form.get('command'); tab=request.form.get('tab','members')
+        if command and command.startswith('shopping_'):return app.extensions['shopping_legacy_action']()
         if tab not in TABS:tab='members'
         try:
             with db_session.create_session() as ses:
@@ -193,46 +193,6 @@ def register_family(app, login_required):
                             if shared and shared.family_id!=group.id:raise fs.FamilyError('Место уже относится к другой семье.')
                             if not shared:shared=FamilyStorage(storage_id=place.id,family_id=group.id);ses.add(shared)
                             shared.permission=permission;fs.event(ses,group,uid,'Общий доступ ('+('изменение' if permission=='edit' else 'просмотр')+'): '+place.name,storage_id=place.id)
-                    elif command in ('shopping_add','shopping_toggle','shopping_delete','shopping_edit','shopping_clear'):
-                        fs.require_family(ses,uid)
-                        if not fs.entitled(ses,group,uid):raise fs.FamilyError('Нет доступного места в семейном тарифе.')
-                        if command=='shopping_clear':
-                            if request.form.get('confirm')!='yes':raise fs.FamilyError('Подтвердите очистку купленных товаров.')
-                            # Only delete the exact bought revisions shown on the confirmation page.
-                            from json import loads
-                            try:shown=loads(request.form.get('shown','[]'))
-                            except (ValueError,TypeError):raise fs.FamilyError('Обновите список перед очисткой.')
-                            if not isinstance(shown,list) or len(shown)>500:raise fs.FamilyError('Обновите список перед очисткой.')
-                            for pair in shown:
-                                if not isinstance(pair,list) or len(pair)!=2:raise fs.FamilyError('Обновите список перед очисткой.')
-                                item=ses.get(FamilyShoppingItem,integer(pair[0]))
-                                if item and item.family_id==group.id and item.bought and str(item.revision)==str(pair[1]):ses.delete(item)
-                            fs.event(ses,group,uid,'Очищены купленные товары')
-                        elif command=='shopping_add':
-                            key=request.form.get('submission_key','')
-                            if not re.fullmatch('[a-f0-9]{48}',key):raise fs.FamilyError('Форма устарела. Обновите страницу.')
-                            existing=ses.scalar(select(FamilyShoppingItem).where(FamilyShoppingItem.family_id==group.id,FamilyShoppingItem.submission_key==key))
-                            if existing:
-                                if existing.name!=ps.clean(request.form.get('name','')) or existing.note!=request.form.get('note','').strip():raise fs.FamilyError('Эта форма уже использована. Повторите действие с новой страницы.')
-                                return redirect(url_for('family.screen',tab='shopping'))
-                            count=ses.scalar(select(func.count()).select_from(FamilyShoppingItem).where(FamilyShoppingItem.family_id==group.id))
-                            if count>=500:raise fs.FamilyError('В списке уже 500 записей. Удалите ненужные.')
-                            name=clean(request.form.get('name',''),120,'Продукт');note=request.form.get('note','').strip()
-                            if len(note)>160:raise fs.FamilyError('Количество или заметка: до 160 символов.')
-                            ses.add(FamilyShoppingItem(family_id=group.id,name=name,note=note,created_by=uid,submission_key=key))
-                            fs.event(ses,group,uid,'Добавлено в покупки: '+name)
-                        else:
-                            item=ses.get(FamilyShoppingItem,integer(request.form.get('item_id')))
-                            if not item or item.family_id!=group.id:raise fs.FamilyError('Покупка не найдена.')
-                            if request.form.get('revision')!=str(item.revision):raise fs.FamilyError('Запись изменилась. Страница обновлена; повторите действие.')
-                            if command=='shopping_delete':ses.delete(item)
-                            elif command=='shopping_edit':
-                                item.name=clean(request.form.get('name',''),120,'Продукт')
-                                note=request.form.get('note','').strip()
-                                if len(note)>160:raise fs.FamilyError('Заметка: до 160 символов.')
-                                item.note=note;item.revision+=1
-                            else:item.bought=not item.bought;item.revision+=1
-                            fs.event(ses,group,uid,('Удалено из покупок: ' if command=='shopping_delete' else 'Изменена покупка: ')+item.name)
                     else:raise fs.FamilyError('Неизвестное действие.')
                 ses.commit()
             flash('Изменения сохранены.','success')

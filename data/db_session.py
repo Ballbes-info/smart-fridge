@@ -43,6 +43,16 @@ def global_init(db_file: str) -> None:
             conn.exec_driver_sql('ALTER TABLE family_events ADD COLUMN storage_id INTEGER')
             conn.exec_driver_sql('UPDATE family_events SET storage_id=0')
         conn.exec_driver_sql('CREATE INDEX IF NOT EXISTS ix_family_events_storage_id ON family_events(storage_id)')
+    with engine.begin() as conn:
+        conn.exec_driver_sql('BEGIN IMMEDIATE')
+        shopping_columns={row[1] for row in conn.exec_driver_sql('PRAGMA table_info(family_shopping_items)')}
+        additions={'quantity':"VARCHAR(32) NOT NULL DEFAULT ''",'unit':"VARCHAR(8) NOT NULL DEFAULT ''",
+            'brand':"VARCHAR(120) NOT NULL DEFAULT ''",'category':"VARCHAR(24) NOT NULL DEFAULT 'other'",
+            'expected_price':'INTEGER','store':"VARCHAR(120) NOT NULL DEFAULT ''",
+            'priority':'BOOLEAN NOT NULL DEFAULT 0','stocked':'BOOLEAN NOT NULL DEFAULT 0',
+            'source':"JSON NOT NULL DEFAULT '{}'"}
+        for name,definition in additions.items():
+            if name not in shopping_columns:conn.exec_driver_sql('ALTER TABLE family_shopping_items ADD COLUMN '+name+' '+definition)
     from services.activity_audit import install
     install()
 

@@ -1,0 +1,1 @@
+{% extends 'shopping_base.html' %}{% block shopping_content %}<section class="sh-panel"><h2>Семейный список</h2><p>{{ access_error }}</p><a class="sh-primary" href="{{ url_for('family.screen') }}">Открыть семью</a><a class="sh-secondary" href="{{ url_for('shopping.index') }}">Мой список покупок</a></section>{% endblock %}

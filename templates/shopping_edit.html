@@ -1,0 +1,3 @@
+{% extends 'shopping_base.html' %}{% from 'shopping_base.html' import mutation,fields with context %}
+{% block shopping_title %}Изменить покупку{% endblock %}
+{% block shopping_content %}<section class="sh-panel">{% if error %}<p class="sh-error" role="alert">{{ error }} <a href="{{ url_for('shopping.edit',item_id=item_id,scope=shopping_scope) }}">Обновить форму</a></p>{% endif %}<form method="post">{{ mutation('edit') }}<input type="hidden" name="expected" value="{{ expected }}">{{ fields(values) }}<button class="sh-primary">Сохранить изменения</button><a class="sh-secondary" href="{{ url_for('shopping.shared' if shopping_scope=='family' else 'shopping.index') }}">К списку</a></form></section>{% endblock %}
