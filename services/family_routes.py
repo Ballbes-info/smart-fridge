@@ -55,10 +55,12 @@ def register_family(app, login_required):
             family_access=bool(group and fs.entitled(ses,group,uid))
         return {'family_invitation_count':count,'has_family_access':family_access}
 
-    @family.route('/family', defaults={'tab':'members'})
+    @family.route('/family')
     @family.route('/family/<any(members,invitations,access,shopping):tab>')
+    @family.route('/home/family')
+    @family.route('/home/family/<any(members,invitations,access,shopping):tab>')
     @login_required
-    def screen(tab):
+    def screen(tab='members'):
         uid = session['user_id']; context = common(tab)
         with db_session.create_session() as ses:
             group = fs.family_for(ses, uid)

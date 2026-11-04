@@ -14,9 +14,9 @@
 </section>
 <div class="sf-module-board">{% for key in ['shopping', 'recipes', 'nutrition', 'assistant', 'statistics', 'family'] %}{% set item = workspace_sections[key] %}
 <section class="sf-module-card sf-module-{{ key }}{% if item.locked %} sf-module-locked{% endif %}" aria-label="{{ item.name }}">
-<div class="sf-card-heading"><a href="{{ url_for('workspace.section', section=key) }}" {{ access_attrs(item) }}><h2>{{ item.name }}</h2>{% if item.locked %}{{ icon('lock') }}{% else %}{{ drawing(key) }}{% endif %}</a>{% if not item.locked %}{{ help_button('help-' ~ key, item.name) }}{% endif %}</div>
+<div class="sf-card-heading"><a href="{{ url_for('family.screen') if key=='family' else url_for('workspace.section', section=key) }}" {{ access_attrs(item) }}><h2>{{ item.name }}</h2>{% if item.locked %}{{ icon('lock') }}{% else %}{{ drawing(key) }}{% endif %}</a>{% if not item.locked %}{{ help_button('help-' ~ key, item.name) }}{% endif %}</div>
 {% if not item.locked %}<p class="sf-help-copy" id="help-{{ key }}" hidden>{{ item.help }}</p>
-<nav class="sf-card-links" aria-label="Подразделы: {{ item.name }}">{% for function in item.functions %}<a href="{{ url_for('workspace.feature', section=key, feature=function.slug) }}" {{ access_attrs(function) }}><span>{{ function.name }}</span>{{ icon('lock' if function.locked else 'chevron') }}</a>{% endfor %}</nav>{% endif %}
+<nav class="sf-card-links" aria-label="Подразделы: {{ item.name }}">{% for function in item.functions %}<a href="{{ url_for('family.screen',tab=function.slug) if key=='family' else url_for('workspace.feature', section=key, feature=function.slug) }}" {{ access_attrs(function) }}><span>{{ function.name }}</span>{{ icon('lock' if function.locked else 'chevron') }}</a>{% endfor %}</nav>{% endif %}
 </section>{% endfor %}</div>
 </div>
 {% else %}
