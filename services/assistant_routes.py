@@ -15,10 +15,12 @@ def register_assistant(app,login_required,subscription_required):
     def companion_context():
         owner=session.get('user_id')
         if not owner:return {}
-        allowed=ai.quota(owner)['allowed'];saved=ai.preference(owner)
+        q=ai.quota(owner);allowed=q['allowed'];prefs=ai.preferences(owner);saved=prefs['enabled']
         pet=allowed and saved and not session.get('assistant_pet_snoozed')
         job=ai.pending(owner) if pet else None
-        return dict(assistant_pet_pending=dict(id=job.id,mode=job.mode) if job else None,assistant_premium=allowed,assistant_pet_saved=saved,assistant_pet=pet,assistant_csrf=session.setdefault('storage_csrf',secrets.token_hex(32)))
+        last=job or (ai.latest(owner) if pet else None)
+        recipe_key=(request.view_args or {}).get('recipe_key','') if request.endpoint=='recipes.detail' else ''
+        return dict(assistant_pet_options=prefs,assistant_pet_scope=str(owner),assistant_pet_quota=q,assistant_pet_recipe=dict(key=recipe_key,servings=request.args.get('servings','')) if recipe_key else None,assistant_pet_last=dict(id=last.id,mode=last.mode,status=last.status) if last else None,assistant_pet_pending=dict(id=job.id,mode=job.mode) if job else None,assistant_premium=allowed,assistant_pet_saved=saved,assistant_pet=pet,assistant_csrf=session.setdefault('storage_csrf',secrets.token_hex(32)))
 
     @assistant.after_request
     def private(response):
@@ -102,7 +104,7 @@ def register_assistant(app,login_required,subscription_required):
     def pet():
         check_form()
         try:
-            ai.set_pet(session['user_id'],request.form.get('enabled')=='1');session.pop('assistant_pet_snoozed',None);flash('Настройка питомца сохранена.','success')
+            ai.set_pet(session['user_id'],request.form.get('enabled')=='1',request.form.get('roaming')=='1' if request.form.get('pet_preferences')=='1' else None,request.form.get('hints')=='1' if request.form.get('pet_preferences')=='1' else None);session.pop('assistant_pet_snoozed',None);flash('Настройка питомца сохранена.','success')
         except ValueError as exc:flash(str(exc),'error')
         return redirect(url_for('workspace.settings')+'#assistant-pet-settings')
 

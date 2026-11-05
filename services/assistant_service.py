@@ -44,22 +44,33 @@ def quota(owner,s=None):
     return dict(allowed=allowed,limit=limit,used=used,remaining=max(0,limit-used),period_start=start,resets_at=end)
 
 
-def preference(owner):
+def preferences(owner):
     with db_session.create_session() as s:
         p=s.get(AssistantPreferences,owner)
-        return bool(p and p.pet_enabled)
+        return dict(enabled=bool(p and p.pet_enabled),roaming=bool(p.pet_roaming) if p else True,hints=bool(p.pet_hints) if p else True)
 
 
-def set_pet(owner,enabled):
+def preference(owner):return preferences(owner)['enabled']
+
+
+def set_pet(owner,enabled,roaming=None,hints=None):
     with db_session.create_session() as s:
         s.execute(text('BEGIN IMMEDIATE'))
         if enabled and not quota(owner,s)['allowed']:raise ValueError('Питомец доступен в Премиуме и Семейном премиуме.')
         p=s.get(AssistantPreferences,owner)
-        if not p:p=AssistantPreferences(owner_id=owner);s.add(p)
-        before=bool(p.pet_enabled)
+        if not p:p=AssistantPreferences(owner_id=owner,pet_enabled=False,pet_roaming=True,pet_hints=True);s.add(p)
+        before=dict(pet_enabled=bool(p.pet_enabled),pet_roaming=bool(p.pet_roaming),pet_hints=bool(p.pet_hints))
         p.pet_enabled=enabled
-        if before!=enabled:s.add(ActivityEvent(owner_id=owner,category='account',action='assistant_pet_changed',before={'pet_enabled':before},after={'pet_enabled':enabled}))
+        if roaming is not None:p.pet_roaming=roaming
+        if hints is not None:p.pet_hints=hints
+        after=dict(pet_enabled=bool(p.pet_enabled),pet_roaming=bool(p.pet_roaming),pet_hints=bool(p.pet_hints))
+        if before!=after:s.add(ActivityEvent(owner_id=owner,category='account',action='assistant_pet_changed',before=before,after=after))
         s.commit()
+
+
+def latest(owner):
+    with db_session.create_session() as s:
+        return s.scalar(select(AssistantExchange).where(AssistantExchange.owner_id==owner,AssistantExchange.hidden==False).order_by(AssistantExchange.created_at.desc(),AssistantExchange.id.desc()).limit(1))
 
 
 def pending(owner):
@@ -107,7 +118,7 @@ def serialize(row):
     context=getattr(row,'context_info',{}) or {};recipe=context.get('recipe')
     status=row.status;error=row.error
     if status=='pending' and row.created_at<time.time()-300:status='error';error='Запрос прерван. Повторите вопрос.'
-    return dict(id=row.id,question=row.question,answer=row.answer,status=status,error=error,created_at=row.created_at,
+    return dict(id=row.id,mode=row.mode,question=row.question,answer=row.answer,status=status,error=error,created_at=row.created_at,
         with_stock=bool(context.get('with_stock')),stock_count=context.get('stock_count',0),stock_omitted=context.get('stock_omitted',0),
         recipe={k:recipe.get(k) for k in ('key','title','servings','step')} if recipe else None)
 

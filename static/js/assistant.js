@@ -153,6 +153,23 @@
   root.querySelectorAll('time[data-time]').forEach(node=>timestamp(node,Number(node.dataset.time)));
   if(root.dataset.pending){lock(true);activeId=root.dataset.pending;responseNode=[...log.querySelectorAll('[data-answer-for]')].find(node=>node.dataset.answerFor===activeId)?.querySelector('.assistant-answer');if(responseNode){latest();waiting();poll(activeId);}}
   else {lock(Boolean(root.dataset.blocked));if(log.querySelector('.is-user'))latest();}
+  let petExchange = null;
+  document.addEventListener('sf-assistant-job', event => {
+    const detail=event.detail;if(!detail||detail.source!=='pet')return;
+    if(detail.status==='pending'){
+      lock(true);status.textContent='Клевер готовит ответ на ваш вопрос.';
+      if(typeof detail.remaining==='number'){remaining=detail.remaining;root.querySelector('[data-remaining]').textContent=remaining;}
+      petExchange={id:detail.id,node:null};
+      if(detail.mode===form.elements.mode.value){
+        root.querySelector('.assistant-welcome')?.remove();const user=message(detail.question||'Вопрос Клеверу',true,detail.id),assistant=message('Готовлю ответ…',false,detail.id);
+        log.append(user.article,assistant.article);petExchange.node=assistant.copy;latest();
+      }
+    }else if(petExchange?.id===detail.id){
+      if(petExchange.node){if(detail.status==='used')renderAnswer(petExchange.node,detail.data?.answer||'');else petExchange.node.textContent=(detail.data?.error||'Не удалось получить ответ.')+' Лимит не потрачен.';}
+      if(typeof detail.remaining==='number'){remaining=detail.remaining;root.querySelector('[data-remaining]').textContent=remaining;}
+      lock(false);status.textContent=detail.status==='used'?'Ответ готов.':'Клеверу можно задать вопрос ещё раз.';petExchange=null;
+    }
+  });
   window.addEventListener('pagehide',()=>{stopped=true;clearTimeout(timer);clearInterval(elapsedTimer);});
   window.addEventListener('pageshow',event=>{if(event.persisted)location.reload();});
 })();

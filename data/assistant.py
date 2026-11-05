@@ -7,6 +7,8 @@ class AssistantPreferences(SqlAlchemyBase):
     __tablename__='assistant_preferences'
     owner_id=sa.Column(sa.Integer,sa.ForeignKey('users.id'),primary_key=True)
     pet_enabled=sa.Column(sa.Boolean,nullable=False,default=False)
+    pet_roaming=sa.Column(sa.Boolean,nullable=False,default=True)
+    pet_hints=sa.Column(sa.Boolean,nullable=False,default=True)
 
 class AssistantExchange(SqlAlchemyBase):
     __tablename__='assistant_exchanges'

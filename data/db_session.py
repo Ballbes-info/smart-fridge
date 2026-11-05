@@ -58,6 +58,11 @@ def global_init(db_file: str) -> None:
     with engine.begin() as conn:
         conn.exec_driver_sql('CREATE INDEX IF NOT EXISTS ix_assistant_owner_period ON assistant_exchanges(owner_id,period_start,status)')
         conn.exec_driver_sql('CREATE INDEX IF NOT EXISTS ix_assistant_owner_history ON assistant_exchanges(owner_id,mode,hidden,created_at,id)')
+    with engine.begin() as conn:
+        conn.exec_driver_sql('BEGIN IMMEDIATE')
+        pet_columns={row[1] for row in conn.exec_driver_sql('PRAGMA table_info(assistant_preferences)')}
+        for name in ('pet_roaming','pet_hints'):
+            if name not in pet_columns:conn.exec_driver_sql('ALTER TABLE assistant_preferences ADD COLUMN '+name+' BOOLEAN NOT NULL DEFAULT 1')
     from services.activity_audit import install
     install()
 
