@@ -1,6 +1,7 @@
 """Authenticated test checkout and subscription settings."""
 import time
 import secrets
+import hmac
 from datetime import datetime, timezone, timedelta
 from functools import wraps
 from flask import Blueprint, current_app, session, redirect, url_for, request, render_template, flash, jsonify, abort
@@ -22,8 +23,21 @@ def verified(view):
             return redirect(url_for('login'))
         if not user.is_verified:
             return redirect(url_for('verify'))
+        session.setdefault('storage_csrf', secrets.token_hex(32))
+        if request.method == 'POST':
+            tokens = [('auth_csrf', 'auth_csrf'), ('csrf_token', 'storage_csrf')]
+            if not any(session.get(saved) and hmac.compare_digest(
+                    session[saved].encode(), request.form.get(field, '').encode())
+                    for field, saved in tokens):
+                abort(400, description='Форма оплаты устарела. Обновите страницу перед подтверждением.')
         return view(*args, **kwargs)
     return wrapped
+
+
+@billing.after_request
+def private_payment(response):
+    response.headers['Cache-Control'] = 'no-store'
+    return response
 
 
 def gateway():
@@ -128,6 +142,8 @@ def select_card(order_id):
 @billing.route('/checkout/<order_id>/confirm',methods=['POST'])
 @verified
 def confirm(order_id):
+    if request.form.get('action') not in ('trial', 'pay'):
+        abort(400, description='Выберите оплату или пробный период.')
     if request.form.get('auto_consent') != 'yes':
         flash('Для оформления подтвердите условия автоматического продления.','error')
         return redirect(url_for('billing.checkout',order_id=order_id))
@@ -162,6 +178,10 @@ def status(order_id):
 @billing.route('/billing/auto-renew',methods=['POST'])
 @verified
 def auto_renew():
+    from services.account_settings import csrf
+    csrf()
+    if request.form.get('enabled') not in ('yes','no'):
+        abort(400)
     try:
         enabled=request.form.get('enabled')=='yes'
         if enabled and request.form.get('consent')!='yes':

@@ -28,7 +28,11 @@ def global_init(db_file: str) -> None:
 
     from . import __all_models
 
-    SqlAlchemyBase.metadata.create_all(engine)
+    # Serialize the check-and-create phase across server processes. SQLite DDL
+    # alone does not protect SQLAlchemy's preceding "does the table exist" checks.
+    with engine.begin() as conn:
+        conn.exec_driver_sql('BEGIN IMMEDIATE')
+        SqlAlchemyBase.metadata.create_all(conn)
     # Additive migration for account databases created before session invalidation.
     with engine.begin() as conn:
         conn.exec_driver_sql("BEGIN IMMEDIATE")

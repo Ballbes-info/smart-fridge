@@ -24,7 +24,9 @@ def preferences_context():
     with db_session.create_session() as ses:
         places=list(ses.scalars(select(StorageLocation).where(StorageLocation.owner_id==uid).order_by(StorageLocation.name_key)))
         pref=ses.get(ProductPreferences,uid)
-    return {'product_storages':places,'product_default_storage':pref.default_storage_id if pref else None}
+    valid_ids={place.id for place in places}
+    default=pref.default_storage_id if pref and pref.default_storage_id in valid_ids else None
+    return {'product_storages':places,'product_default_storage':default}
 
 
 def context_page(template, **kwargs):
@@ -245,12 +247,14 @@ def register_products(app, subscription_required, login_required):
         check_form();value=request.form.get('default_storage_id','')
         with db_session.create_session() as ses:
             ses.execute(text('BEGIN IMMEDIATE'))
-            if value and (not re.fullmatch(r'[0-9]{1,18}',value) or not own_storage(int(value),ses)):abort(404)
+            if value and (not re.fullmatch(r'[0-9]{1,18}',value) or not own_storage(int(value),ses)):
+                flash('Место удалено или недоступно. Выберите место из списка.', 'error')
+                return redirect(url_for('workspace.settings',_anchor='products-settings'))
             pref=ses.get(ProductPreferences,session['user_id'])
             if not pref:pref=ProductPreferences(user_id=session['user_id']);ses.add(pref)
             pref.default_storage_id=int(value) if value else None;ses.commit()
         flash('Место по умолчанию сохранено.','success')
-        return redirect(url_for('workspace.settings'))
+        return redirect(url_for('workspace.settings',_anchor='products-settings'))
 
     @products.route('/products/catalog',methods=['POST'])
     @subscription_required

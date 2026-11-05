@@ -7,6 +7,12 @@ from services import billing_service as service
 local_payment = Blueprint('local_payment', __name__)
 
 
+@local_payment.after_request
+def private_payment(response):
+    response.headers['Cache-Control'] = 'no-store'
+    return response
+
+
 def owned(payment_id):
     payment=LocalGateway().page(payment_id,session['user_id'])
     if payment is None: abort(404)

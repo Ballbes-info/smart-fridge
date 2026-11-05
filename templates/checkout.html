@@ -17,11 +17,11 @@
   {% if order.status == 'ready' and not quote %}
     <h2>Выберите карту</h2>
     <p>На следующем шаге появится точная сумма с учётом доступной скидки. Выбор карты ничего не списывает.</p>
-    <form action="{{ url_for('billing.select_card',order_id=order.id) }}" method="post">
+    <form action="{{ url_for('billing.select_card',order_id=order.id) }}" method="post"><input type="hidden" name="auth_csrf" value="{{ auth_csrf }}">
       {% for card in cards %}<label class="billing-choice"><input type="radio" name="card" value="{{ card.alias }}" required{% if loop.first %} checked{% endif %}><span>Демо-карта · •••• {{ card.last4 }}</span></label>{% endfor %}
       <button class="btn btn-primary" type="submit">Продолжить</button>
     </form>
-    <form method="post" action="{{ url_for('billing.close',order_id=order.id) }}"><button class="billing-link" type="submit">Выбрать другой тариф</button></form>
+    <form method="post" action="{{ url_for('billing.close',order_id=order.id) }}"><input type="hidden" name="auth_csrf" value="{{ auth_csrf }}"><button class="billing-link" type="submit">Выбрать другой тариф</button></form>
   {% elif order.status == 'ready' and quote %}
     <p class="billing-eyebrow">УСЛОВИЯ ПОДПИСКИ</p>
     <h2>Проверьте условия</h2>
@@ -34,7 +34,7 @@
     </dl>
     {% if subscription_active and subscription.status=='active' %}<p class="billing-small">Смена применяется сразу. В том же периоде доплачивается только разница за оставшееся время. При смене месяца на год или обратно стоимость оставшихся дней вычитается из нового периода. Неиспользованный избыток не возвращается и не переносится на баланс.</p>{% endif %}
     {% if subscription and subscription.status=='trialing' %}<p class="billing-small">При оплате сейчас оставшиеся пробные дни сгорают. Начнётся новый оплаченный период.</p>{% endif %}
-    <form action="{{ url_for('billing.confirm',order_id=order.id) }}" method="post">
+    <form action="{{ url_for('billing.confirm',order_id=order.id) }}" method="post"><input type="hidden" name="auth_csrf" value="{{ auth_csrf }}">
       <input type="hidden" name="expected_amount" value="{{ quote.amount }}">
       {% if trial_allowed %}
       <label class="billing-choice"><input type="radio" name="action" value="trial" checked><span><strong>Начать 7 бесплатных дней</strong><br>Проверка карты: 1 ₽ с автоматическим возвратом.<br>{{ trial_end|billing_date }} — {{ next_amount|rubles }} за первый {{ 'год' if order.interval=='year' else 'месяц' }}. Далее {{ quote.regular_amount|rubles }} за каждый {{ 'год' if order.interval=='year' else 'месяц' }}.</span></label>
@@ -43,7 +43,7 @@
       <label class="billing-check"><input type="checkbox" name="auto_consent" value="yes" required><span>Согласен с автоматическим продлением. После первого платного периода — {{ quote.regular_amount|rubles }} каждый {{ 'год' if order.interval=='year' else 'месяц' }}. {% if trial_allowed %}При выборе пробы первое списание {{ trial_end|billing_date }} — {{ next_amount|rubles }}.{% endif %} Следующее продление без пробы — {{ quote.ends_at|billing_date }}. Можно отключить в настройках до даты списания. При неудачной оплате доступ блокируется, данные сохраняются.</span></label>
       <button type="submit" class="btn btn-primary">Подтвердить оформление</button>
     </form>
-    <form method="post" action="{{ url_for('billing.close',order_id=order.id) }}"><button class="billing-link" type="submit">Выбрать другой тариф</button></form>
+    <form method="post" action="{{ url_for('billing.close',order_id=order.id) }}"><input type="hidden" name="auth_csrf" value="{{ auth_csrf }}"><button class="billing-link" type="submit">Выбрать другой тариф</button></form>
   {% elif order.status == 'succeeded' %}
     <p class="billing-eyebrow">ОФОРМЛЕНО</p><h2>{{ 'Пробная неделя началась' if order.wants_trial else 'План активирован' }}</h2>
     <p>Доступ до {{ subscription.period_end|billing_date }}.</p>

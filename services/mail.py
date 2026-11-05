@@ -47,12 +47,12 @@ def generate_code() -> str:
 
 
 def _subject(purpose="verify") -> str:
-    return "Сброс пароля СмартФридж" if purpose == "reset" else "Код подтверждения СмартФридж"
+    return "Сброс пароля СмартФридж" if purpose == "reset" else "Смена почты СмартФридж" if purpose == "email_change" else "Код подтверждения СмартФридж"
 
 
 def _body(code: str, purpose="verify") -> str:
     minutes = _config()["ttl_minutes"]
-    action = "сброса пароля" if purpose == "reset" else "подтверждения почты"
+    action = "сброса пароля" if purpose == "reset" else "смены почты" if purpose == "email_change" else "подтверждения почты"
     return (
         f"Ваш код для {action} СмартФридж:\n\n"
         f"    {code}\n\n"

@@ -143,6 +143,26 @@ def normalize(raw):
     return r
 
 
+def available_stock(owner):
+    """Read current rights and amounts immediately before sending anything externally."""
+    snap=matching.stock_snapshot(owner,{})
+    grouped={}
+    for batch in snap['batches']:
+        key=(batch['name'],batch['dimension'])
+        grouped[key]=grouped.get(key,Decimal(0))+batch['quantity']
+    return [{'name':name,'available':matching.product_service.quantity_text(int(quantity*1000000),dimension)}
+            for (name,dimension),quantity in list(grouped.items())[:100]]
+
+
+def ensure_pending(owner,nonce):
+    with db_session.create_session() as s:
+        row=s.get(RecipeGeneration,nonce)
+        if not row or row.owner_id!=owner or row.status!='pending' or row.created_at<time.time()-600:
+            raise ValueError('Запрос прерван. Повторите создание. Лимит не потрачен.')
+        if not quota(owner,s)['allowed']:
+            raise ValueError('Доступ к созданию рецептов закончился. Лимит не потрачен.')
+
+
 def start(owner,form):
     prompt=form.get('wish','').strip();exclude=form.get('exclude','').strip()
     if not 1<=len(prompt)<=1500 or len(exclude)>500:raise ValueError('Опишите пожелания: 1–1500 символов; исключения — до 500.')
@@ -155,14 +175,10 @@ def start(owner,form):
     nonce=form.get('request_id','')
     if not re.fullmatch('[a-f0-9]{32}',nonce):raise ValueError('Обновите форму и повторите запрос.')
     if not giga.configured():raise ValueError('GigaChat не настроен на сервере.')
-    stock=[]
-    if form.get('use_stock')=='1':
-        snap=matching.stock_snapshot(owner,{})
-        grouped={}
-        for batch in snap['batches']:
-            key=(batch['name'],batch['dimension']);grouped[key]=grouped.get(key,Decimal(0))+batch['quantity']
-        stock=[{'name':name,'available':matching.product_service.quantity_text(int(quantity*1000000),dimension)} for (name,dimension),quantity in list(grouped.items())[:100]]
-        if not stock:raise ValueError('В запасах нет доступных продуктов. Добавьте их или снимите отметку использования запасов.')
+    use_stock=form.get('use_stock')=='1'
+    stock=available_stock(owner) if use_stock else []
+    if use_stock and not stock:
+        raise ValueError('В запасах нет доступных продуктов. Добавьте их или снимите отметку использования запасов.')
     with db_session.create_session() as s:
         s.execute(text('BEGIN IMMEDIATE'))
         old=s.get(RecipeGeneration,nonce)
@@ -183,9 +199,17 @@ def start(owner,form):
         usage={};calls=[];unreported=0;error='';result=None;reason='';last_issue=None
         model=os.environ.get('GIGACHAT_RECIPE_MODEL',os.environ.get('GIGACHAT_MODEL','GigaChat-2-Pro'))
         try:
+            ensure_pending(owner,nonce)
+            if use_stock:
+                payload['stock']=available_stock(owner)
+                if not payload['stock']:raise ValueError('Выбранные запасы больше недоступны. Проверьте доступ и повторите создание. Лимит не потрачен.')
             with requests.Session() as client:
                 gigachat_tls.configure(client);client.headers['Authorization']='Bearer '+giga.access_token(client)
                 for attempt in range(2):
+                    ensure_pending(owner,nonce)
+                    if use_stock:
+                        payload['stock']=available_stock(owner)
+                        if not payload['stock']:raise ValueError('Выбранные запасы больше недоступны. Повторите создание. Лимит не потрачен.')
                     messages=[{'role':'system','content':PROMPT},{'role':'user','content':json.dumps(payload,ensure_ascii=False)}]
                     if last_issue:messages.append({'role':'user','content':'Исправь предыдущую попытку. '+last_issue.feedback+' Верни заново один завершённый JSON по схеме.'})
                     unreported+=1
@@ -221,7 +245,11 @@ def start(owner,form):
         finally:
             try:
                 with db_session.create_session() as s:
+                    s.execute(text('BEGIN IMMEDIATE'))
                     row=s.get(RecipeGeneration,nonce)
+                    if not row or row.status=='used':return
+                    if row.status!='pending' or row.created_at<time.time()-600:
+                        result=None;error=row.error or 'Запрос прерван. Повторите создание. Лимит не потрачен.';reason='interrupted'
                     row.status='used' if result else 'failed';row.error=error;row.tokens=usage
                     if result:
                         row.recipe_key=result['key'];s.add(RecipeState(owner_id=owner,recipe_key=result['key'],snapshot=result,generated=True,favorite=True))
@@ -229,5 +257,16 @@ def start(owner,form):
                         usage={'calls':calls,'unreported_attempts':unreported},source='recipe',limit=q['limit'])))
                     s.commit()
             finally:_gate.release()
-    _pool.submit(work)
+    try:
+        _pool.submit(work)
+    except Exception:
+        _gate.release()
+        with db_session.create_session() as s:
+            s.execute(text('BEGIN IMMEDIATE'))
+            row=s.get(RecipeGeneration,nonce)
+            if row and row.status=='pending':
+                row.status='failed';row.error='Не удалось запустить создание рецепта. Повторите запрос. Лимит не потрачен.'
+                s.add(ActivityEvent(owner_id=owner,category='ai',action='recipe_generated',after=dict(kind='recipe',status='failed',error=row.error,reason='dispatch',usage={'calls':[],'unreported_attempts':0},source='recipe',limit=q['limit'])))
+                s.commit()
+        raise ValueError('Не удалось запустить создание рецепта. Повторите запрос. Лимит не потрачен.') from None
     return nonce

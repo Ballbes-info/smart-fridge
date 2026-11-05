@@ -15,3 +15,4 @@ from .family import FamilyStorageAccess
 
 from .shopping import ShoppingItem,ShoppingMutation,ShoppingStore
 from .assistant import AssistantPreferences,AssistantExchange,AssistantContext
+from .account import AccountPreferences, EmailChange

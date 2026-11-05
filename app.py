@@ -22,6 +22,7 @@ from data.user import User
 from dotenv import load_dotenv
 from flask import (
     Flask,
+    abort,
     flash,
     redirect,
     render_template,
@@ -131,6 +132,22 @@ def get_user_by_id(user_id: int):
 def start_local_payment_worker():
     from services.local_payment_worker import start_worker
     start_worker(app)
+
+
+@app.url_value_preprocessor
+def validate_record_ids(endpoint, values):
+    # SQLite keys are positive signed 64-bit values. Flask's int converter accepts
+    # arbitrary-sized Python integers, which otherwise raise OverflowError in queries.
+    for key, value in (values or {}).items():
+        if key.endswith('_id') and type(value) is int and not 0 < value <= 9223372036854775807:
+            abort(404)
+
+
+@app.after_request
+def private_account_pages(response):
+    if request.endpoint in AUTH_ENDPOINTS or request.path.startswith('/settings') or request.path.startswith('/profile'):
+        response.headers['Cache-Control'] = 'no-store'
+    return response
 
 
 AUTH_ENDPOINTS={'login','register','reset_password','resend','verify','reset_password_verify','reset_resend','change_password','logout'}
@@ -248,6 +265,10 @@ register_statistics(app, subscription_required)
 
 from services.assistant_routes import register_assistant
 register_assistant(app, login_required, subscription_required)
+from services.account_settings import register_account
+register_account(app, login_required, valid_email)
+from services.http_errors import register_errors
+register_errors(app)
 
 
 # --------------------------------------------------------------------------- #
@@ -378,9 +399,12 @@ def logout():
 
 
 @app.route("/profile")
-@subscription_required
+@login_required
 def profile():
-    return render_template("profile.html", user=current_user())
+    from services.account_settings import details
+    response = app.make_response(render_template("profile.html", **details(session["user_id"]), active_section="profile"))
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 @app.route("/verify", methods=["GET", "POST"])

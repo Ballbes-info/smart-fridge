@@ -6,7 +6,7 @@ import math
 import re
 import time
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from decimal import Decimal, ROUND_HALF_UP
 from sqlalchemy import text
 from data import db_session
@@ -39,7 +39,7 @@ def first_price(plan, interval, extra=0):
 
 
 def add_period(timestamp, interval):
-    value = datetime.fromtimestamp(timestamp, timezone.utc)
+    value = datetime.fromtimestamp(timestamp, timezone(timedelta(hours=3)))
     year = value.year + (1 if interval == 'year' else (value.month == 12))
     month = value.month if interval == 'year' else value.month % 12 + 1
     return value.replace(year=year, month=month, day=min(value.day, calendar.monthrange(year, month)[1])).timestamp()

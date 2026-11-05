@@ -1,0 +1,59 @@
+/* Account controls share the application's palette, type and straight edges. */
+.account-columns,.account-settings-layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(280px,.85fr);gap:24px;align-items:start}
+.account-column{display:flex;flex-direction:column;gap:24px;min-width:0}
+.account-column>.workspace-panel,.account-column>div>.workspace-panel{margin:0;padding:26px;min-width:0}
+.account-column .workspace-panel h2{font-size:18px;font-weight:550;line-height:1.4;margin:0 0 16px}
+.account-column .workspace-panel p{font-size:14px;line-height:1.65;max-width:65ch;margin:0 0 16px;overflow-wrap:anywhere}
+.account-tabs{display:flex;flex-wrap:wrap;gap:4px 20px;padding:0 0 20px;margin-bottom:24px;border-bottom:1px solid var(--line)}
+.account-tabs a{display:inline-flex;align-items:center;min-height:44px;font-size:14px;color:var(--muted);border-bottom:2px solid transparent}
+.account-tabs a:hover,.account-tabs a:focus-visible{color:var(--ink);border-bottom-color:var(--green)}
+.account-form{display:flex;flex-direction:column;align-items:stretch;gap:10px;min-width:0;margin-top:16px}
+.account-form>label,.account-form .password-label{font-size:14px;color:var(--ink);font-weight:500}
+.account-form>input,.account-form>select{width:100%;min-height:46px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;padding:10px 12px;border-radius:0}
+.account-form input[aria-invalid=true]{border-color:var(--danger)}
+.account-form>button{align-self:flex-start;margin-top:6px;min-height:44px}
+.account-form .password-field{margin:4px 0}
+.account-form .password-control{background:var(--bg)}
+.account-form .sf-help-setting{margin:0;padding:12px 0;min-height:48px;line-height:1.5}
+.account-column .account-caption{font-size:12px;color:var(--muted);margin:0 0 12px}
+.account-facts{margin:22px 0}
+.account-facts>div{padding:14px 0;border-top:1px solid var(--line)}
+.account-facts dt{font-size:12px;color:var(--muted);margin-bottom:6px}
+.account-facts dd{font-size:14px;margin:0;overflow-wrap:anywhere;line-height:1.6}
+.account-confirmed{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--green);margin-top:5px}
+.account-confirmed .icon{width:15px;height:15px}
+.account-column .account-plan{font-size:20px;font-weight:550;color:var(--ink)}
+.account-details{margin-top:20px;border-top:1px solid var(--line);padding-top:8px}
+.account-details summary{cursor:pointer;padding:12px 0;min-height:44px;color:var(--ink);font-size:14px;font-weight:500}
+.account-details summary::marker{color:var(--green)}
+.account-notice{border-left:3px solid var(--green);background:var(--bg);padding:14px 16px}
+.account-notice p{margin:0!important}
+.account-inline-form{margin:14px 0}
+.account-signout{margin-top:26px;padding-top:20px;border-top:1px solid var(--line)}
+.account-error{color:var(--danger)}
+.account-column [id],#products-settings,#appearance{scroll-margin-top:24px}
+.account-column .workspace-setting-links a{font-size:14px;min-height:52px}
+.account-column .workspace-theme-options{gap:8px;grid-template-columns:repeat(3,minmax(0,1fr))}
+.account-column .workspace-theme-options button{min-width:0;padding:12px 6px;font-size:12px}
+.account-column .product-default-form{display:flex;flex-direction:column;gap:10px;align-items:stretch}
+.account-column .product-default-form button{align-self:flex-start;min-height:44px}
+.account-column .product-default-form select{width:100%;max-width:100%;min-height:46px}
+.account-columns .workspace-primary-button,.account-column .workspace-secondary-button{min-height:44px;white-space:normal;text-align:left}
+.account-columns a:focus-visible,.account-tabs a:focus-visible,.account-column summary:focus-visible,.account-form input:focus-visible,.account-form select:focus-visible{outline:2px solid var(--green);outline-offset:4px}
+@media(max-width:1100px){.account-columns,.account-settings-layout{grid-template-columns:minmax(0,1fr)}.account-column>.workspace-panel,.account-column>div>.workspace-panel{padding:22px}}
+@media(max-width:480px){.account-column>.workspace-panel,.account-column>div>.workspace-panel{padding:18px}.account-column{gap:16px}.account-tabs{column-gap:16px}.account-form>button{align-self:stretch}.workspace-profile-intro p{overflow-wrap:anywhere}.account-column .workspace-theme-options button{font-size:11px}.account-column .workspace-secondary-button{max-width:100%}}
+/* workspace-panel is a two-column shell elsewhere; forms here need document flow. */
+.account-column .workspace-panel{display:block}
+.account-column #appearance{display:flex;flex-direction:column;gap:24px}
+.account-column .workspace-panel-heading{align-items:flex-start;margin-bottom:18px}
+.account-column .workspace-panel-heading h2{margin-bottom:8px}
+.account-column .workspace-panel-heading p{margin-bottom:0}
+.account-column .sf-help-setting{font-size:14px}
+.account-form .sf-help-setting{align-self:stretch;width:100%}
+.account-form .password-control,.account-form .password-control input{border-radius:0}
+.account-password-page{max-width:620px}
+.account-section>h1{font-size:26px;line-height:1.35;margin:0 0 16px}
+.account-section>p[role=alert]{font-size:14px;line-height:1.7;color:var(--muted);margin-bottom:24px}
+.account-error-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.auth-page>.account-column{width:100%}
+.auth-page .workspace-profile-card{padding:28px;background:var(--surface);border:1px solid var(--line)}

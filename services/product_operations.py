@@ -155,7 +155,11 @@ def apply(owner,batch_id,action,key,expected,params,*,authorize=None):
 
 
 def notifications(owner):
-    today=service.today();until=today+timedelta(days=3)
+    from services.account_settings import preferences
+    settings=preferences(owner)
+    if not settings['expiry_notifications']:
+        return dict(items=[],unread=0,total=0,all_items=[])
+    today=service.today();until=today+timedelta(days=settings['expiry_days'])
     with db_session.create_session() as ses:
         from services.family_service import accessible_places
         shared_ids=[place.id for _,place,_ in accessible_places(ses,owner) if place.owner_id!=owner]

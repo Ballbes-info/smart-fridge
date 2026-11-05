@@ -1,0 +1,6 @@
+{% extends 'workspace_base.html' if current_user else 'base.html' %}
+{% macro error_content() %}<div class="account-column account-password-page"><section class="workspace-profile-card account-section"><h1>{{ error_title }}</h1><p role="alert">{{ error_message }}</p><div class="account-error-actions">{% if error_back %}<a class="workspace-secondary-button" href="{{ error_back }}">Вернуться в раздел</a>{% endif %}<a class="btn btn-primary" href="{{ error_home }}">На главную</a></div></section></div>{% endmacro %}
+{% block title %}{{ error_title }} — СмартФридж{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static',filename='css/account-settings.css') }}">{% endblock %}
+{% block content %}{% if current_user %}{{ super() }}{% else %}<section class="auth-page">{{ error_content() }}</section>{% endif %}{% endblock %}
+{% block workspace_content %}{{ error_content() }}{% endblock %}

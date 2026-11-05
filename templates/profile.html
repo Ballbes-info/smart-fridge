@@ -1,10 +1,33 @@
 {% extends 'workspace_base.html' %}
+{% from 'password_field.html' import password_field %}
 {% block title %}Профиль — СмартФридж{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static',filename='css/account-settings.css') }}">{% endblock %}
 {% block workspace_content %}
-<header class="workspace-heading app-page-heading"><div><h1>Профиль</h1><p>Ваши данные и доступ к СмартФридж.</p></div></header>
-<div class="workspace-profile-intro"><span class="workspace-avatar" aria-hidden="true">{{ current_user.name[:1]|upper }}</span><div><h2>{{ current_user.name }}</h2><p>Личный аккаунт</p></div></div>
-<div class="workspace-profile-grid">
-<section class="workspace-profile-card" aria-labelledby="profile-data-title"><h2 id="profile-data-title">Данные пользователя</h2><dl><div><dt>Имя</dt><dd>{{ current_user.name }}</dd></div><div><dt>Электронная почта</dt><dd>{{ current_user.email }}</dd></div><div><dt>Подтверждение почты</dt><dd><span class="status-pill status-ok">{{ icon('check') }}Подтверждена</span></dd></div></dl></section>
-<section class="workspace-profile-card workspace-subscription-card" aria-labelledby="profile-plan-title">{{ icon('lock') }}<h2 id="profile-plan-title">{{ billing_plans[subscription.plan].name }}</h2><p>Доступ до {{ subscription.period_end|billing_date }}.<br>{{ 'Семейный доступ' if billing_plans[subscription.plan].family else 'Личный доступ' }} · {{ 'Годовая оплата' if subscription.interval == 'year' else 'Месячная оплата' }}</p><a class="workspace-secondary-button" href="{{ url_for('billing.settings') }}">Управлять подпиской</a></section>
-</div>
+<header class="workspace-heading app-page-heading"><div><h1>Профиль</h1><p>Личные данные и ваш доступ к приложению.</p></div><a class="workspace-secondary-button" href="{{ url_for('workspace.settings') }}">{{ icon('sliders') }} Настройки</a></header>
+<div class="workspace-profile-intro"><span class="workspace-avatar" aria-hidden="true">{{ current_user.name[:1]|upper }}</span><div><h2>{{ current_user.name }}</h2><p>{{ current_user.email }}</p></div></div>
+<div class="account-columns">
+<div class="account-column">
+<section class="workspace-panel account-section" aria-labelledby="personal-title"><h2 id="personal-title">Личные данные</h2>
+<form action="{{ url_for('account.name') }}" method="post" class="account-form"><input type="hidden" name="auth_csrf" value="{{ auth_csrf }}"><input type="hidden" name="original_name" value="{{ current_user.name }}">
+<label for="profile-name">Имя</label><input id="profile-name" name="name" autocomplete="name" required maxlength="80" value="{{ name_value if name_value is defined else current_user.name }}"{% if name_error %} aria-invalid="true" aria-describedby="name-error"{% endif %}>
+{% if name_error %}<p id="name-error" class="account-error" role="alert">{{ name_error }}</p>{% endif %}
+<p class="account-caption">Это имя видят участники вашей семьи.</p><button class="btn btn-primary" type="submit">Сохранить имя</button></form>
+<dl class="account-facts"><div><dt>Почта</dt><dd>{{ current_user.email }}<span class="account-confirmed">{{ icon('check') }} Подтверждена</span></dd></div><div><dt>Дата регистрации</dt><dd>{{ account_created }}</dd></div></dl></section>
+<section id="email" class="workspace-panel account-section" aria-labelledby="email-title"><h2 id="email-title">Смена электронной почты</h2>
+{% if account_pending_email %}<div class="account-notice"><p>Код отправлен на <strong>{{ account_pending_email }}</strong>. Вход пока по адресу {{ current_user.email }}.</p></div>
+<form class="account-form" action="{{ url_for('account.confirm_email') }}" method="post"><input type="hidden" name="auth_csrf" value="{{ auth_csrf }}"><label for="email-code">Код из письма</label><input id="email-code" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" required><p class="account-caption">Шесть цифр. Код одноразовый; после пяти ошибок нужен новый.</p><button class="btn btn-primary" type="submit">Подтвердить почту</button></form>
+<form class="account-inline-form" action="{{ url_for('account.cancel_email') }}" method="post"><input type="hidden" name="auth_csrf" value="{{ auth_csrf }}"><button class="workspace-secondary-button" type="submit">Отменить смену</button></form>
+{% endif %}
+<details class="account-details"{% if not account_pending_email %} open{% endif %}><summary>{{ 'Другой адрес или повторная отправка' if account_pending_email else 'Указать новый адрес' }}</summary><form class="account-form" action="{{ url_for('account.email') }}" method="post"><input type="hidden" name="auth_csrf" value="{{ auth_csrf }}"><label for="new-email">Новая почта</label><input id="new-email" type="email" name="email" autocomplete="email" maxlength="254" required>
+{{ password_field('email-password','current_password','Текущий пароль','current-password',none) }}
+<p class="account-caption">Адрес изменится только после подтверждения. Данные и подписка сохранятся, на других устройствах потребуется войти заново.</p><button class="workspace-secondary-button" type="submit">Отправить код</button></form></details></section>
+</div><div class="account-column">
+<section class="workspace-panel account-section" aria-labelledby="access-title"><h2 id="access-title">Подписка и доступ</h2>
+{% if account_access %}<p class="account-plan">{{ billing_plans[account_access.plan].name }}</p><dl class="account-facts"><div><dt>{{ 'Пробный период до' if account_access.status=='trialing' else 'Доступ до' }}</dt><dd>{{ account_access.period_end|billing_date }}</dd></div><div><dt>Источник доступа</dt><dd>{{ 'Подписка владельца семьи' if account_access.user_id != current_user.id else 'Ваша подписка' }}</dd></div></dl>
+{% else %}<p>Активного доступа сейчас нет. Профиль, настройки и история остаются доступны.</p>{% endif %}
+<a class="workspace-secondary-button" href="{{ url_for('billing.settings') }}">Управлять подпиской</a></section>
+<section class="workspace-panel account-section" aria-labelledby="family-title"><h2 id="family-title">Семья</h2>{% if account_family %}<p class="account-plan">{{ account_family.name }}</p><p>{{ 'Вы управляете семьёй.' if account_family.owner else 'Вы участник семьи.' }} Личный дневник питания и настройки видны только вам.</p>{% else %}<p>Вы пока не состоите в семье. Здесь можно принять приглашение или создать свою семью.</p>{% endif %}<a class="workspace-secondary-button" href="{{ url_for('family.screen') }}">Открыть семью</a></section>
+<section class="workspace-panel account-section"><h2>Питание и предпочтения</h2><p>Цели, исключённые продукты, предпочтения и нормы КБЖУ редактируются в одном месте.</p><a class="workspace-secondary-button" href="{{ url_for('nutrition.goals') }}">Настроить питание</a></section>
+<section class="workspace-panel account-section"><h2>Безопасность</h2><div class="workspace-setting-links"><a href="{{ url_for('change_password') }}">Изменить пароль {{ icon('chevron') }}</a><a href="{{ url_for('workspace.settings',_anchor='security') }}">Управление входом {{ icon('chevron') }}</a><a href="{{ url_for('activity.index',category='account') }}">История аккаунта {{ icon('chevron') }}</a></div></section>
+</div></div>
 {% endblock %}

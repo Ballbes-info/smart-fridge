@@ -187,7 +187,7 @@ def stock_snapshot(owner_id, args):
         if not b.expiry_date:
             unknown+=1
             if args.get('dated')=='1': continue
-        batches.append(dict(id=b.id,group_id=g.id,name=g.name,storage_id=g.storage_id,
+        batches.append(dict(id=b.id,group_id=g.id,name=g.name,storage_id=g.storage_id,shared=g.owner_id!=owner_id,
             storage=next(s.name for s in storages if s.id==g.storage_id),identity=identity(g.name),
             dimension=g.dimension,quantity=Decimal(b.quantity_micro)/1000000,
             expiry=b.expiry_date,urgent=bool(b.expiry_date and b.expiry_date<=now+timedelta(days=3))))
@@ -249,7 +249,7 @@ def assess(ingredients, snapshot, base_servings=None, chosen=None):
             for b in sources:
                 if b['urgent']:urgent.add(b['id']);row['urgent']=True
                 if b['expiry'] is None:unknown.add(b['id']);row['unknown_date']=True
-                row['sources'].append(dict(group_id=b['group_id'],name=b['name'],storage=b['storage'],expiry=b['expiry']))
+                row['sources'].append(dict(group_id=b['group_id'],name=b['name'],storage=b['storage'],expiry=b['expiry'],storage_id=b.get('storage_id'),shared=b.get('shared',False)))
             row['label']=STATUS_LABELS[row['status']]
         results[pos]=row
     rows=[results[i] for i in range(len(ingredients))]

@@ -1,0 +1,6 @@
+{% extends 'workspace_base.html' %}
+{% block title %}{{ error_title }} — СмартФридж{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static',filename='css/account-settings.css') }}">{% endblock %}
+{% block workspace_content %}
+<div class="account-column account-password-page"><section class="workspace-panel account-section" role="alert"><h1>{{ error_title }}</h1><p>{{ error_message }}</p><a class="workspace-secondary-button" href="{{ return_url }}">{{ 'Вернуться в профиль' if active_section=='profile' else 'Вернуться в настройки' }}</a></section></div>
+{% endblock %}
