@@ -1,5 +1,6 @@
 """Web-only assistant, private job polling and premium companion controls."""
 import secrets
+from pathlib import Path
 from urllib.parse import urlsplit,unquote
 from flask import Blueprint,render_template,request,session,jsonify,abort,redirect,url_for,flash
 from data import db_session
@@ -20,7 +21,7 @@ def register_assistant(app,login_required,subscription_required):
         job=ai.pending(owner) if pet else None
         last=job or (ai.latest(owner) if pet else None)
         recipe_key=(request.view_args or {}).get('recipe_key','') if request.endpoint=='recipes.detail' else ''
-        return dict(assistant_pet_options=prefs,assistant_pet_scope=str(owner),assistant_pet_quota=q,assistant_pet_recipe=dict(key=recipe_key,servings=request.args.get('servings','')) if recipe_key else None,assistant_pet_last=dict(id=last.id,mode=last.mode,status=last.status) if last else None,assistant_pet_pending=dict(id=job.id,mode=job.mode) if job else None,assistant_premium=allowed,assistant_pet_saved=saved,assistant_pet=pet,assistant_csrf=session.setdefault('storage_csrf',secrets.token_hex(32)))
+        return dict(assistant_pet_rive=(Path(app.static_folder)/'pets/bunny/character.riv').is_file(),assistant_pet_options=prefs,assistant_pet_scope=str(owner),assistant_pet_quota=q,assistant_pet_recipe=dict(key=recipe_key,servings=request.args.get('servings','')) if recipe_key else None,assistant_pet_last=dict(id=last.id,mode=last.mode,status=last.status) if last else None,assistant_pet_pending=dict(id=job.id,mode=job.mode) if job else None,assistant_premium=allowed,assistant_pet_saved=saved,assistant_pet=pet,assistant_csrf=session.setdefault('storage_csrf',secrets.token_hex(32)))
 
     @assistant.after_request
     def private(response):
