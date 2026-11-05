@@ -14,3 +14,4 @@ from .family import Family, FamilyMember, FamilyInvitation, FamilyStorage, Famil
 from .family import FamilyStorageAccess
 
 from .shopping import ShoppingItem,ShoppingMutation,ShoppingStore
+from .assistant import AssistantPreferences,AssistantExchange,AssistantContext

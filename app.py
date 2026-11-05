@@ -246,6 +246,9 @@ register_shopping(app, subscription_required, login_required)
 from services.statistics_routes import register_statistics
 register_statistics(app, subscription_required)
 
+from services.assistant_routes import register_assistant
+register_assistant(app, login_required, subscription_required)
+
 
 # --------------------------------------------------------------------------- #
 # Маршруты

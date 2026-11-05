@@ -55,6 +55,9 @@ def global_init(db_file: str) -> None:
             if name not in shopping_columns:conn.exec_driver_sql('ALTER TABLE family_shopping_items ADD COLUMN '+name+' '+definition)
     with engine.begin() as conn:
         conn.exec_driver_sql('CREATE INDEX IF NOT EXISTS ix_stock_owner_time ON product_mutations(owner_id,created_at)')
+    with engine.begin() as conn:
+        conn.exec_driver_sql('CREATE INDEX IF NOT EXISTS ix_assistant_owner_period ON assistant_exchanges(owner_id,period_start,status)')
+        conn.exec_driver_sql('CREATE INDEX IF NOT EXISTS ix_assistant_owner_history ON assistant_exchanges(owner_id,mode,hidden,created_at,id)')
     from services.activity_audit import install
     install()
 
