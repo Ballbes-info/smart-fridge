@@ -9,7 +9,11 @@ character.riv is the unmodified file provided by the project owner, 4,184 bytes.
 SHA-256: 193084d46620547aab82eb5df40732e402cdeba184e8969246b8e9918fe77f39
 
 The local adapter drives the original `State Machine 1`: `isHovered` (boolean)
-and `onClick` (trigger). It composites the uniform edge-connected background
-out of the displayed canvas, adds local hop/direction transforms, and supplies
-browser-level floor, drag and gravity behavior. No source artwork was replaced.
-Creator attribution and the source link are available in the pet settings.
+and `onClick` (trigger). The uploaded source file is unchanged.
+
+Additional body/limbs, scarf, facial expressions, blinking, walking, grooming,
+stretching, dancing, surprise, falling and landing effects are original procedural
+Canvas animation added in SmartFridge. The original head and ears remain derived
+from the credited Rive artwork, composited with its edge-connected background
+removed. Character motion, interaction and gravity run locally in the browser.
+Creator attribution and the source link remain available in the pet settings.

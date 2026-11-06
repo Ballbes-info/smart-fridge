@@ -2,3 +2,21 @@
 .sf-companion-heading{position:sticky;top:-18px;background:var(--surface);z-index:2}@media(max-width:650px){.sf-companion-heading{top:-16px}}
 
 .sf-companion-sprite{position:relative}.sf-companion-sprite>canvas:first-child{position:relative;z-index:1}
+/* The body remains grounded; its shadow stays at floor level while it is lifted. */
+.sf-companion-shadow{position:fixed;width:52px;height:8px;border-radius:50%;background:#403e35;pointer-events:none;filter:blur(2px);transform-origin:center}
+.sf-companion-open{z-index:1;-webkit-tap-highlight-color:transparent}
+.sf-companion-sprite{filter:drop-shadow(0 2px 1px #0001)}
+.sf-companion-chat{position:absolute;right:-8px;top:44px;display:grid;place-items:center;width:32px;height:32px;padding:0;border:1px solid var(--control-border);border-radius:50%;color:var(--green);background:var(--surface);box-shadow:0 2px 8px #0001;cursor:pointer;pointer-events:auto;z-index:2;transition:background 150ms ease,transform 150ms ease}
+.sf-companion-chat:hover{background:var(--mint);transform:translateY(-2px)}
+.sf-companion-reaction{position:fixed;max-width:190px;padding:8px 12px;border:1px solid var(--line);border-radius:12px 12px 12px 3px;background:var(--surface);color:var(--ink);box-shadow:0 4px 15px #0001;pointer-events:none;font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.sf-companion-play{display:flex;gap:6px;flex-wrap:wrap;padding:12px 0 0}
+.sf-companion-play button{flex:1;min-height:40px;background:var(--bg);color:var(--ink);border:1px solid var(--line);padding:7px 9px;font:inherit;font-size:11px;cursor:pointer}
+.sf-companion-play button:hover{border-color:var(--green);background:var(--mint)}
+.sf-companion-motion-note{font-size:11px;line-height:1.5;color:var(--muted);margin:12px 0 5px}
+.sf-companion-motion-choice{border:0;background:none;padding:8px 0;color:var(--green);font:inherit;font-size:12px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.sf-companion[data-motion='drag'] .sf-companion-chat,.sf-companion[data-motion='fall'] .sf-companion-chat,.sf-companion[data-motion='jump'] .sf-companion-chat{visibility:hidden}
+@media(max-width:650px){.sf-companion-chat{right:-4px;top:30px;width:30px;height:30px}.sf-companion-reaction{max-width:165px;font-size:11px}}
+@media(prefers-reduced-motion:reduce){.sf-companion-chat{transition:none}}
+.sf-companion-chat>.sf-companion-dot{right:0;top:0;width:7px;height:7px;pointer-events:none}
+.sf-companion-open{-webkit-touch-callout:none}
+[data-theme='dark'] .sf-companion-sprite{filter:brightness(.94) drop-shadow(0 2px 1px #0002)}
