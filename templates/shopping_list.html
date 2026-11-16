@@ -1,6 +1,6 @@
 {% extends 'shopping_base.html' %}{% from 'shopping_base.html' import mutation,fields with context %}
 {% block shopping_title %}{{ 'Семейные покупки' if shopping_scope=='family' else 'Список покупок' }}{% endblock %}
-{% block shopping_subtitle %}{% if family_name %}<p><a href="{{ url_for('family.screen') }}">{{ family_name }}</a> · общий список участников</p>{% endif %}{% endblock %}
+{% block shopping_subtitle %}{% if family_name %}<p><a href="{{ url_for('family.screen') }}">{{ family_name }}</a> · общий список участников</p>{% else %}<p>Запишите нужное, отметьте купленное и перенесите покупки в запасы.</p>{% endif %}{% endblock %}
 {% block shopping_action %}<a class="sh-secondary sh-download" aria-label="Скачать список CSV" href="{{ url_for('shopping.export',scope=shopping_scope) }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg><span>Скачать список</span></a>{% endblock %}
 {% block shopping_content %}
 <div class="sh-update" data-shopping-updated role="status" hidden><span>Список изменился в другой вкладке или у участника семьи.</span><button type="button" class="sh-secondary" data-shopping-reload>Обновить</button></div>

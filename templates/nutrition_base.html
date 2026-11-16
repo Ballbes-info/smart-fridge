@@ -4,7 +4,7 @@
 {% block workspace_content %}
 <div class="nt-app">
 <header class="nt-heading"><div><p class="nt-eyebrow">Личное питание</p><h1>{% block nutrition_title %}Дневник питания{% endblock %}</h1></div>{% block nutrition_action %}{% endblock %}</header>
-<nav class="nt-tabs" aria-label="Разделы питания">{% for slug,label in [('diary','Дневник'),('nutrients','Калории и БЖУ'),('goals','Мои цели'),('menu','Меню')] %}<a href="{{ url_for('nutrition.'+slug) }}" {% if feature.slug==slug %}aria-current="page"{% endif %}>{{ label }}{% if slug=='menu' %}<small>Премиум</small>{% endif %}</a>{% endfor %}</nav>
+<nav class="nt-tabs" aria-label="Разделы питания">{% for slug,label in [('diary','Дневник'),('nutrients','Калории и БЖУ'),('goals','Мои цели'),('menu','План питания')] %}<a href="{{ url_for('nutrition.'+slug) }}" {% if feature.slug==slug %}aria-current="page"{% endif %}>{{ label }}{% if slug=='menu' %}<small>Премиум</small>{% endif %}</a>{% endfor %}</nav>
 {% block nutrition_content %}{% endblock %}
 </div>
 {% endblock %}

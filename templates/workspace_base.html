@@ -2,12 +2,12 @@
 {% from 'workspace_access.html' import access_attrs %}
 {% macro section_links(label, prefix) %}
 <nav class="workspace-navigation" aria-label="{{ label }}">
-  <a href="{{ url_for('workspace.home') }}" class="sf-nav-main" aria-label="Главная" title="Главная" {% if active_section|default('') == 'home' %}aria-current="page"{% endif %}>{{ icon('grid') }}<span>Главная</span></a>
-  {% for keys, group in [(['fridges', 'shopping', 'recipes'], 'Основное'), (['nutrition', 'assistant', 'statistics', 'family'], 'Управление')] %}
+  <a href="{{ url_for('workspace.home') }}" class="sf-nav-main" aria-label="Сегодня" title="Сегодня" {% if active_section|default('') == 'home' %}aria-current="page"{% endif %}>{{ icon('grid') }}<span>Сегодня</span></a>
+  {% for keys, group in [(['fridges', 'shopping', 'recipes', 'nutrition'], 'Каждый день'), (['statistics', 'family', 'assistant'], 'Дополнительно')] %}
   <p class="workspace-nav-group">{{ group }}</p>
   {% for key in keys %}{% set item = workspace_sections[key] %}{% set selected = active_section|default('') == key %}
   <div class="sf-nav-section">
-    <div class="sf-nav-row"><a class="sf-nav-main" href="{{ url_for('family.screen') if key=='family' else url_for('workspace.section', section=key) }}" aria-label="{{ item.name }}" title="{{ item.name }}" {{ access_attrs(item) }} {% if selected and feature is not defined %}aria-current="page"{% elif selected %}data-active-section{% endif %}>{{ icon(item.icon) }}<span>{{ item.name }}</span>{% if item.locked %}{{ icon('lock', 'sf-nav-lock') }}{% endif %}</a>{% if not item.locked %}<button type="button" class="sf-nav-expand" aria-label="Подразделы: {{ item.name }}" aria-expanded="{{ 'true' if selected else 'false' }}" aria-controls="{{ prefix }}-{{ key }}" data-toggle-subnav>{{ icon('chevron') }}</button>{% endif %}</div>
+    <div class="sf-nav-row"><a class="sf-nav-main" href="{{ url_for('family.screen') if key=='family' else url_for('workspace.section', section=key) }}" aria-label="{{ item.name }}" title="{{ item.name }}" {{ access_attrs(item) }} {% if selected %}data-active-section{% if feature is not defined %} aria-current="page"{% endif %}{% endif %}>{{ icon(item.icon) }}<span>{{ item.name }}</span>{% if item.locked %}{{ icon('lock', 'sf-nav-lock') }}{% endif %}</a>{% if not item.locked %}<button type="button" class="sf-nav-expand" aria-label="Подразделы: {{ item.name }}" aria-expanded="{{ 'true' if selected else 'false' }}" aria-controls="{{ prefix }}-{{ key }}" data-toggle-subnav>{{ icon('chevron') }}</button>{% endif %}</div>
     {% if not item.locked %}<div class="sf-subnav" id="{{ prefix }}-{{ key }}" {% if not selected %}hidden{% endif %}>{% for function in item.functions %}<a href="{{ url_for('family.screen',tab=function.slug) if key=='family' else url_for('workspace.feature', section=key, feature=function.slug) }}" {{ access_attrs(function) }} {% if selected and feature is defined and feature.slug == function.slug %}aria-current="page"{% endif %}><span>{{ function.name }}</span>{% if function.locked %}{{ icon('lock') }}{% endif %}</a>{% endfor %}</div>{% endif %}
   </div>
   {% endfor %}{% endfor %}
@@ -26,12 +26,17 @@
     </div>
   </aside>
   <div class="workspace-content">
-    {% if active_section|default('') != 'home' %}<a class="sf-back-link" href="{{ workspace_back_url if workspace_back_url is defined else url_for('workspace.section', section=active_section) if feature is defined else url_for('workspace.settings') if request.endpoint == 'billing.settings' else url_for('workspace.home') }}">{{ icon('back') }}Назад</a>{% endif %}
+    {% if active_section|default('') != 'home' %}<a class="sf-back-link" href="{{ workspace_back_url if workspace_back_url is defined else url_for('workspace.section', section=active_section) if feature is defined else url_for('workspace.settings') if request.endpoint == 'billing.settings' else url_for('workspace.home') }}">{{ icon('back') }}К разделу</a>{% endif %}
     {% block workspace_content %}
 {% endblock %}
     <footer class="workspace-footnote"><span translate="no">СмартФридж</span><span>Личное пространство</span></footer>
   </div>
 </div>
+<nav class="sf-bottom-nav" aria-label="Быстрая навигация">
+{% for key, label, symbol, endpoint in [('home','Сегодня','grid','workspace.home'),('fridges','Продукты','fridge','products.index'),('shopping','Покупки','basket','shopping.index'),('nutrition','Питание','leaf','nutrition.diary')] %}
+<a href="{{ url_for(endpoint) }}" {% if active_section|default('') == key %}aria-current="page"{% endif %}>{{ icon(symbol) }}<span>{{ label }}</span></a>
+{% endfor %}<button type="button" data-open-navigation aria-haspopup="dialog" aria-controls="workspace-drawer" aria-expanded="false" {% if active_section|default('') in ['recipes','assistant','statistics','family','settings'] %}data-active-section{% endif %}>{{ icon('menu') }}<span>Ещё</span></button>
+</nav>
 <dialog id="workspace-drawer" class="workspace-drawer" aria-labelledby="drawer-title">
   <div class="workspace-drawer-heading"><h2 id="drawer-title">Навигация</h2><button class="workspace-icon-button" type="button" data-close-navigation aria-label="Закрыть меню">{{ icon('close') }}</button></div>
   {{ section_links('Все разделы', 'mobile') }}
@@ -45,7 +50,7 @@
 <dialog id="workspace-help" class="sf-help-dialog" aria-labelledby="help-dialog-title" aria-describedby="help-dialog-copy">
 <div class="sf-help-dialog-top"><span class="sf-help-emblem">{{ icon('info') }}</span><button type="button" class="app-compact-search" data-close-help aria-label="Закрыть описание">{{ icon('close') }}</button></div>
 <h2 id="help-dialog-title"></h2><div id="help-dialog-copy" class="sf-help-dialog-copy"></div>
-<div class="sf-help-dialog-footer"><span>Раздел в разработке</span><button class="workspace-secondary-button" type="button" data-close-help>Понятно</button></div>
+<div class="sf-help-dialog-footer"><span>Справка по разделу</span><button class="workspace-secondary-button" type="button" data-close-help>Понятно</button></div>
 </dialog>
 <dialog id="workspace-notifications" class="sf-notifications" aria-labelledby="notifications-title">
   <div class="sf-notifications-heading"><h2 id="notifications-title">Уведомления</h2><button class="app-compact-search" type="button" data-close-notifications aria-label="Закрыть уведомления">{{ icon('close') }}</button></div>

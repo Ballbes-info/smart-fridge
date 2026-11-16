@@ -7,7 +7,7 @@ from services.family_service import access_subscription as get_subscription
 workspace = Blueprint('workspace', __name__)
 
 SECTIONS = {
-    'fridges': {'name': 'Холодильники', 'icon': 'fridge', 'description': 'Все места хранения и продукты внутри.', 'empty': 'Ваши холодильники появятся здесь', 'hint': 'Кухня, морозильник или дача — у каждого места будет свой список запасов.'},
+    'fridges': {'name': 'Продукты', 'icon': 'fridge', 'description': 'Все места хранения и продукты внутри.', 'empty': 'Ваши холодильники появятся здесь', 'hint': 'Кухня, морозильник или дача — у каждого места будет свой список запасов.'},
     'shopping': {'name': 'Покупки', 'icon': 'basket', 'description': 'Что купить для дома и выбранных блюд.', 'empty': 'Здесь будет ваш список покупок', 'hint': 'Собирайте покупки для дома и добавляйте недостающие ингредиенты из рецептов.'},
     'recipes': {'name': 'Рецепты', 'icon': 'book', 'description': 'Каталог блюд с ингредиентами и шагами приготовления.', 'empty': 'Здесь вы сможете выбирать рецепты', 'hint': 'Подбирайте блюда по запасам и используйте в первую очередь продукты с ближайшим сроком.'},
     'nutrition': {'name': 'Питание', 'icon': 'leaf', 'description': 'Личный дневник, КБЖУ и цели питания.', 'empty': 'Здесь будет ваш дневник питания', 'hint': 'Записывайте приёмы пищи и следите за КБЖУ. Личный дневник остаётся вашим даже в семейном тарифе.'},
@@ -142,11 +142,16 @@ def register_workspace(app, login_required, subscription_required):
     @workspace.route('/home')
     @subscription_required
     def home():
-        return render_template('workspace.html', active_section='home')
+        from services.dashboard import overview
+        response = app.make_response(render_template('dashboard.html', active_section='home',
+            dashboard=overview(session['user_id'], menu_allowed=not access_state('nutrition', 'menu')['locked'])))
+        response.headers['Cache-Control'] = 'no-store'
+        return response
 
     @workspace.route('/home/<section>')
     @subscription_required
     def section(section):
+        if section=='fridges':return app.view_functions['products.index']()
         if section=='family':return app.view_functions['family.screen']('members')
         if section=='recipes':return app.view_functions['recipes.index']()
         if section=='nutrition':return app.view_functions['nutrition.diary']()
