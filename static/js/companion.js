@@ -39,7 +39,7 @@
  }
  const fieldFocused=()=>document.activeElement?.matches('input,textarea,select,[contenteditable=true]');
  function viewport(){const v=window.visualViewport;return {x:v?.offsetLeft||0,y:v?.offsetTop||0,w:v?.width||innerWidth,h:v?.height||innerHeight};}
- function limits(){const v=viewport();return {left:v.x+8,top:v.y+8,right:v.x+Math.max(8,v.w-size.w-16),bottom:v.y+Math.max(8,v.h-size.h-8)};}
+ function limits(){const v=viewport();return {left:v.x+8,top:v.y+8,right:v.x+Math.max(8,v.w-size.w-16),bottom:v.y+Math.max(8,v.h-size.h-8-(document.querySelector('.sf-bottom-nav')?.getBoundingClientRect().height||0))};}
  function bound(p){const b=limits();return {x:clamp(p.x,b.left,b.right),y:clamp(p.y,b.top,b.bottom)};}
  function save(){const b=limits();try{localStorage.setItem(storageKey,JSON.stringify({version:3,motionOverride,x:(position.x-b.left)/Math.max(1,b.right-b.left),restUntil,lastHint,hintDay,hintCount,greeted,ambientCount}));}catch(_){} }
  function place(p){
