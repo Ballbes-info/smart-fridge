@@ -90,7 +90,7 @@
     </div>
   </header>
   <main id="main-content" tabindex="-1">
-    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% with messages = get_flashed_messages(with_categories=true)|selectattr(0, 'in', ['error', 'warning'])|list %}
       {% if messages %}
         <div class="flashes" role="status" aria-live="polite">
           {% for category, message in messages %}<div class="flash flash-{{ category }}">{{ message }}</div>{% endfor %}

@@ -86,12 +86,11 @@ def plans():
 @verified
 def free_trial():
     try:
-        end = service.start_free_trial(session['user_id'], request.form.get('plan', ''),
-                                       request.form.get('interval', 'month'))
+        service.start_free_trial(session['user_id'], request.form.get('plan', ''),
+                                 request.form.get('interval', 'month'))
     except PaymentError as exc:
         flash(str(exc), 'error')
         return redirect(url_for('billing.plans'))
-    flash('Пробный доступ до ' + billing_date(end) + '. Карта не нужна, автоматических списаний нет.', 'success')
     return redirect(url_for('workspace.home'))
 
 
