@@ -93,3 +93,12 @@
 .billing-ai-action-arrow{transition:transform .18s ease}
 .billing-ai-action:hover .billing-ai-action-arrow{transform:translateX(3px)}
 @media(prefers-reduced-motion:reduce){.billing-ai-action,.billing-ai-action-arrow{transition:none}.billing-ai-action:hover .billing-ai-action-arrow{transform:none}}
+
+/* Direct trial activation stays primary; paid checkout is optional. */
+.billing-card-actions{margin-top:auto;display:flex;flex-direction:column;gap:16px}
+.billing-card .billing-card-actions form{min-height:0;margin-top:0}
+.billing-card .billing-card-actions .billing-trial-form{padding-top:0;border-top:0}
+.billing-card .billing-trial-form>.btn{margin-top:0;white-space:normal;line-height:1.4}
+.billing-paid-choice summary{cursor:pointer;min-height:44px;display:list-item;padding:10px 0;color:var(--green);font-size:13px;line-height:1.6;text-underline-offset:4px}
+.billing-paid-choice summary:focus-visible{outline:3px solid var(--green);outline-offset:3px}
+.billing-paid-choice[open] summary{border-bottom:1px solid var(--line)}

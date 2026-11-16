@@ -9,8 +9,31 @@ from data import db_session
 from data.auth import AuthCode, AuthRateLimit
 from data.user import User
 from services import mail
+import secrets
 
 CODE_ATTEMPTS = 5
+
+
+def begin_registration(email):
+    """Resume a pending address without changing its password before proof."""
+    from sqlalchemy import func, text
+    with db_session.create_session() as ses:
+        ses.execute(text('BEGIN IMMEDIATE'))
+        user = ses.query(User).filter(func.lower(func.trim(User.email)) == email.lower().strip()).order_by(User.id).first()
+        if user and user.is_verified:
+            raise ValueError('Эта почта уже подтверждена. Войдите с паролем или восстановите его.')
+        if user is None:
+            user = User(email=email.lower().strip(), name='Пользователь')
+            # No usable password exists until the email code is confirmed.
+            user.set_password(secrets.token_urlsafe(48))
+            ses.add(user)
+            ses.flush()
+            from data.activity import ActivityEvent
+            ses.add(ActivityEvent(owner_id=user.id, category='account', action='account_created',
+                                  after={'email': user.email, 'name': user.name}))
+        ident, version = user.id, user.auth_version or 0
+        ses.commit()
+        return ident, version
 
 
 def consume_limits(limits):
@@ -37,14 +60,18 @@ def consume_limits(limits):
 
 
 def issue_code(email, purpose='verify'):
-    if purpose not in ('verify', 'reset'):
+    if purpose not in ('verify', 'register', 'reset'):
         raise ValueError('Неизвестное назначение кода')
+    try:
+        ttl = mail.code_ttl_seconds()
+    except mail.MailError as exc:
+        return False, str(exc)
     with db_session.create_session() as ses:
         from sqlalchemy import func
         user = ses.query(User).filter(func.lower(func.trim(User.email)) == email.lower().strip()).order_by(User.id).first()
         if user is None:
             return False, 'Аккаунт не найден.'
-        if purpose == 'verify' and user.is_verified:
+        if purpose in ('verify', 'register') and user.is_verified:
             return False, 'Почта уже подтверждена.'
         # A shared email limit also prevents alternating reset/verification sends.
         retry = consume_limits([
@@ -66,17 +93,19 @@ def issue_code(email, purpose='verify'):
             return False, str(exc)
         # Failed delivery leaves both account status and the previous code intact.
         ses.merge(AuthCode(user_id=user.id, purpose=purpose, code_hash=code_hash,
-                           expires_at=time.time() + mail.code_ttl_seconds(), failed_attempts=0))
+                           expires_at=time.time() + ttl, failed_attempts=0))
         ses.commit()
     return True, ''
 
 
-def complete_code(user_id, code, purpose='verify', password=None):
+def complete_code(user_id, code, purpose='verify', password=None, name=None):
     """Validate once and apply the action and code consumption in one transaction."""
-    if purpose not in ('verify', 'reset'):
+    if purpose not in ('verify', 'register', 'reset'):
         raise ValueError('Неизвестное назначение кода')
     if not re.fullmatch(r'[0-9]{6}', str(code).strip()):return False
-    if purpose == 'reset' and (password is None or not 8 <= len(password) <= 256 or password.isspace()):
+    if purpose in ('reset', 'register') and (password is None or not 8 <= len(password) <= 256 or password.isspace()):
+        return False
+    if purpose == 'register' and name is not None and (not 1 <= len(name) <= 80 or any(ord(c)<32 for c in name)):
         return False
     # Begin with a write lock so two requests cannot consume the same code.
     with db_session.create_session() as ses:
@@ -86,18 +115,22 @@ def complete_code(user_id, code, purpose='verify', password=None):
         user = ses.get(User, user_id)
         if user is None or entry is None:
             return False
+        if purpose == 'register' and user.is_verified:
+            return False
         if entry.expires_at <= time.time() or entry.failed_attempts >= CODE_ATTEMPTS:
             return False
         if not check_password_hash(entry.code_hash, code.strip()):
             entry.failed_attempts += 1
             ses.commit()
             return False
-        if purpose == 'reset':
+        if purpose in ('reset', 'register'):
             user.set_password(password)
             user.auth_version=(user.auth_version or 0)+1
+            if purpose == 'register' and name is not None:
+                user.name = name
         user.is_verified = True
         # Successful ownership confirmation also invalidates an older verify code.
-        if purpose == 'reset':
+        if purpose in ('reset', 'register'):
             ses.query(AuthCode).filter(AuthCode.user_id == user_id).delete(synchronize_session=False)
         else:
             ses.delete(entry)

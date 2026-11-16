@@ -36,11 +36,8 @@
     {% if subscription and subscription.status=='trialing' %}<p class="billing-small">При оплате сейчас оставшиеся пробные дни сгорают. Начнётся новый оплаченный период.</p>{% endif %}
     <form action="{{ url_for('billing.confirm',order_id=order.id) }}" method="post"><input type="hidden" name="auth_csrf" value="{{ auth_csrf }}">
       <input type="hidden" name="expected_amount" value="{{ quote.amount }}">
-      {% if trial_allowed %}
-      <label class="billing-choice"><input type="radio" name="action" value="trial" checked><span><strong>Начать 7 бесплатных дней</strong><br>Проверка карты: 1 ₽ с автоматическим возвратом.<br>{{ trial_end|billing_date }} — {{ next_amount|rubles }} за первый {{ 'год' if order.interval=='year' else 'месяц' }}. Далее {{ quote.regular_amount|rubles }} за каждый {{ 'год' if order.interval=='year' else 'месяц' }}.</span></label>
-      <label class="billing-choice"><input type="radio" name="action" value="pay"><span><strong>Оплатить сразу: {{ quote.amount|rubles }}</strong><br>Без пробной недели и проверочного платежа.</span></label>
-      {% else %}<input type="hidden" name="action" value="pay"><p>Пробная неделя недоступна для этого аккаунта, карты или тарифа.</p>{% endif %}
-      <label class="billing-check"><input type="checkbox" name="auto_consent" value="yes" required><span>Согласен с автоматическим продлением. После первого платного периода — {{ quote.regular_amount|rubles }} каждый {{ 'год' if order.interval=='year' else 'месяц' }}. {% if trial_allowed %}При выборе пробы первое списание {{ trial_end|billing_date }} — {{ next_amount|rubles }}.{% endif %} Следующее продление без пробы — {{ quote.ends_at|billing_date }}. Можно отключить в настройках до даты списания. При неудачной оплате доступ блокируется, данные сохраняются.</span></label>
+      <input type="hidden" name="action" value="pay">
+      <label class="billing-check"><input type="checkbox" name="auto_consent" value="yes" required><span>Согласен с автоматическим продлением. После первого платного периода — {{ quote.regular_amount|rubles }} каждый {{ 'год' if order.interval=='year' else 'месяц' }}. Следующее продление — {{ quote.ends_at|billing_date }}. Можно отключить в настройках до даты списания. При неудачной оплате доступ блокируется, данные сохраняются.</span></label>
       <button type="submit" class="btn btn-primary">Подтвердить оформление</button>
     </form>
     <form method="post" action="{{ url_for('billing.close',order_id=order.id) }}"><input type="hidden" name="auth_csrf" value="{{ auth_csrf }}"><button class="billing-link" type="submit">Выбрать другой тариф</button></form>

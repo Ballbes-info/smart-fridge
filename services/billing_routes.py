@@ -76,7 +76,23 @@ def billing_context():
 @billing.route('/subscriptions')
 @verified
 def plans():
-    return render_template('subscriptions.html', plans=service.PLANS)
+    sub = service.get_subscription(session['user_id'])
+    return render_template('subscriptions.html', plans=service.PLANS,
+        free_trial_available=service.free_trial_available(sub),
+        free_trial_switchable=service.free_trial_switchable(sub))
+
+
+@billing.route('/subscriptions/trial', methods=['POST'])
+@verified
+def free_trial():
+    try:
+        end = service.start_free_trial(session['user_id'], request.form.get('plan', ''),
+                                       request.form.get('interval', 'month'))
+    except PaymentError as exc:
+        flash(str(exc), 'error')
+        return redirect(url_for('billing.plans'))
+    flash('Пробный доступ до ' + billing_date(end) + '. Карта не нужна, автоматических списаний нет.', 'success')
+    return redirect(url_for('workspace.home'))
 
 
 @billing.route('/settings/subscription')
@@ -142,8 +158,8 @@ def select_card(order_id):
 @billing.route('/checkout/<order_id>/confirm',methods=['POST'])
 @verified
 def confirm(order_id):
-    if request.form.get('action') not in ('trial', 'pay'):
-        abort(400, description='Выберите оплату или пробный период.')
+    if request.form.get('action') != 'pay':
+        abort(400, description='Пробный доступ включается на странице тарифов без карты.')
     if request.form.get('auto_consent') != 'yes':
         flash('Для оформления подтвердите условия автоматического продления.','error')
         return redirect(url_for('billing.checkout',order_id=order_id))

@@ -5,6 +5,7 @@
 
   function updatePrices() {
     const year = period?.querySelector('input:checked')?.value === 'year';
+    document.querySelectorAll('[data-trial-interval]').forEach(input => { input.value = year ? 'year' : 'month'; });
     planForms.forEach(form => {
       const card = form.closest('.billing-card');
       const seatsInput = form.elements.extra_seats;

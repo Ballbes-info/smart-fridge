@@ -1,6 +1,6 @@
 """SmartFridge — веб-приложение на Flask.
 
-Регистрация (почта + пароль + имя), вход, подтверждение почты,
+Регистрация (почта → код и новый пароль → тариф), вход, подтверждение почты,
 смена пароля по почте, профиль.
 
 Запуск:
@@ -14,7 +14,6 @@ import hmac
 import time
 from urllib.parse import urlsplit,unquote
 from functools import wraps
-from sqlalchemy.exc import IntegrityError
 from pathlib import Path
 
 from data import db_session
@@ -150,7 +149,7 @@ def private_account_pages(response):
     return response
 
 
-AUTH_ENDPOINTS={'login','register','reset_password','resend','verify','reset_password_verify','reset_resend','change_password','logout'}
+AUTH_ENDPOINTS={'login','register','reset_password','resend','verify','reset_password_verify','reset_resend','change_password','logout','restart_registration'}
 
 @app.before_request
 def protect_auth_forms():
@@ -285,71 +284,35 @@ def index():
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if session.get("user_id") is not None:
+        user = current_user()
+        if user and not user.is_verified:
+            return redirect(url_for("verify"))
         return redirect(url_for("workspace.home"))
-
     errors = []
-
+    email = request.form.get("email", "").strip() if request.method == "POST" else ""
     if request.method == "POST":
-        email = request.form.get("email", "").strip()
-        name = request.form.get("name", "").strip()
-        password = request.form.get("password", "")
-        password2 = request.form.get("password2", "")
-
         if not valid_email(email):
             errors.append("Введите корректный email.")
-        existing = find_user_by_email(email) if valid_email(email) else None
-        if existing is not None and existing.is_verified:
-            errors.append("Пользователь с таким email уже зарегистрирован. Войдите или восстановите пароль.")
-
-        if not name or len(name)>80 or any(ord(c)<32 for c in name):
-            errors.append("Введите имя: от 1 до 80 символов без управляющих знаков.")
-
-        if not MIN_PASSWORD_LENGTH <= len(password) <= 256 or password.isspace():
-            errors.append("Пароль должен содержать от 8 до 256 символов и не состоять только из пробелов.")
-
-        if password != password2:
-            errors.append("Пароли не совпадают.")
-
-        if not errors and existing is not None and not existing.check_password(password):
-            errors.append("Регистрация с этой почтой уже начата, но почта ещё не подтверждена. Введите прежний пароль или восстановите его через страницу входа.")
-
-        if not errors:
-            if existing is not None:
-                # Proof of the original password permits resuming verification,
-                # never replacing an account's password, name or verification code.
-                user_id = existing.id
+        else:
+            from services.auth_service import begin_registration
+            try:
+                user_id, version = begin_registration(email)
+            except ValueError as exc:
+                errors.append(str(exc))
             else:
-                with db_session.create_session() as ses:
-                    user = User(email=email.lower().strip(), name=name)
-                    user.set_password(password)
-                    ses.add(user)
-                    try:
-                        ses.commit()
-                    except IntegrityError:
-                        ses.rollback()
-                        # A double submit may have created the pending account meanwhile.
-                        concurrent = find_user_by_email(email)
-                        if concurrent is None or concurrent.is_verified or not concurrent.check_password(password):
-                            errors.append("Пользователь с таким email уже зарегистрирован. Войдите или восстановите пароль.")
-                            return render_template("register.html", email=email, name=name, errors=errors)
-                        user_id = concurrent.id
-                    else:
-                        user_id = user.id
-                        record_activity(user_id, "account_created", after={"name":user.name,"email":user.email})
+                session.clear()
+                session.update(user_id=user_id, auth_version=version, registration_flow=True)
+                ok, message = (True, "") if code_ready(user_id, "register") else issue_code(email, "register")
+                flash(f"Код отправлен на {email}. Введите его и задайте пароль." if ok else message,
+                      "success" if ok else "error")
+                return redirect(url_for("verify"))
+    return render_template("register.html", email=email, errors=errors)
 
-            session.clear()
-            session["user_id"] = user_id
-            session["auth_version"]=get_user_by_id(user_id).auth_version or 0
-            ok, msg = issue_code(email)
-            if ok:
-                flash(f"Мы отправили шестизначный код на {email}.", "success")
-            else:
-                flash(msg, "error")
-            return redirect(url_for("verify"))
 
-        return render_template("register.html", email=email, name=name, errors=errors)
-
-    return render_template("register.html", email="", name="", errors=errors)
+@app.route('/register/restart', methods=['POST'])
+def restart_registration():
+    session.clear()
+    return redirect(url_for('register'))
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -421,18 +384,31 @@ def verify():
     if user.is_verified:
         return redirect(url_for("workspace.home"))
 
+    registration = bool(session.get("registration_flow"))
+    purpose = "register" if registration else "verify"
+    errors = []
+    name = request.form.get("name", "").strip() if request.method == "POST" else ""
     if request.method == "POST":
         code = request.form.get("code", "")
-        if complete_code(user.id, code, "verify"):
-            from services.family_service import has_invitation
-            if has_invitation(user.id):
-                flash("Почта подтверждена. Вас пригласили в семью.", "success")
-                return redirect(url_for("family.screen"))
+        password = request.form.get("password", "") if registration else None
+        if registration:
+            if not MIN_PASSWORD_LENGTH <= len(password) <= 256 or password.isspace():
+                errors.append("Пароль должен содержать от 8 до 256 символов и не состоять только из пробелов.")
+            if password != request.form.get("password2", ""):
+                errors.append("Пароли не совпадают.")
+            if len(name)>80 or any(ord(c)<32 for c in name):
+                errors.append("Имя — не более 80 символов без управляющих знаков.")
+        if not errors and complete_code(user.id, code, purpose, password,
+                                        name=(name or "Пользователь") if registration else None):
+            session["auth_version"] = get_user_by_id(user.id).auth_version or 0
+            session.pop("registration_flow", None)
             flash("Почта подтверждена. Выберите тариф, чтобы завершить регистрацию.", "success")
             return redirect(url_for("billing.plans"))
-        flash("Неверный или истёкший код либо превышен лимит попыток.", "error")
+        if not errors:
+            errors.append("Неверный или истёкший код либо превышен лимит попыток. Запросите новый код, если необходимо.")
 
-    return render_template("verify.html", email=user.email,code_sent=code_ready(user.id))
+    return render_template("verify.html", email=user.email, code_sent=code_ready(user.id, purpose),
+                           registration=registration, errors=errors, name=name)
 
 
 @app.route("/resend", methods=["POST"])
@@ -446,7 +422,7 @@ def resend():
         session.clear()
         return redirect(url_for("register"))
 
-    ok, message = issue_code(user.email)
+    ok, message = issue_code(user.email, "register" if session.get("registration_flow") else "verify")
     flash(f"Код отправлен на {user.email}." if ok else message,
           "success" if ok else "error")
     return redirect(url_for("verify"))

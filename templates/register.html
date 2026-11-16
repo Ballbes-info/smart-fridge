@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 {% from "display.html" import display %}
-{% from "password_field.html" import password_field %}
 {% block title %}Регистрация — СмартФридж{% endblock %}
 
 {% block content %}
@@ -8,13 +7,13 @@
   <div class="auth-aside">
     <p class="section-tag"><i></i> НОВЫЙ АККАУНТ</p>
     <h1>Всё начинается <em>с порядка.</em></h1>
-    <p>Ваш дисплей, ваши продукты и доступ с телефона — начните с аккаунта СмартФридж.</p>
+    <p>Сначала подтвердите почту, затем выберите тариф — 7 дней можно попробовать без карты.</p>
     {{ display('display-compact') }}
   </div>
 
   <div class="auth-card">
     <h2>Регистрация</h2>
-    <p class="auth-description">Заполните данные и подтвердите электронную почту.</p>
+    <p class="auth-description">Укажите почту. На неё придёт код; на следующем шаге задайте пароль.</p>
 
     {% if errors %}
       <div class="form-errors" role="alert">
@@ -26,25 +25,15 @@
 
     <form method="post" action="{{ url_for('register') }}" class="industrial-form"><input type="hidden" name="auth_csrf" value="{{ auth_csrf }}">
       <label class="field">
-        <span>Имя</span>
-        <input type="text" name="name" autocomplete="name" maxlength="80"
-               value="{{ name|default('', true) }}"
-               placeholder="Как к вам обращаться" required>
-      </label>
-
-      <label class="field">
         <span>Электронная почта</span>
         <input type="email" name="email" autocomplete="email" maxlength="254"
                value="{{ email|default('', true) }}"
                placeholder="name@example.com" required>
       </label>
 
-      {{ password_field('auth-password','password','Пароль','new-password') }}
-
-      {{ password_field('auth-password2','password2','Повторите пароль','new-password',match='auth-password') }}
 
       <button class="btn btn-primary action-wide" type="submit">
-        <span>Создать аккаунт</span> {{ icon('arrow') }}
+        <span>Получить код</span> {{ icon('arrow') }}
       </button>
     </form>
 

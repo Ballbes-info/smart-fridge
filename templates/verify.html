@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "display.html" import display %}
+{% from "password_field.html" import password_field %}
 {% block title %}Подтверждение почты — СмартФридж{% endblock %}
 
 {% block content %}
@@ -12,7 +13,7 @@
   </div>
 
   <div class="auth-card">
-    <h2>Введите код</h2>
+    <h2>{{ "Подтвердите почту и задайте пароль" if registration else "Введите код" }}</h2>
     <p class="auth-description">
       Адрес: <strong>{{ email }}</strong>.<br>{% if code_sent %}Введите код из письма. Срок его действия ограничен.{% else %}Действующего кода нет. Нажмите «Отправить код повторно».{% endif %}
     </p>
@@ -42,8 +43,13 @@
         >
       </label>
 
+      {% if registration %}
+      <label class="field"><span>Имя (необязательно)</span><input type="text" name="name" autocomplete="name" maxlength="80" value="{{ name|default('') }}" placeholder="Как к вам обращаться"></label>
+      {{ password_field('register-password','password','Новый пароль','new-password') }}
+      {{ password_field('register-password2','password2','Повторите пароль','new-password',match='register-password') }}
+      {% endif %}
       <button class="btn btn-primary action-wide" type="submit">
-        <span>Подтвердить</span> {{ icon('arrow') }}
+        <span>{{ "Перейти к тарифам" if registration else "Подтвердить" }}</span> {{ icon('arrow') }}
       </button>
     </form>
 
@@ -51,6 +57,7 @@
       <button class="text-action" type="submit">Отправить код повторно</button>
     </form>
 
+    {% if registration %}<form method="post" action="{{ url_for('restart_registration') }}" class="industrial-form"><input type="hidden" name="auth_csrf" value="{{ auth_csrf }}"><button class="text-action" type="submit">Указать другую почту</button></form>{% endif %}
     <form method="post" action="{{ url_for('logout') }}" class="industrial-form"><input type="hidden" name="auth_csrf" value="{{ auth_csrf }}">
       <button class="text-action" type="submit">Выйти из аккаунта</button>
     </form>
