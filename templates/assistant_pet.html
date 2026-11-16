@@ -10,8 +10,7 @@
 <div class="sf-companion-tip" data-pet-tip hidden><button type="button" data-dismiss-tip aria-label="Закрыть подсказку">×</button><p data-tip-text></p><a data-tip-link href="{{ url_for('products.index',state='due') }}">Посмотреть →</a></div>
 <section id="companion-panel" class="sf-companion-panel" role="dialog" aria-labelledby="companion-title" hidden data-hide-url="{{ url_for('assistant.hide_pet') }}" data-send-url="{{ url_for('assistant.send') }}" data-job-base="/assistant/jobs/" data-chat-url="{{ url_for('assistant.index',mode='chat') }}" data-cooking-url="{{ url_for('assistant.index',mode='cooking') }}" data-csrf="{{ assistant_csrf }}">
 <div class="sf-companion-heading"><div><h2 id="companion-title">Клевер</h2><span>Ваш питомец-помощник</span></div><button type="button" data-pet-close aria-label="Закрыть окно питомца">×</button></div>
-<div class="sf-companion-play" role="group" aria-label="Поиграть с Клевером"><button type="button" data-pet-play="stroke">Погладить</button><button type="button" data-pet-play="dance">Потанцевать</button><button type="button" data-pet-play="jump">Подпрыгнуть</button></div>
-<p class="sf-companion-motion-note" data-pet-motion-note hidden>На устройстве включено уменьшение движения.</p><button class="sf-companion-motion-choice" type="button" data-pet-motion-choice hidden>Разрешить движения питомца</button>
+<details class="sf-companion-section" data-pet-chat-section><summary>Спросить помощника</summary>
 <p class="sf-companion-copy" data-pet-copy>{{ 'Спросите о продуктах или приготовлении.' if assistant_premium else 'Погладьте меня или выберите игру. Подсказки по приложению доступны без ИИ.' }}</p>
 {% if not assistant_premium %}<p><a href="{{ url_for('assistant.index',mode='guide') }}">Как пользоваться приложением →</a></p><p>Ответы на вопросы с ИИ доступны в премиум-тарифах.</p>{% endif %}
 <div class="sf-companion-reply" data-pet-reply hidden tabindex="0" aria-label="Ответ помощника"><p class="sf-companion-question" data-pet-question></p><div data-pet-answer></div></div>
@@ -27,7 +26,13 @@
 <details class="sf-companion-data"><summary>Что передаётся с вопросом</summary><p>Вопрос и контекст разговора. Если включить запасы — названия, количества и сроки до 60 доступных непросроченных партий. Для готовки может передаваться открытый рецепт. Движение и подсказки работают без ИИ.</p></details>
 </form>
 <p class="sf-companion-status" role="status" data-pet-status></p><button type="button" class="sf-companion-reconnect" data-pet-reconnect hidden>Проверить ответ</button>
+</details>
+<details class="sf-companion-section"><summary>Подсказки</summary><p>{{ 'Включены' if assistant_pet_options.hints else 'Отключены' }}. Клевер иногда подсказывает по открытой странице: например, напоминает проверить срок продукта.</p><p>Не чаще раза в 20 минут, до трёх раз в день. Одну подсказку не повторяет в течение дня.</p><a href="{{ url_for('workspace.settings') }}#assistant-pet-settings">Настроить подсказки →</a></details>
+<details class="sf-companion-section"><summary>Настройки питомца</summary>
+<div class="sf-companion-play" role="group" aria-label="Поиграть с Клевером"><button type="button" data-pet-play="stroke">Погладить</button><button type="button" data-pet-play="dance">Потанцевать</button><button type="button" data-pet-play="jump">Подпрыгнуть</button></div>
+<p class="sf-companion-motion-note" data-pet-motion-note hidden>На устройстве включено уменьшение движения.</p><button class="sf-companion-motion-choice" type="button" data-pet-motion-choice hidden>Разрешить движения питомца</button>
 <div class="sf-companion-actions"><button type="button" data-pet-rest>Отдыхать 10 минут</button><button type="button" data-pet-hide>Скрыть до входа</button><a href="{{ url_for('workspace.settings') }}#assistant-pet-settings">Настройки питомца →</a></div>
+</details>
 </section>
 </aside>{% if assistant_pet_rive %}<script src="{{ url_for('static',filename='vendor/rive/rive.js') }}" defer></script>{% endif %}<script src="{{ url_for('static',filename='vendor/bunny-runtime.js') }}" defer></script><script src="{{ url_for('static',filename='js/companion.js') }}" defer></script>
 {% endif %}

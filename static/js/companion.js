@@ -17,6 +17,7 @@
  let activeId=pet.dataset.activeJob||'',lastId=activeId||pet.dataset.lastJob||'',activeMode=pet.dataset.activeMode||form.elements.mode.value;
  let busy=!!activeId,ownRequest=false,lastQuestion='',remaining=Number(pet.querySelector('[data-pet-remaining]').textContent),failures=0,loading=false;
  let restUntil=[2,3].includes(stored.version)?Math.min(Date.now()+600000,Number(stored.restUntil)||0):0,lastTick=performance.now(),openedAt=Date.now(),lastHint=Number(stored.lastHint)||0,hintDay=Number(stored.hintDay)||0,hintCount=Number(stored.hintCount)||0,greeted=!!stored.greeted,ambientCount=Number(stored.ambientCount)||0;
+ let seenHints=stored.seenHints&&typeof stored.seenHints==='object'?stored.seenHints:{};
  const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
  motionOverride=stored.motionOverride===true;
  const motionReduced=()=>reduced.matches&&!motionOverride;
@@ -41,7 +42,7 @@
  function viewport(){const v=window.visualViewport;return {x:v?.offsetLeft||0,y:v?.offsetTop||0,w:v?.width||innerWidth,h:v?.height||innerHeight};}
  function limits(){const v=viewport();return {left:v.x+8,top:v.y+8,right:v.x+Math.max(8,v.w-size.w-16),bottom:v.y+Math.max(8,v.h-size.h-8-(document.querySelector('.sf-bottom-nav')?.getBoundingClientRect().height||0))};}
  function bound(p){const b=limits();return {x:clamp(p.x,b.left,b.right),y:clamp(p.y,b.top,b.bottom)};}
- function save(){const b=limits();try{localStorage.setItem(storageKey,JSON.stringify({version:3,motionOverride,x:(position.x-b.left)/Math.max(1,b.right-b.left),restUntil,lastHint,hintDay,hintCount,greeted,ambientCount}));}catch(_){} }
+ function save(){const b=limits();try{localStorage.setItem(storageKey,JSON.stringify({version:3,motionOverride,x:(position.x-b.left)/Math.max(1,b.right-b.left),restUntil,lastHint,hintDay,hintCount,greeted,ambientCount,seenHints}));}catch(_){} }
  function place(p){
   position=bound(p);pet.style.left=position.x.toFixed(2)+'px';pet.style.top=position.y.toFixed(2)+'px';
   const floor=limits().bottom,height=Math.max(0,floor-position.y),scale=clamp(1-height/1000,.45,1);
@@ -146,7 +147,7 @@
  function close(focus=false){panel.hidden=true;chatButton.setAttribute('aria-expanded','false');if(focus)chatButton.focus({preventScroll:true});if(!keyboardMode)chatButton.blur();actionUntil=0;roamAt=Date.now()+700;}
  async function open(focus=false){
   dismissTip();speech.hidden=true;route=[];actionUntil=0;panel.hidden=false;chatButton.setAttribute('aria-expanded','true');sprite.set('alert');face('curious');positionBubble(panel);
-  if(focus)(aiAllowed?question:pet.querySelector('[data-pet-close]')).focus({preventScroll:true});
+  if(focus){pet.querySelector('[data-pet-chat-section]').open=true;(aiAllowed?question:pet.querySelector('[data-pet-close]')).focus({preventScroll:true});}
   if(lastId&&!loading){loading=true;clearTimeout(pollTimer);await poll(lastId);loading=false;}
  }
  function watch(detail){
@@ -174,7 +175,7 @@
  form.elements.mode.addEventListener('change',()=>{const note=pet.querySelector('[data-pet-attachment]');if(note)note.hidden=form.elements.mode.value!=='cooking';});
  reconnect.addEventListener('click',()=>{if(activeId){reconnect.hidden=true;failures=0;poll(activeId);}});
  pet.querySelector('[data-pet-close]').addEventListener('click',()=>close(true));
- chatButton.addEventListener('click',()=>{if(panel.hidden)open(true);else close();});
+ chatButton.addEventListener('click',()=>{if(panel.hidden){open();pet.querySelector('[data-pet-close]').focus({preventScroll:true});}else close();});
  pet.querySelectorAll('[data-pet-play]').forEach(control=>control.addEventListener('click',()=>{const kind=control.dataset.petPlay;close();interact(kind);}));
  button.addEventListener('click',()=>{if(suppressClick){suppressClick=false;return;}interact();});
  button.addEventListener('contextmenu',event=>event.preventDefault());
@@ -220,21 +221,21 @@
   if(empty&&['Продуктов пока нет','Сначала создайте место хранения'].includes(heading)){
    const action=empty.querySelector('a[href]');if(action){const url=new URL(action.href,location.href);if(url.origin===location.origin)return {text:heading==='Продуктов пока нет'?'Можно начать с одного продукта: укажите название, количество и срок, если он известен.':'Сначала выберите, где будут храниться продукты. После создания места можно наполнить его.',url:url.pathname+url.search,label:heading==='Продуктов пока нет'?'Добавить продукт →':'Создать место →'};}
   }
-  if(!aiAllowed)return {text:'В справке есть подсказки: как добавить продукты, выбрать рецепт и составить покупки.',url:'/home/assistant/guide',label:'Открыть справку →'};
-  if(form.elements.recipe_key.value)return {text:'Если шаг приготовления непонятен, можете спросить меня об открытом рецепте.',label:'Задать вопрос →',ask:true};
-  const error=[...document.querySelectorAll('.product-error,[aria-invalid=true]')].find(n=>!pet.contains(n)&&n.getClientRects().length);
-  if(error)return {text:'На странице есть отмеченные поля. Можно проверить их или открыть справку по приложению.',url:'/home/assistant/guide',label:'Открыть справку →'};
-  const messages=['Я гуляю здесь, внизу. Для вопроса нажмите кнопку разговора рядом со мной.','Можно задать мне вопрос о продуктах или приготовлении. Я отвечу рядом с вами.','Если хотите тишины, подсказки можно выключить в настройках питомца.'];return {text:messages[ambientCount%messages.length],label:'Задать вопрос →',ask:true};
+  if(aiAllowed&&form.elements.recipe_key.value)return {text:'Можно задать вопрос о шагах этого рецепта.',label:'Спросить о рецепте →',ask:true};
+  return null;
  }
  function hint(now){
-  if(pet.dataset.hints!=='1'||now-openedAt<(greeted?20000:10000)||now-lastHint<180000||busy||drag||hover||!panel.hidden||!tip.hidden||obscured||fieldFocused()||document.querySelector('dialog[open]'))return;
+  if(pet.dataset.hints!=='1'||document.hidden||now<restUntil||now-openedAt<60000||now-lastHint<1200000||busy||drag||hover||!panel.hidden||!tip.hidden||obscured||fieldFocused()||document.querySelector('dialog[open]'))return;
   let shared={};try{shared=JSON.parse(localStorage.getItem(storageKey)||'{}')||{};}catch(_){}
-  if(Number(shared.lastHint)>lastHint)lastHint=Number(shared.lastHint);if(Number(shared.hintDay)===Math.floor(now/86400000))hintCount=Math.max(hintCount,Number(shared.hintCount)||0);if(now-lastHint<180000)return;
-  const day=Math.floor(now/86400000);if(day!==hintDay){hintDay=day;hintCount=0;}if(hintCount>=8)return;
-  const item=greeted?contextualHint():{text:'Привет! Я Клевер. Погладьте меня или нажмите несколько раз — покажу танец. А ещё меня можно поднять и отпустить.',label:openLabel+' →',ask:true};if(!item)return;
+  if(Number(shared.lastHint)>lastHint)lastHint=Number(shared.lastHint);if(Number(shared.hintDay)===Math.floor(now/86400000))hintCount=Math.max(hintCount,Number(shared.hintCount)||0);if(now-lastHint<1200000)return;
+  const day=Math.floor(now/86400000);if(day!==hintDay){hintDay=day;hintCount=0;seenHints={};}if(hintCount>=3)return;
+  if(Number(shared.hintDay)===day&&shared.seenHints&&typeof shared.seenHints==='object')seenHints={...seenHints,...shared.seenHints};
+  const item=contextualHint();if(!item)return;
+  const hintKey=JSON.stringify([item.url||form.elements.recipe_key.value,item.text]);if(seenHints[hintKey])return;seenHints[hintKey]=true;
   pet.querySelector('[data-tip-text]').textContent=item.text;const link=pet.querySelector('[data-tip-link]');link.textContent=item.label;link.href=item.url||'#companion-panel';link.dataset.ask=item.ask?'1':'';
-  lastHint=now;hintCount++;greeted=true;ambientCount++;save();tip.hidden=false;act('wave','happy',1700);positionBubble(tip);tipTimer=setTimeout(dismissTip,12000);
+  lastHint=now;hintCount++;greeted=true;ambientCount++;save();tip.hidden=false;positionBubble(tip);tipTimer=setTimeout(dismissTip,12000);
  }
+ pet.querySelectorAll('.sf-companion-section').forEach(section=>section.addEventListener('toggle',()=>{if(section.open)pet.querySelectorAll('.sf-companion-section').forEach(other=>{if(other!==section)other.open=false;});if(!panel.hidden)positionBubble(panel);}));
  pet.querySelector('[data-dismiss-tip]').addEventListener('click',dismissTip);
  pet.querySelector('[data-tip-link]').addEventListener('click',event=>{const ask=event.currentTarget.dataset.ask==='1';dismissTip();if(ask){event.preventDefault();if(form.elements.recipe_key.value)form.elements.mode.value='cooking';open(true);}});
  function tick(){

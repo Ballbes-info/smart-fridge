@@ -20,3 +20,16 @@
 .sf-companion-chat>.sf-companion-dot{right:0;top:0;width:7px;height:7px;pointer-events:none}
 .sf-companion-open{-webkit-touch-callout:none}
 [data-theme='dark'] .sf-companion-sprite{filter:brightness(.94) drop-shadow(0 2px 1px #0002)}
+
+/* Compact pet menu: disclose one task at a time. */
+.sf-companion-section{border-top:1px solid var(--line);padding:0}
+.sf-companion-section>summary{min-height:48px;box-sizing:border-box;padding:14px 6px;cursor:pointer;font-size:14px;font-weight:600;color:var(--ink)}
+.sf-companion-section>summary:hover{color:var(--green)}
+.sf-companion-section>summary:focus-visible{outline:2px solid var(--green);outline-offset:-2px;border-radius:8px}
+.sf-companion-section[open]{padding-bottom:14px}
+.sf-companion-section>p{font-size:12px;line-height:1.6;color:var(--muted)}
+.sf-companion-section>a{display:inline-flex;align-items:center;min-height:44px;color:var(--green);font-size:13px}
+.sf-companion-section .sf-companion-actions{margin-top:10px}
+.sf-companion-section .sf-companion-actions button,.sf-companion-section .sf-companion-actions a{min-height:44px;font-size:12px}
+.sf-companion-panel select,.sf-companion-panel textarea,.sf-companion-send button,.sf-companion-play button{border-radius:8px}
+.sf-companion-tip{border-radius:12px}
