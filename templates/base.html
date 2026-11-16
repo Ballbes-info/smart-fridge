@@ -63,6 +63,7 @@
   <script src="{{ url_for('static',filename='js/ai-modes.js') }}" defer></script>
   {% block head %}{% endblock %}
   {% if current_user %}<link rel="stylesheet" href="{{ url_for('static', filename='css/everyday.css') }}">{% endif %}
+  {% if request.endpoint in ['index', 'login', 'register', 'verify', 'resend', 'restart_registration', 'reset_password', 'reset_password_verify', 'reset_resend'] %}<link rel="stylesheet" href="{{ url_for('static', filename='css/entry-colors.css') }}">{% endif %}
 </head>
 <body{% if current_user %} class="is-authenticated{% if workspace_error|default(false) or request.blueprint in ['account', 'storage', 'products', 'product_import', 'activity', 'recipes', 'family', 'shopping', 'statistics', 'assistant', 'nutrition'] or request.endpoint in ['workspace.home', 'workspace.section', 'workspace.feature', 'workspace.settings', 'profile', 'billing.settings', 'billing.scan_limits'] %} has-workspace{% endif %}"{% endif %}>
   <a class="skip-link" href="#main-content">Перейти к содержимому</a>

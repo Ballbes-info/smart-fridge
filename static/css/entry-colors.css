@@ -1,0 +1,46 @@
+/* Colour-only alignment of the entry pages with the workspace palette.
+   Loaded only on the public home and authentication routes. */
+:root {
+ --bg:#f3f5f2; --surface:#ffffff; --ink:#202d3a; --muted:#586777;
+ --line:#d6dee6; --control-border:#b5c2ce; --control-bg:#ffffff;
+ --green:#28634f; --mint:#eaf3ef; --accent-surface:#eaf3ef; --lime:#c5dfd1;
+ --button-bg:#28634f; --button-hover:#1c4d3b; --button-ink:#ffffff;
+ --soft-surface:#ffffff; --focus:#28634f; --app-soft:#eaf3ef;
+}
+:root[data-theme="dark"] {
+ --bg:#151b22; --surface:#222b35; --ink:#edf2f7; --muted:#b4c0cd;
+ --line:#43505f; --control-border:#718093; --control-bg:#1a232d;
+ --green:#9ed9bc; --mint:#293d36; --accent-surface:#293d36; --lime:#9ed9bc;
+ --button-bg:#9ed9bc; --button-hover:#b8e8d0; --button-ink:#142c22;
+ --soft-surface:#222b35; --focus:#9ed9bc; --app-soft:#293d36;
+}
+html body .site-header { background-color:var(--surface); }
+html body .auth-card { background-color:var(--surface); border-color:var(--line); }
+html body .field input { color:var(--ink); background-color:var(--control-bg); border-color:var(--control-border); }
+html body .field input:hover,html body .field input:focus { border-color:var(--green); }
+html body .field input:focus { outline-color:color-mix(in srgb,var(--green) 30%,transparent); }
+html body .field input::placeholder { color:var(--muted); }
+html body .button-arrow { color:var(--button-bg); background-color:var(--button-ink); }
+html body .section-tag i { background-color:var(--green); box-shadow:0 0 0 4px var(--mint); }
+html body .connection-art>b,html body .daily-mobile-line { background-color:var(--green); }
+html body .freshness-scale>span { background-color:var(--green); }
+html body .freshness-scale>span:nth-child(2) { background-color:var(--control-border); }
+html body .freshness-scale>span:nth-child(3) { background-color:var(--muted); }
+html body .rhythm-radio:checked ~ .rhythm-switch label { border-color:transparent; }
+html body #rhythm-home:checked ~ .rhythm-switch label[for="rhythm-home"],
+html body #rhythm-shop:checked ~ .rhythm-switch label[for="rhythm-shop"],
+html body #rhythm-dinner:checked ~ .rhythm-switch label[for="rhythm-dinner"] { border-color:var(--green); color:var(--ink); }
+html body .rhythm-radio:focus-visible ~ .rhythm-switch label { outline-color:var(--focus); }
+html body .display-glow { background:radial-gradient(ellipse,color-mix(in srgb,var(--green) 12%,transparent) 0%,color-mix(in srgb,var(--mint) 30%,transparent) 50%,transparent 72%); }
+html body .display-screen { background-color:var(--bg); }
+html body .display-top,html body .display-nav { border-color:var(--line); }
+html body .display-mark,html body .display-nav .icon:first-child,
+html body .display-leaf { color:var(--green); }
+html body .display-nav { color:var(--muted); }
+html body .display-temperature>span,html body .display-summary strong { color:var(--ink); }
+html body .display-temperature svg circle:first-child { stroke:var(--line); }
+html body .display-arc,html body .display-wave-path { stroke:var(--green); }
+html body .display-summary span,html body .display-indicator { background-color:var(--green); }
+html body .display-summary i,html body .display-summary b,html body .display-leaf span { background-color:var(--control-border); }
+html body .display-wave svg path:first-child { stroke:var(--line); }
+html body .display-online { background-color:var(--green); box-shadow:0 0 0 4px var(--mint); }
