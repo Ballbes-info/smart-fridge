@@ -315,3 +315,26 @@
  .has-workspace .daily-meal-grid { gap:8px; }
  .has-workspace .daily-meal { padding:12px; }
 }
+
+/* Secondary actions form one short row; charts only render when data exists. */
+.daily-tools { grid-column:1 / -1; display:flex; align-items:center; flex-wrap:wrap; gap:12px 24px; padding:14px 18px; background:var(--surface); border:1px solid var(--line); border-radius:var(--daily-radius); min-width:0; }
+.daily-tool-primary { display:flex; align-items:center; gap:12px; color:var(--ink); flex:1 1 240px; min-height:54px; }
+.daily-tool-symbol { display:grid; place-items:center; width:48px; height:48px; border-radius:10px; background:var(--mint); color:var(--green); flex-shrink:0; }
+.daily-tool-symbol svg { width:32px; height:32px; }
+.daily-tool-primary>span:nth-child(2),.daily-tool-stats>span { flex:1; min-width:0; }
+.daily-tools strong { display:block; font-size:15px; font-weight:600; }
+.daily-tools small { display:block; font-size:12px; color:var(--muted); margin-top:4px; }
+.daily-tools .icon { width:18px; height:18px; flex-shrink:0; }
+.daily-tool-links { display:flex; flex-wrap:wrap; gap:4px 16px; }
+.daily-tool-links>a { display:flex; align-items:center; gap:8px; min-height:44px; font-size:13px; color:var(--green); }
+.daily-tool-stats { display:flex; align-items:center; gap:12px; flex:1 1 220px; min-height:54px; padding-left:24px; border-left:1px solid var(--line); color:var(--ink); }
+.daily-tools a:hover { color:var(--green); }
+.daily-tools a:focus-visible { outline:2px solid var(--focus); outline-offset:4px; border-radius:6px; }
+.daily-activity { grid-column:1 / -1; }
+@media(max-width:700px) {
+ .daily-tools { order:4; gap:8px; padding:14px 16px; }
+ .daily-tool-primary { flex-basis:100%; }
+ .daily-tool-links { width:100%; padding-left:60px; }
+ .daily-tool-stats { flex-basis:100%; padding:12px 0 0; border-left:0; border-top:1px solid var(--line); }
+ .daily-activity { order:5; }
+}
