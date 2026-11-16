@@ -46,17 +46,17 @@
 .daily-primary { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:48px; padding:12px 18px; border-radius:10px; background:var(--button-bg); color:var(--button-ink); font-size:14px; font-weight:600; text-align:center; }
 .daily-primary:hover { background:var(--button-hover); color:var(--button-ink); }
 .daily-primary .icon,.daily-heading-actions .icon { width:18px; height:18px; flex-shrink:0; }
-.daily-summary { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-bottom:20px; }
-.daily-summary>:is(a,.daily-stock-summary) { padding:16px 18px; border:1px solid var(--line); border-radius:14px; background:var(--surface); color:var(--ink); }
-.daily-summary>a:hover { outline:1px solid var(--green); }
-.daily-summary>:is(a,.daily-stock-summary)>span { display:flex; gap:7px; align-items:center; font-size:13px; font-weight:500; }
-.daily-summary .icon { width:17px; height:17px; }
-.daily-summary strong { display:block; font-size:30px; font-weight:650; letter-spacing:-.03em; margin:8px 0 4px; font-variant-numeric:tabular-nums; }
-.daily-summary p { font-size:12px; color:var(--muted); line-height:1.55; }
-.daily-summary .daily-summary-alert { background:var(--due-bg); border-color:color-mix(in srgb,var(--due-ink) 25%,var(--line)); }
-.daily-summary-alert>span,.daily-summary-alert strong { color:var(--due-ink); }
-.daily-summary .daily-summary-expired { background:var(--expired-bg); border-color:color-mix(in srgb,var(--danger) 25%,var(--line)); }
-.daily-summary-expired>span,.daily-summary-expired strong { color:var(--danger); }
+
+
+
+
+
+
+
+
+
+
+
 .daily-columns { display:grid; grid-template-columns:minmax(0,1.2fr) minmax(0,1fr); gap:20px; align-items:start; }
 .daily-column { display:grid; gap:20px; min-width:0; }
 .daily-card { border:1px solid var(--line); border-radius:var(--daily-radius); padding:22px; background:var(--surface); min-width:0; scroll-margin-top:20px; box-shadow:0 2px 5px #00000003; }
@@ -124,7 +124,7 @@
 .sf-nav-description { display:block; color:var(--muted); font-size:11px; font-weight:400; line-height:1.45; margin-top:3px; }
 .sf-bottom-nav { display:none; }
 @media(min-width:901px) { .workspace-sidebar-inner { max-height:calc(100svh - 48px); overflow-y:auto; scrollbar-width:thin; } }
-@media(max-width:1150px) and (min-width:901px) { .has-workspace .workspace-content { padding-inline:22px; } .daily-card { padding:18px; } .daily-summary { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:1150px) and (min-width:901px) { .has-workspace .workspace-content { padding-inline:22px; } .daily-card { padding:18px; } }
 @media(max-width:900px) {
  .has-workspace .workspace-content { padding-bottom:calc(90px + env(safe-area-inset-bottom)); }
  .has-workspace .workspace-mobile-bar { display:none; }
@@ -133,7 +133,7 @@
  .sf-bottom-nav .icon { width:21px; height:21px; }
  .sf-bottom-nav [aria-current],.sf-bottom-nav button[aria-expanded=true] { color:var(--green); background:var(--mint); font-weight:650; }
  .has-workspace :is(input,select,textarea,button,a,summary) { scroll-margin-bottom:100px; }
- .daily-summary { grid-template-columns:repeat(2,minmax(0,1fr)); }
+
 }
 @media(max-width:700px) {
  .daily-columns { grid-template-columns:minmax(0,1fr); gap:16px; }
@@ -148,11 +148,11 @@
  .daily-heading h1 { font-size:28px; }
  .daily-heading-actions { width:100%; }
  .daily-heading-actions a { flex:1; padding-inline:10px; font-size:13px; }
- .daily-summary { gap:10px; }
- .daily-summary>:is(a,.daily-stock-summary) { padding:14px; border-radius:12px; }
- .daily-summary>:is(a,.daily-stock-summary)>span { font-size:12px; gap:6px; }
- .daily-summary strong { font-size:27px; }
- .daily-summary p { font-size:11px; }
+
+
+
+
+
  .daily-card { padding:18px; }
  .daily-card h2 { font-size:19px; }
  .daily-meal { padding:12px; }
@@ -186,13 +186,13 @@
 .nt-menu-slot:target { outline:2px solid var(--focus); outline-offset:4px; scroll-margin-block:24px 100px; border-radius:8px; }
 
 /* Calm composition shared by light and dark themes. */
-.daily-summary { grid-template-columns:repeat(3,minmax(0,1fr)); gap:0; border:1px solid var(--line); border-radius:var(--daily-radius); background:var(--surface); overflow:hidden; }
-.daily-summary>a { padding:14px 18px; border:0; border-radius:0; background:transparent; }
-.daily-summary>a+a { border-left:1px solid var(--line); }
-.daily-summary strong { font-size:24px; margin:5px 0; }
-.daily-summary strong small { font-size:14px; font-weight:500; letter-spacing:normal; }
-.daily-summary>a:hover { outline:0; background:var(--mint); }
-.daily-summary>a:focus-visible { outline:2px solid var(--focus); outline-offset:-3px; }
+
+
+
+
+
+
+
 .daily-columns { grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:18px; }
 .daily-meals { grid-column:1 / -1; }
 .daily-meal-grid { grid-template-columns:repeat(4,minmax(0,1fr)); gap:0; margin-bottom:8px; }
@@ -217,14 +217,64 @@
 @media(max-width:700px) {
  .daily-columns { grid-template-columns:minmax(0,1fr); }
  .daily-meals { grid-column:auto; }
- .daily-summary>a { padding:12px 10px; }
- .daily-summary>:is(a,.daily-stock-summary)>span { font-size:12px; }
- .daily-summary .icon { display:none; }
- .daily-summary strong { font-size:22px; }
- .daily-summary strong small { display:block; font-size:12px; margin-top:3px; }
- .daily-summary p { display:none; }
+
+
+
+
+
+
 }
 @media(max-width:380px) {
  .daily-meal-grid { grid-template-columns:minmax(0,1fr); }
  .daily-meal+.daily-meal { border-left:0; border-top:1px solid var(--line); }
+}
+
+/* Screenshot review: a single compact summary, without nested card borders. */
+.has-workspace .daily-summary { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:0; margin:0 0 18px; padding:0; border:1px solid var(--line); border-radius:12px; background:var(--surface); overflow:hidden; }
+.has-workspace .daily-summary>a { display:grid; grid-template-columns:auto 1fr; align-items:center; gap:4px 12px; min-width:0; padding:14px 18px; border:0; border-radius:0; background:transparent; color:var(--ink); }
+.has-workspace .daily-summary>a+a { border-left:1px solid var(--line); }
+.has-workspace .daily-summary>a>span { grid-column:1 / -1; display:flex; align-items:center; gap:7px; font-size:13px; color:var(--muted); }
+.has-workspace .daily-summary .icon { width:16px; height:16px; }
+.has-workspace .daily-summary strong { display:block; font-size:24px; line-height:1.2; font-weight:600; margin:0; font-variant-numeric:tabular-nums; }
+.has-workspace .daily-summary strong small { font-size:13px; font-weight:400; }
+.has-workspace .daily-summary p { font-size:12px; color:var(--muted); margin:0; text-align:right; }
+.has-workspace .daily-summary>a:hover { background:var(--mint); }
+.has-workspace .daily-summary>a:focus-visible { outline:2px solid var(--focus); outline-offset:-3px; }
+.has-workspace .daily-heading { margin-bottom:18px; }
+.has-workspace .daily-heading>div:first-child { display:flex; align-items:baseline; gap:16px; flex-wrap:wrap; }
+.has-workspace .daily-heading h1 { margin:0; }
+.has-workspace .daily-card { padding:18px 20px; }
+.has-workspace .daily-card>header { margin-bottom:8px; min-height:36px; }
+.has-workspace .daily-card h2 { font-size:19px; }
+.has-workspace .daily-card-symbol { width:28px; height:28px; background:transparent; }
+.has-workspace .daily-list { margin-bottom:8px; }
+.has-workspace .daily-list a { min-height:60px; padding:10px 0; }
+.has-workspace .daily-list small { margin-top:3px; }
+.has-workspace .daily-expired-group { margin-top:8px; }
+.has-workspace .daily-missing { margin-top:8px; }
+.has-workspace .daily-card>footer { margin-top:8px; padding-top:6px; }
+.has-workspace .daily-meal { padding:10px 14px; }
+.has-workspace .daily-meal-label { margin-bottom:6px; }
+.has-workspace .daily-meal-action { padding-top:4px; }
+.has-workspace .workspace-sidebar .sf-nav-description { display:none; }
+.has-workspace .workspace-sidebar .workspace-nav-group { margin-block:16px 6px; }
+.has-workspace .workspace-sidebar .workspace-navigation { gap:4px; }
+.has-workspace .workspace-sidebar .sf-nav-main { min-height:46px; padding-block:10px; }
+.has-workspace .workspace-sidebar .sf-nav-expand { min-height:46px; }
+@media(min-width:701px) {
+ .daily-expiry,#daily-shopping { align-self:stretch; display:flex; flex-direction:column; }
+ .daily-expiry>footer,#daily-shopping>footer { margin-top:auto; }
+}
+@media(max-width:1100px) {
+ .has-workspace .daily-summary>a { grid-template-columns:minmax(0,1fr); padding:12px 14px; }
+ .has-workspace .daily-summary p { text-align:left; }
+}
+@media(max-width:700px) {
+ .has-workspace .daily-summary>a { padding:12px 10px; gap:6px; }
+ .has-workspace .daily-summary>a>span { font-size:12px; }
+ .has-workspace .daily-summary .icon,.has-workspace .daily-summary p { display:none; }
+ .has-workspace .daily-summary strong { font-size:22px; }
+ .has-workspace .daily-summary strong small { display:block; font-size:12px; margin-top:3px; }
+ .has-workspace .daily-card { padding:16px; }
+ .has-workspace .daily-heading>div:first-child { gap:8px 14px; }
 }
