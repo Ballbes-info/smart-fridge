@@ -12,3 +12,10 @@
   window.addEventListener('hashchange', reveal);
   reveal();
 })();
+
+/* Missing or unavailable recipe photos leave the text card intact. */
+document.querySelectorAll('[data-daily-photo]').forEach(photo => {
+  const hide = () => { photo.hidden = true; };
+  photo.addEventListener('error', hide, {once:true});
+  if (photo.complete && !photo.naturalWidth) hide();
+});

@@ -1,11 +1,11 @@
 /* Shared, touch-friendly refinement. Existing brand tokens also provide dark mode. */
 .has-workspace {
- --daily-radius:16px; --bg:#f1f4f7; --surface:#ffffff; --ink:#202d3a;
+ --daily-radius:14px; --bg:#f3f5f2; --surface:#ffffff; --ink:#202d3a;
  --muted:#586777; --line:#d6dee6; --control-border:#b5c2ce;
  --green:#28634f; --mint:#eaf3ef; --accent-surface:#eaf3ef;
  --button-bg:#28634f; --button-hover:#1c4d3b; --button-ink:#ffffff;
  --control-bg:#ffffff; --danger:#a63236; --focus:#28634f;
- --due-bg:#fff4dc; --due-ink:#805500; --expired-bg:#fceced;
+ --due-bg:#edf2ee; --due-ink:#3f594a; --expired-bg:#eef0f2;
  background:var(--bg); color:var(--ink);
 }
 [data-theme='dark'] .has-workspace {
@@ -13,8 +13,8 @@
  --line:#43505f; --control-border:#718093; --control-bg:#1a232d;
  --green:#9ed9bc; --mint:#293d36; --accent-surface:#293d36;
  --button-bg:#9ed9bc; --button-hover:#b8e8d0; --button-ink:#142c22;
- --danger:#ffb4b4; --focus:#9ed9bc; --due-bg:#403421; --due-ink:#f8d58b;
- --expired-bg:#422c34;
+ --danger:#ffb4b4; --focus:#9ed9bc; --due-bg:#2b3933; --due-ink:#c1d7c9;
+ --expired-bg:#303740;
 }
 .has-workspace .workspace-content { padding-top:28px; padding-bottom:20px; }
 .has-workspace .workspace-sidebar { background:var(--bg); }
@@ -38,7 +38,7 @@
 .has-workspace .sf-back-link { min-height:44px; margin-bottom:8px; }
 .has-workspace .workspace-footnote { margin-top:28px; }
 .has-workspace .flash-success { border:1px solid var(--green); background:var(--mint); color:var(--ink); }
-/* Daily overview: two independent columns, so short cards never stretch. */
+/* Daily overview: summary strip, paired lists, full-width meal plan. */
 .daily-heading { display:flex; justify-content:space-between; align-items:center; gap:20px; margin-bottom:22px; }
 .daily-heading h1 { font-size:32px; line-height:1.2; letter-spacing:-.03em; font-weight:650; margin:0 0 6px; }
 .daily-heading p { color:var(--muted); font-size:14px; }
@@ -74,7 +74,7 @@
 .daily-list strong { display:block; font-size:15px; font-weight:550; overflow-wrap:anywhere; }
 .daily-list small { display:block; font-size:13px; color:var(--muted); margin-top:5px; overflow-wrap:anywhere; }
 .daily-badge { font-size:12px; font-weight:550; color:var(--green); background:var(--mint); padding:6px 9px; border-radius:7px; max-width:115px; text-align:center; flex-shrink:0; }
-.daily-badge.is-expired { color:var(--danger); background:var(--expired-bg); }
+.daily-badge.is-expired { color:var(--ink); background:var(--expired-bg); }
 .daily-badge.is-today,.daily-badge.is-soon { background:var(--due-bg); color:var(--due-ink); }
 .daily-badge.is-today { border:1px solid var(--due-ink); }
 .daily-card>footer { margin-top:12px; padding-top:10px; border-top:1px solid var(--line); display:flex; flex-wrap:wrap; gap:4px 16px; }
@@ -82,8 +82,8 @@
 .daily-count { font-size:12px; border-radius:6px; padding:2px 7px; background:var(--mint); }
 .daily-empty { padding:16px 0; }
 .daily-empty p { font-size:14px; line-height:1.7; color:var(--muted); }
-.daily-expired-group { background:var(--expired-bg); border:1px solid color-mix(in srgb,var(--danger) 30%,var(--line)); border-radius:10px; padding:0 12px; scroll-margin-top:20px; }
-.daily-expired-group>summary { cursor:pointer; color:var(--danger); min-height:48px; padding:12px 0; font-size:14px; }
+.daily-expired-group { background:var(--expired-bg); border:1px solid var(--line); border-radius:10px; padding:0 12px; scroll-margin-top:20px; }
+.daily-expired-group>summary { cursor:pointer; color:var(--ink); min-height:48px; padding:12px 0; font-size:14px; }
 .daily-expired-group>summary strong { float:right; font-variant-numeric:tabular-nums; }
 .daily-expired-group .daily-list { margin:0; }
 .daily-missing { font-size:13px; line-height:1.65; color:var(--muted); margin:12px 0 0; }
@@ -105,7 +105,7 @@
 .daily-bars { height:125px; width:100%; display:flex; align-items:flex-end; justify-content:center; gap:4px; border-bottom:1px solid var(--line); }
 .daily-bars span { width:13px; border-radius:4px 4px 0 0; }
 .daily-bar-use,.daily-legend i { background:var(--green); }
-.daily-bar-waste,.daily-legend span+span i { background:var(--danger); }
+.daily-bar-waste,.daily-legend span+span i { background:var(--muted); }
 .daily-chart small { font-size:11px; color:var(--muted); }
 .daily-legend { display:flex; flex-wrap:wrap; gap:14px; font-size:12px; color:var(--muted); }
 .daily-legend span { display:flex; align-items:center; gap:6px; }
@@ -184,3 +184,47 @@
 .daily-stock-links a { display:inline-flex; align-items:center; min-height:28px; color:var(--green); text-decoration:underline; text-underline-offset:3px; }
 @media(pointer:coarse) { .daily-stock-links a { min-height:44px; } }
 .nt-menu-slot:target { outline:2px solid var(--focus); outline-offset:4px; scroll-margin-block:24px 100px; border-radius:8px; }
+
+/* Calm composition shared by light and dark themes. */
+.daily-summary { grid-template-columns:repeat(3,minmax(0,1fr)); gap:0; border:1px solid var(--line); border-radius:var(--daily-radius); background:var(--surface); overflow:hidden; }
+.daily-summary>a { padding:14px 18px; border:0; border-radius:0; background:transparent; }
+.daily-summary>a+a { border-left:1px solid var(--line); }
+.daily-summary strong { font-size:24px; margin:5px 0; }
+.daily-summary strong small { font-size:14px; font-weight:500; letter-spacing:normal; }
+.daily-summary>a:hover { outline:0; background:var(--mint); }
+.daily-summary>a:focus-visible { outline:2px solid var(--focus); outline-offset:-3px; }
+.daily-columns { grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:18px; }
+.daily-meals { grid-column:1 / -1; }
+.daily-meal-grid { grid-template-columns:repeat(4,minmax(0,1fr)); gap:0; margin-bottom:8px; }
+.daily-meal { border:0; border-radius:0; background:transparent; padding:12px 16px; }
+.daily-meal+.daily-meal { border-left:1px solid var(--line); }
+.daily-meal:hover { background:var(--mint); }
+.daily-meal-photo { display:block; width:100%; aspect-ratio:16 / 10; object-fit:cover; border-radius:8px; margin:4px 0 10px; }
+.daily-meal-photo[hidden] { display:none; }
+.daily-meal-action { margin-top:auto; min-height:32px; }
+.daily-diary { border-top:1px solid var(--line); margin-top:12px; }
+.daily-diary>summary { cursor:pointer; padding:12px 0; min-height:44px; font-size:13px; color:var(--muted); }
+.daily-diary .daily-nutrition { border:0; padding:4px 0 12px; }
+.daily-chart { height:100px; margin-top:12px; }
+.daily-bars { height:72px; }
+.daily-card { box-shadow:none; }
+.daily-cook .daily-action-row { min-height:44px; padding:8px 0; }
+@media(max-width:1100px) {
+ .daily-meal-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .daily-meal:nth-child(3) { border-left:0; }
+ .daily-meal:nth-child(n+3) { border-top:1px solid var(--line); }
+}
+@media(max-width:700px) {
+ .daily-columns { grid-template-columns:minmax(0,1fr); }
+ .daily-meals { grid-column:auto; }
+ .daily-summary>a { padding:12px 10px; }
+ .daily-summary>:is(a,.daily-stock-summary)>span { font-size:12px; }
+ .daily-summary .icon { display:none; }
+ .daily-summary strong { font-size:22px; }
+ .daily-summary strong small { display:block; font-size:12px; margin-top:3px; }
+ .daily-summary p { display:none; }
+}
+@media(max-width:380px) {
+ .daily-meal-grid { grid-template-columns:minmax(0,1fr); }
+ .daily-meal+.daily-meal { border-left:0; border-top:1px solid var(--line); }
+}

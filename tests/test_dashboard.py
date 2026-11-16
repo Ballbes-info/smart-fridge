@@ -132,6 +132,33 @@ class DashboardTests(unittest.TestCase):
         self.assertEqual(result['diary']['missing']['calories'],1)
         self.assertFalse(any(m['planned'] for m in overview(self.owner,menu_allowed=False)['meals']))
 
+
+    def test_selected_meal_photo_and_missing_photo_fallback(self):
+        from unittest.mock import patch
+        with db_session.create_session() as s:
+            for meal, key in [('breakfast', 'a'*24), ('lunch', 'b'*24), ('dinner', 'c'*24)]:
+                s.add(NutritionMenu(owner_id=self.owner, day=today(), meal=meal,
+                    recipe_key=key, snapshot={'title': 'Блюдо ' + meal}))
+            s.commit()
+        def lookup(owner, key):
+            self.assertEqual(owner, self.owner)
+            return {'image': 'https://www.povarenok.ru/images/meal.jpg'} if key == 'a'*24 else (
+                {'image': 'javascript:alert(1)'} if key == 'b'*24 else None)
+        with patch('services.dashboard.recipe_library.recipe', side_effect=lookup) as recipe:
+            result = overview(self.owner, menu_allowed=True)
+            self.assertEqual(result['meals'][0]['image'], 'https://www.povarenok.ru/images/meal.jpg')
+            self.assertEqual(result['meals'][1]['image'], '')
+            self.assertEqual(result['meals'][2]['image'], '')
+            recipe.reset_mock()
+            self.assertTrue(all(not m['image'] for m in overview(self.owner)['meals']))
+            recipe.assert_not_called()
+            with app.test_client() as client:
+                with client.session_transaction() as session: session['user_id'] = self.owner
+                html = client.get('/home').get_data(as_text=True)
+                self.assertEqual(html.count('data-daily-photo'), 1)
+                self.assertIn('Блюдо dinner', html)
+                self.assertNotIn('javascript:alert', html)
+
     def test_week_chart_has_moscow_boundaries_and_does_not_write(self):
         midnight=datetime.combine(today(),datetime.min.time(),tzinfo=timezone(timedelta(hours=3))).timestamp()
         with db_session.create_session() as s:

@@ -7,6 +7,7 @@ from data.storage import StorageLocation
 from data.nutrition import NutritionMenu
 from services import product_service as stock, family_service as family, shopping_service as shopping
 from services import nutrition_service as nutrition
+from services import recipe_library, recipe_catalog
 
 
 def overview(owner, *, menu_allowed=False):
@@ -18,6 +19,7 @@ def overview(owner, *, menu_allowed=False):
     pending = 0
     shopping_counts = {}
     planned = {}
+    planned_keys = {}
     with db_session.create_session() as ses:
         own_places = list(ses.scalars(select(StorageLocation).where(StorageLocation.owner_id == owner)))
         shared_places = [place for _, place, _ in family.accessible_places(ses, owner) if place.owner_id != owner]
@@ -56,8 +58,10 @@ def overview(owner, *, menu_allowed=False):
                     unit=stock.UNITS.get(item.unit, ('',))[0], priority=item.priority, scope=scope))
         groceries.sort(key=lambda item: (not item['priority'], item['created_at'], item['scope'], item['id']))
         if menu_allowed:
-            planned = {row.meal: row.snapshot.get('title', 'Блюдо') for row in ses.scalars(
-                select(NutritionMenu).where(NutritionMenu.owner_id == owner, NutritionMenu.day == today))}
+            for row in ses.scalars(select(NutritionMenu).where(
+                    NutritionMenu.owner_id == owner, NutritionMenu.day == today)):
+                planned[row.meal] = row.snapshot.get('title', 'Блюдо')
+                planned_keys[row.meal] = row.recipe_key
         # Count operations, never mix kilograms, pieces and money in one graph.
         start = today - timedelta(days=6)
         msk = timezone(timedelta(hours=3))
@@ -73,10 +77,15 @@ def overview(owner, *, menu_allowed=False):
     weekly = [dict(label=day.strftime('%d.%m'), **values,
                    use_height=values['use'] / maximum * 100, waste_height=values['waste'] / maximum * 100)
               for day, values in days.items()]
+    # Resolve only this owner's selected dishes; old menu snapshots need no migration.
+    photos = {}
+    for key in set(planned_keys.values()):
+        recipe = recipe_library.recipe(owner, key)
+        photos[key] = recipe_catalog.safe_url(recipe.get('image')) if recipe else ''
     diary = nutrition.summary(owner, today)
     return dict(day=today.isoformat(), date=today.strftime('%d.%m.%Y'), counts=counts, total_batches=sum(counts.values()),
         products=len(groups), personal_products=len(personal_groups), shared_products=len(groups-personal_groups), places=len(place_ids), shared=bool(shared_places), urgent=urgent, expired=expired,
         pending=pending, shopping_counts=shopping_counts, groceries=groceries[:4], menu_allowed=menu_allowed,
-        meals=[dict(key=key, label=label, planned=planned.get(key), recorded=len(diary['meals'][key]))
+        meals=[dict(key=key, label=label, planned=planned.get(key), image=photos.get(planned_keys.get(key), ''), recorded=len(diary['meals'][key]))
                for key, label in nutrition.MEALS.items()], diary=diary,
         weekly=weekly, weekly_total=sum(d['use'] + d['waste'] for d in days.values()))
