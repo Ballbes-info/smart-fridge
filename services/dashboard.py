@@ -13,8 +13,10 @@ def overview(owner, *, menu_allowed=False):
     today = stock.today()
     counts = dict(expired=0, today=0, soon=0, fresh=0, unknown=0)
     urgent = []
+    expired = []
     groceries = []
     pending = 0
+    shopping_counts = {}
     planned = {}
     with db_session.create_session() as ses:
         own_places = list(ses.scalars(select(StorageLocation).where(StorageLocation.owner_id == owner)))
@@ -27,13 +29,17 @@ def overview(owner, *, menu_allowed=False):
                    ProductGroup.owner_id == StorageLocation.owner_id, ProductBatch.quantity_micro > 0)
             .order_by(ProductBatch.expiry_date.is_(None), ProductBatch.expiry_date, ProductBatch.id))
         groups = set()
+        personal_groups = set()
         for batch, group, place in rows:
             groups.add(group.id)
+            if group.owner_id == owner:
+                personal_groups.add(group.id)
             days = (batch.expiry_date - today).days if batch.expiry_date else None
             state = 'unknown' if days is None else 'expired' if days < 0 else 'today' if days == 0 else 'soon' if days <= 3 else 'fresh'
             counts[state] += 1
-            if state in ('today', 'soon', 'expired') and len(urgent) < 5:
-                urgent.append(dict(name=group.name, group_id=group.id, batch_id=batch.id, storage_id=place.id,
+            target = expired if state == 'expired' else urgent
+            if state in ('today', 'soon', 'expired') and len(target) < 5:
+                target.append(dict(name=group.name, group_id=group.id, batch_id=batch.id, storage_id=place.id,
                     shared=place.owner_id != owner, place=place.name, state=state,
                     label='Срок истёк' if days < 0 else 'Сегодня' if days == 0 else 'Через '+str(days)+' дн.',
                     quantity=stock.quantity_text(batch.quantity_micro, group.dimension)))
@@ -43,11 +49,12 @@ def overview(owner, *, menu_allowed=False):
             except shopping.ShoppingError:
                 continue
             condition = condition & model.bought.is_(False) & model.stocked.is_(False)
-            pending += ses.scalar(select(func.count()).select_from(model).where(condition))
+            shopping_counts[scope] = ses.scalar(select(func.count()).select_from(model).where(condition))
+            pending += shopping_counts[scope]
             for item in ses.scalars(select(model).where(condition).order_by(model.priority.desc(), model.created_at, model.id).limit(4)):
-                groceries.append(dict(name=item.name, quantity=item.quantity,
+                groceries.append(dict(id=item.id, created_at=item.created_at, name=item.name, quantity=item.quantity,
                     unit=stock.UNITS.get(item.unit, ('',))[0], priority=item.priority, scope=scope))
-        groceries.sort(key=lambda item: not item['priority'])
+        groceries.sort(key=lambda item: (not item['priority'], item['created_at'], item['scope'], item['id']))
         if menu_allowed:
             planned = {row.meal: row.snapshot.get('title', 'Блюдо') for row in ses.scalars(
                 select(NutritionMenu).where(NutritionMenu.owner_id == owner, NutritionMenu.day == today))}
@@ -67,9 +74,9 @@ def overview(owner, *, menu_allowed=False):
                    use_height=values['use'] / maximum * 100, waste_height=values['waste'] / maximum * 100)
               for day, values in days.items()]
     diary = nutrition.summary(owner, today)
-    return dict(date=today.strftime('%d.%m.%Y'), counts=counts, total_batches=sum(counts.values()),
-        products=len(groups), places=len(place_ids), shared=bool(shared_places), urgent=urgent,
-        pending=pending, groceries=groceries[:4], menu_allowed=menu_allowed,
+    return dict(day=today.isoformat(), date=today.strftime('%d.%m.%Y'), counts=counts, total_batches=sum(counts.values()),
+        products=len(groups), personal_products=len(personal_groups), shared_products=len(groups-personal_groups), places=len(place_ids), shared=bool(shared_places), urgent=urgent, expired=expired,
+        pending=pending, shopping_counts=shopping_counts, groceries=groceries[:4], menu_allowed=menu_allowed,
         meals=[dict(key=key, label=label, planned=planned.get(key), recorded=len(diary['meals'][key]))
                for key, label in nutrition.MEALS.items()], diary=diary,
         weekly=weekly, weekly_total=sum(d['use'] + d['waste'] for d in days.values()))

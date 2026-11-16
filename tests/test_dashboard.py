@@ -59,8 +59,40 @@ class DashboardTests(unittest.TestCase):
         result = overview(self.owner)
         self.assertEqual(result['counts'], dict(expired=1, today=1, soon=2, fresh=1, unknown=1))
         self.assertEqual(result['products'], 6)
-        self.assertEqual(len(result['urgent']), 4)
+        self.assertEqual(len(result['urgent']), 3)
+        self.assertEqual(len(result['expired']), 1)
         self.assertNotIn('Чужой продукт', str(result))
+
+    def test_expired_stock_does_not_hide_upcoming_expiry(self):
+        for i in range(8): self.product(self.owner,-i-1,name='Просрочка '+str(i))
+        self.product(self.owner,0,name='Использовать сегодня')
+        result=overview(self.owner)
+        self.assertEqual(result['counts']['expired'],8)
+        self.assertEqual(result['urgent'][0]['name'],'Использовать сегодня')
+        self.assertTrue(all(item['state']=='expired' for item in result['expired']))
+
+    def test_dashboard_links_target_the_selected_item_and_meal(self):
+        from html.parser import HTMLParser
+        class Links(HTMLParser):
+            def __init__(self): super().__init__(); self.urls=[]
+            def handle_starttag(self,tag,attrs):
+                if tag=='a': self.urls.append(dict(attrs).get('href',''))
+        with db_session.create_session() as s:
+            item=ShoppingItem(owner_id=self.owner,created_by=self.owner,name='Молоко')
+            s.add(item); s.commit(); item_id=item.id
+        with app.test_client() as client:
+            with client.session_transaction() as session: session['user_id']=self.owner
+            html=client.get('/home').get_data(as_text=True)
+            links=Links(); links.feed(html)
+            self.assertIn('/shopping/'+str(item_id)+'/edit?scope=personal',links.urls)
+            for meal in ('breakfast','lunch','dinner','snack'):
+                self.assertIn('/home/nutrition/menu#meal-'+str(today())+'-'+meal,links.urls)
+            plan=client.get('/home/nutrition/menu').get_data(as_text=True)
+            self.assertIn('id="meal-'+str(today())+'-lunch"',plan)
+            shopping_html=client.get('/home/shopping?add=1').get_data(as_text=True)
+            self.assertIn('class="sh-panel sh-add" open',shopping_html)
+            self.assertNotIn('Больше времени для себя',html)
+            self.assertNotIn('Начните с того',html)
 
     def test_shared_access_revocation_and_family_purchases(self):
         place = self.product(self.other, 0, name='Общее молоко')
