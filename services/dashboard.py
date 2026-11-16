@@ -41,7 +41,7 @@ def overview(owner, *, menu_allowed=False):
             counts[state] += 1
             target = expired if state == 'expired' else urgent
             if state in ('today', 'soon', 'expired') and len(target) < 5:
-                target.append(dict(name=group.name, group_id=group.id, batch_id=batch.id, storage_id=place.id,
+                target.append(dict(name=group.name, category=group.details.get('category', 'other'), group_id=group.id, batch_id=batch.id, storage_id=place.id,
                     shared=place.owner_id != owner, place=place.name, state=state,
                     label='Срок истёк' if days < 0 else 'Сегодня' if days == 0 else 'Через '+str(days)+' дн.',
                     quantity=stock.quantity_text(batch.quantity_micro, group.dimension)))
@@ -54,7 +54,7 @@ def overview(owner, *, menu_allowed=False):
             shopping_counts[scope] = ses.scalar(select(func.count()).select_from(model).where(condition))
             pending += shopping_counts[scope]
             for item in ses.scalars(select(model).where(condition).order_by(model.priority.desc(), model.created_at, model.id).limit(4)):
-                groceries.append(dict(id=item.id, created_at=item.created_at, name=item.name, quantity=item.quantity,
+                groceries.append(dict(id=item.id, expected=shopping.signature(item), created_at=item.created_at, name=item.name, quantity=item.quantity,
                     unit=stock.UNITS.get(item.unit, ('',))[0], priority=item.priority, scope=scope))
         groceries.sort(key=lambda item: (not item['priority'], item['created_at'], item['scope'], item['id']))
         if menu_allowed:

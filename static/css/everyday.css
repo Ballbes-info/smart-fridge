@@ -278,3 +278,40 @@
  .has-workspace .daily-card { padding:16px; }
  .has-workspace .daily-heading>div:first-child { gap:8px 14px; }
 }
+
+/* Distinct visual patterns for stock, shopping, meals and recipe discovery. */
+.has-workspace .daily-list a>.daily-food-symbol { flex:0 0 44px; display:grid; place-items:center; width:44px; height:48px; border-radius:10px; background:var(--mint); color:var(--green); }
+.daily-food-symbol svg { width:30px; height:30px; }
+.has-workspace .daily-list .daily-product-copy { flex:1; min-width:0; }
+.daily-check-row { display:flex; align-items:center; gap:10px; }
+.daily-check-row>form { flex:0 0 44px; margin:0; }
+.daily-check-row>a { flex:1; min-width:0; }
+.has-workspace .daily-check { display:grid; place-items:center; width:44px; height:44px; padding:0; border:0; background:transparent; cursor:pointer; color:var(--green); }
+.daily-check>span { display:grid; place-items:center; width:23px; height:23px; border:1.5px solid var(--control-border); border-radius:6px; }
+.daily-check .icon { opacity:0; width:16px; height:16px; }
+.daily-check:hover>span,.daily-check:focus-visible>span { border-color:var(--green); background:var(--mint); }
+.daily-check:hover .icon,.daily-check:focus-visible .icon { opacity:1; }
+.daily-check:focus-visible { outline:2px solid var(--focus); outline-offset:1px; }
+.has-workspace .daily-meal-grid { gap:12px; }
+.has-workspace .daily-meal { border:1px solid var(--line); border-radius:10px; padding:14px; background:var(--bg); }
+.has-workspace .daily-meal.is-empty { justify-content:center; align-items:flex-start; border-style:dashed; min-height:94px; }
+.has-workspace .daily-meal.is-empty strong { color:var(--green); margin:4px 0; }
+.has-workspace .daily-meal.is-planned { background:var(--surface); }
+.has-workspace .daily-meal-photo { aspect-ratio:16 / 9; margin-top:6px; }
+.has-workspace .daily-meal:hover { background:var(--mint); border-color:var(--green); }
+.daily-recipe-launch { display:flex; align-items:center; gap:16px; min-height:108px; padding:18px; border-radius:12px; background:var(--mint); color:var(--green); }
+.daily-recipe-symbol { flex:0 0 52px; }
+.daily-recipe-symbol svg { display:block; width:52px; height:52px; }
+.daily-recipe-launch>span:nth-child(2) { flex:1; min-width:0; }
+.daily-recipe-launch strong { display:block; font-size:17px; line-height:1.4; }
+.daily-recipe-launch small { display:block; color:var(--muted); margin-top:6px; font-size:13px; }
+.daily-recipe-launch:hover { outline:1px solid var(--green); }
+.daily-activity.is-empty { align-self:start; }
+.daily-activity.is-empty .daily-empty { padding:0; }
+.daily-activity.is-empty>footer { border-top:0; padding-top:0; margin-top:0; }
+@media(max-width:600px) {
+ .daily-recipe-launch { gap:12px; padding:14px; }
+ .daily-recipe-launch strong { font-size:15px; }
+ .has-workspace .daily-meal-grid { gap:8px; }
+ .has-workspace .daily-meal { padding:12px; }
+}

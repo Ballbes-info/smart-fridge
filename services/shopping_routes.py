@@ -74,6 +74,7 @@ def register_shopping(app,subscription_required,login_required):
     @login_required
     def action():
         check_form();scope=mode();command=request.form.get('command','');params=request.form.to_dict()
+        return_home=params.pop('return_to',None)=='home' and command=='toggle'
         params.pop('submission_key',None);params.pop('csrf_token',None);params.pop('scope',None);params.pop('command',None)
         try:
             if command=='clear':
@@ -86,7 +87,7 @@ def register_shopping(app,subscription_required,login_required):
             if request.accept_mimetypes.best=='application/json':return jsonify(ok=False,error=str(exc)),exc.status
             if command=='add':return page(scope,add_values=request.form.to_dict(),add_error=str(exc),status=exc.status)
             flash(str(exc),'error')
-        return redirect(url_for('shopping.shared' if scope=='family' else 'shopping.index'))
+        return redirect(url_for('workspace.home', _anchor='daily-shopping') if return_home else url_for('shopping.shared' if scope=='family' else 'shopping.index'))
 
     @shopping.route('/shopping/<int:item_id>/edit',methods=['GET','POST'])
     @login_required

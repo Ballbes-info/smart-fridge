@@ -44,6 +44,41 @@ class DashboardTests(unittest.TestCase):
             s.commit()
             return place_id
 
+
+    def test_home_purchase_form_is_protected_and_idempotent(self):
+        from html.parser import HTMLParser
+        class Forms(HTMLParser):
+            def __init__(self):
+                super().__init__(); self.forms=[]; self.current=None
+            def handle_starttag(self, tag, attrs):
+                attrs=dict(attrs)
+                if tag=='form' and attrs.get('action')=='/shopping/action':
+                    self.current={}
+                if tag=='input' and self.current is not None and attrs.get('name'):
+                    self.current[attrs['name']]=attrs.get('value','')
+            def handle_endtag(self, tag):
+                if tag=='form' and self.current is not None:
+                    self.forms.append(self.current); self.current=None
+        with db_session.create_session() as s:
+            item=ShoppingItem(owner_id=self.owner,created_by=self.owner,name='Хлеб')
+            foreign=ShoppingItem(owner_id=self.other,created_by=self.other,name='Чужое')
+            s.add_all([item,foreign]); s.commit(); item_id=item.id; foreign_id=foreign.id
+        with app.test_client() as client:
+            with client.session_transaction() as session: session['user_id']=self.owner
+            parser=Forms(); parser.feed(client.get('/home').get_data(as_text=True))
+            form=next(f for f in parser.forms if f.get('item_id')==str(item_id))
+            self.assertEqual(client.post('/shopping/action',data=dict(form,csrf_token='invalid')).status_code,400)
+            response=client.post('/shopping/action',data=form)
+            self.assertEqual(response.status_code,302)
+            self.assertTrue(response.location.endswith('/home#daily-shopping'))
+            client.post('/shopping/action',data=form)
+            with db_session.create_session() as s:
+                self.assertTrue(s.get(ShoppingItem,item_id).bought)
+            self.assertEqual(overview(self.owner)['pending'],0)
+            client.post('/shopping/action',data=dict(form,item_id=str(foreign_id),submission_key='f'*48))
+            with db_session.create_session() as s:
+                self.assertFalse(s.get(ShoppingItem,foreign_id).bought)
+
     def test_empty_overview_is_honest(self):
         result = overview(self.owner)
         self.assertEqual(result['products'], 0)

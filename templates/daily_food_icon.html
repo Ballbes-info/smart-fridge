@@ -1,0 +1,15 @@
+{% macro food_icon(category) -%}
+<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+{% if category == 'dairy' %}<path d="M12 4h8v5l3 5v14H9V14l3-5zM12 9h8M9 17h14M13 22h6"/>
+{% elif category == 'fruits' %}<path d="M16 11c-7-6-13 0-11 8s6 11 11 7c5 4 9 1 11-7s-4-14-11-8zM16 11V7c0-4 4-5 7-4-1 4-4 5-7 4"/>
+{% elif category == 'vegetables' %}<path d="M12 11c6-5 13 1 9 7L7 28l5-17zM20 10l2-7m-1 8 7-5M13 16l4 3m-7 2 3 2"/>
+{% elif category == 'fish' %}<path d="M5 16c7-12 17-9 22 0-5 9-15 12-22 0zm0 0-3-5v10zM21 12c-2 3-2 5 0 8"/><circle cx="24" cy="15" r="1"/>
+{% elif category == 'eggs' %}<path d="M25 20c0 12-18 12-18 0 0-7 5-16 9-16s9 9 9 16z"/>
+{% elif category == 'bakery' %}<path d="M5 13c0-12 22-12 22 0l-3 3v12H8V16zM12 9l-2 4m8-5-2 5m7-3-2 4"/>
+{% elif category == 'meat' %}<path d="M12 7c9-7 20 4 12 13-4 4-8 1-10 3l-5 5-5-5 5-5c2-2-1-7 3-11z"/><ellipse cx="19" cy="12" rx="4" ry="3"/>
+{% elif category == 'grains' %}<path d="M16 28V5m0 17c-8 0-9-5-9-5 6 0 9 5 9 5zm0-7c-8 0-9-5-9-5 6 0 9 5 9 5zm0 4c8 0 9-5 9-5-6 0-9 5-9 5zm0-7c8 0 9-5 9-5-6 0-9 5-9 5z"/>
+{% elif category == 'ready' %}<path d="M4 24h24M6 21a10 10 0 0 1 20 0zM16 8V5m-3 0h6"/>
+{% elif category == 'sweets' %}<path d="m4 8 7 3 10 10 3 7 4-8-7-3L11 7 4 4z"/><path d="m11 11 10-4m-10 14 10-4"/>
+{% else %}<path d="m5 10 11-6 11 6v15l-11 5-11-5zM5 10l11 5 11-5M16 15v15"/>
+{% endif %}</svg>
+{%- endmacro %}

@@ -144,7 +144,10 @@ def register_workspace(app, login_required, subscription_required):
     @subscription_required
     def home():
         from services.dashboard import overview
+        import secrets
+        session.setdefault('storage_csrf', secrets.token_hex(32))
         response = app.make_response(render_template('dashboard.html', active_section='home',
+            daily_csrf=session['storage_csrf'], daily_nonce=lambda: secrets.token_hex(24),
             dashboard=overview(session['user_id'], menu_allowed=not access_state('nutrition', 'menu')['locked'])))
         response.headers['Cache-Control'] = 'no-store'
         return response
