@@ -57,6 +57,25 @@ def register_nutrition(app,subscription_required):
             else:flash('Цели сохранены','success');return redirect(url_for('nutrition.goals'))
         return render_template('nutrition_goals.html',**common('goals'),values=values,revision=revision,error=error,activities=ns.ACTIVITIES,goals=ns.GOALS),422 if error else 200
 
+    @nutrition.route('/home/nutrition/restrictions',methods=['GET','POST'])
+    @subscription_required
+    def restrictions():
+        from services import dietary
+        goals,revision=ns.profile(session['user_id']);values=dietary.DEFAULTS|goals.get('dietary',{});error=''
+        if request.method=='POST':
+            check_form()
+            try:ns.save_dietary(session['user_id'],request.form)
+            except ValueError as exc:
+                error=str(exc);values=dict(request.form);values['allergens']=request.form.getlist('allergens')
+            else:
+                flash('Ограничения сохранены. Уже запланированные блюда проверьте заново.','success')
+                return redirect(url_for('nutrition.restrictions'))
+        q=stock.clean(request.args.get('q',''))[:120]
+        ctx=common('goals');ctx['feature']=dict(ctx['feature'],slug='restrictions',name='Ограничения питания')
+        return render_template('nutrition_restrictions.html',**ctx,values=values,revision=revision,error=error,q=q,
+            allergens=dietary.ALLERGENS,ages=dietary.AGES,conditions=dietary.CONDITIONS,
+            result=ns.dietary_results(session['user_id'],request.args) if request.method=='GET' else None),422 if error else 200
+
     @nutrition.route('/home/nutrition/add',methods=['GET','POST'])
     @nutrition.route('/home/nutrition/entry/<int:entry_id>',methods=['GET','POST'])
     @subscription_required

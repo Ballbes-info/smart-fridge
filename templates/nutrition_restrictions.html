@@ -1,0 +1,23 @@
+{% extends 'nutrition_base.html' %}
+{% from 'nutrition_base.html' import csrf with context %}
+{% block nutrition_title %}Ограничения питания{% endblock %}
+{% block nutrition_content %}
+<p class="nt-note">Личные настройки для подбора блюд и проверки при добавлении в план. Общий каталог и подбор по запасам не фильтруются по этим настройкам. Диагноз не определяет рацион автоматически.</p>
+{% if error %}<p class="nt-error" role="alert">{{ error }}</p>{% endif %}
+<form method="post" class="nt-panel">{{ csrf() }}<input type="hidden" name="revision" value="{{ revision }}">
+<div class="nt-form-grid"><div class="product-field"><label for="diet-age">Для кого подбираем</label><select name="audience" id="diet-age">{% for key,label in ages.items() %}<option value="{{ key }}" {% if values.audience==key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div><div class="product-field"><label for="diet-condition">Особенности здоровья</label><select name="condition" id="diet-condition">{% for key,label in conditions.items() %}<option value="{{ key }}" {% if values.condition==key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div></div>
+<details class="nt-parameters" {% if values.allergens %}open{% endif %}><summary>Аллергены{% if values.allergens %} · {{ values.allergens|length }}{% endif %}</summary><div class="nt-form-grid">{% for key,item in allergens.items() %}<label class="nt-check"><input type="checkbox" name="allergens" value="{{ key }}" {% if key in values.allergens %}checked{% endif %}><span>{{ item[0] }}</span></label>{% endfor %}</div></details>
+<div class="nt-form-grid"><div class="product-field"><label for="diet-excluded">Исключения по назначению врача</label><textarea id="diet-excluded" name="medical_excluded" maxlength="500" rows="3" placeholder="Названия продуктов через запятую">{{ values.medical_excluded }}</textarea></div><div class="product-field"><label for="diet-carbs">Максимум углеводов на приём пищи, г</label><input id="diet-carbs" name="carb_limit" type="number" min="0.1" max="300" step="0.1" value="{{ values.carb_limit }}"><p class="nt-muted">Только если такой предел согласован с врачом. Оставьте пустым, если не назначен. В подборе проверяется одна порция; при сохранении — выбранное количество.</p></div></div>
+<p class="nt-note">При целиакии включается проверка злаков с глютеном. При диабете и других заболеваниях учитываются введённые исключения и предел углеводов, но не лекарства и все необходимые нутриенты. Для заболеваний почек этого недостаточно для лечебного рациона.</p>
+<p class="nt-muted">Детям и пожилым людям нужны индивидуальные порции и подходящая текстура. Для детей до года подбор недоступен. Автоматические взрослые нормы при смене группы или выборе заболевания сбрасываются; ручные сохраняются.</p>
+<button class="product-primary">Сохранить ограничения</button>
+</form>
+<section class="nt-panel"><h2>Рецепты по сохранённым ограничениям</h2>
+<p class="nt-note">Это предварительная проверка текста состава. Блюда ниже требуют проверки упаковок и способа приготовления, особенно при аллергии. Составные продукты с неизвестным составом исключаются. Настройки остаются личными и не отправляются ИИ.</p>
+<form method="get" class="nt-search"><div class="product-field"><label for="diet-q">Название блюда или ингредиент</label><input id="diet-q" name="q" type="search" maxlength="120" value="{{ q }}"></div><button class="workspace-secondary-button">Найти</button></form>
+{% if result %}
+<p class="nt-muted">Проверено на этой странице: {{ result.scanned }}. Исключено: {{ result.excluded }}. Страница {{ result.page }} из {{ result.pages }}.</p>
+<div class="nt-source-results">{% for item in result.results %}<article class="nt-panel"><h3><a href="{{ url_for('recipes.detail',recipe_key=item.recipe.key) }}">{{ item.recipe.title }}</a></h3><p>Явных совпадений с ограничениями не найдено.</p>{% for note in item.report.review %}<p class="nt-muted">{{ note }}</p>{% endfor %}<a href="{{ url_for('nutrition.menu',recipe_key=item.recipe.key,_anchor='menu-picker') }}">Выбрать для плана →</a></article>{% else %}<p>На этой странице нет блюд без выявленных ограничений. Уточните поиск или перейдите дальше. Ограничения не ослабляются автоматически.</p>{% endfor %}</div>
+<nav class="nt-inline" aria-label="Страницы рецептов">{% if result.page>1 %}<a href="{{ url_for('nutrition.restrictions',q=q,page=result.page-1) }}">← Назад</a>{% endif %}{% if result.page<result.pages %}<a href="{{ url_for('nutrition.restrictions',q=q,page=result.page+1) }}">Далее →</a>{% endif %}</nav>
+{% endif %}</section>
+{% endblock %}

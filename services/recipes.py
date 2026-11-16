@@ -213,7 +213,15 @@ def register_recipes(app,subscription_required):
             ctx['workspace_back_url']=origin;context['return_to']=origin
         for source,slug in [('/home/recipes/saved','saved'),('/home/recipes/nutrition','nutrition'),('/home/recipes/generate','generate')]:
             if origin and urlsplit(origin).path==source:ctx['feature']=feature(slug)
-        return render_template('recipe_detail.html',**ctx,recipe=recipe,assessment=assessment,snapshot=snapshot,stock_context=context,from_stock=from_stock,
+        from services import nutrition_service as ns, dietary
+        goals,_=ns.profile(session['user_id'])
+        dietary_report=None
+        if dietary.active(goals):
+            facts=library.nutrition(session['user_id'],recipe,personal['nutrition'])
+            dietary_report=dietary.assess(recipe,goals,facts['per_portion'] if facts['complete'] else None)
+            try:ns.check_exclusions(recipe,goals['excluded'])
+            except ValueError: dietary_report['blocked'].append('Есть исключённый ингредиент.')
+        return render_template('recipe_detail.html',**ctx,dietary_report=dietary_report,recipe=recipe,assessment=assessment,snapshot=snapshot,stock_context=context,from_stock=from_stock,
             personal=personal,cooking_steps=library.cooking_steps(recipe),nutrition=library.nutrition(session['user_id'],recipe,personal['nutrition']),nutrient_names=library.NUTRIENTS),422 if recipe['portion_error'] else 200
 
     @recipes.route('/recipes/item/<recipe_key>/export')

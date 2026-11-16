@@ -4,7 +4,7 @@
 {% block head %}<link rel="stylesheet" href="{{ url_for('static',filename='css/products.css') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/recipes.css') }}">{% endblock %}
 {% block workspace_content %}
 <header class="workspace-heading recipe-page-heading"><div><h1>Рецепты</h1><p>Каталог блюд на русском языке</p></div>{% if catalog.count %}<div class="recipe-catalog-count"><strong>{{ '{:,}'.format(catalog.count)|replace(',',' ') }}</strong><span>в базе · {{ '{:,}'.format(catalog.complete)|replace(',',' ') }} со шагами</span></div>{% endif %}</header>
-<nav class="recipe-tabs" aria-label="Режим рецептов"><a href="{{ url_for('recipes.index') }}" aria-current="page">Каталог блюд</a><a href="{{ url_for('recipes.available') }}">Из моих продуктов</a></nav>
+<nav class="recipe-tabs" aria-label="Режим рецептов"><a href="{{ url_for('recipes.index') }}" aria-current="page">Каталог блюд</a><a href="{{ url_for('recipes.available') }}">Из моих продуктов</a><a href="{{ url_for('nutrition.restrictions') }}">По ограничениям питания</a></nav>
 {% if catalog.count %}
 <form class="recipe-filters" method="get">
 <div class="product-field recipe-query"><label for="recipe-query">Название или ингредиент</label><input type="search" id="recipe-query" name="q" value="{{ filters.q }}" maxlength="120" placeholder="Например, курица или суп с рисом"></div>

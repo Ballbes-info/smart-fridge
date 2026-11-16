@@ -8,7 +8,7 @@ from data.nutrition import NutritionProfile, NutritionEntry, NutritionMeasure, N
 from data.product import ProductBatch, ProductGroup, ProductMutation
 from data.activity import ActivityEvent
 from services import product_service as stock, product_operations as operations
-from services import recipe_library as library, recipe_catalog as catalog, recipe_matching as matching
+from services import recipe_library as library, recipe_catalog as catalog, recipe_matching as matching, dietary
 
 MEALS = {'breakfast':'Завтрак','lunch':'Обед','dinner':'Ужин','snack':'Перекус'}
 NAMES = {'calories':'Ккал','protein':'Белки','fat':'Жиры','carbs':'Углеводы'}
@@ -59,7 +59,9 @@ def profile(owner):
 
 
 def save_profile(owner,form):
+    existing,_=profile(owner)
     values={k:str(form.get(k,'')).strip() for k in DEFAULTS}
+    values['dietary']=existing.get('dietary',dict(dietary.DEFAULTS))
     if values['mode'] not in ['manual','auto'] or values['goal'] not in GOALS:raise ValueError('Выберите способ расчёта и цель.')
     if values['sex'] not in ['', 'male','female'] or values['activity'] not in ACTIVITIES:raise ValueError('Проверьте пол и активность.')
     if len(values['excluded'])>500 or len(values['preferences'])>500:raise ValueError('Предпочтения и исключения — до 500 символов.')
@@ -67,6 +69,8 @@ def save_profile(owner,form):
     for field,lo,hi in [('age',1,120),('height',80,250),('weight',20,400),('target_weight',20,400)]:
         if values[field]:values[field]=shown(number(values[field],field,lo,hi))
     if values['mode']=='auto':
+        restrictions=values['dietary']
+        if restrictions.get('audience','adult')!='adult' or restrictions.get('condition','none')!='none':raise ValueError('Для выбранной возрастной группы или назначений укажите индивидуальные нормы вручную.')
         if values['sex'] not in ['female','male'] or values['activity'] not in ACTIVITIES:raise ValueError('Укажите пол и активность для расчёта.')
         age=number(values['age'],'Возраст',18,100);height=number(values['height'],'Рост',100,250);weight=number(values['weight'],'Вес',30,400)
         base=10*weight+Decimal('6.25')*height-5*age+(5 if values['sex']=='male' else -161)
@@ -267,6 +271,8 @@ def save_menu(owner,form):
     goals,_=profile(owner);check_exclusions(r,goals['excluded'])
     n=library.nutrition(owner,r,library.state(owner,key)['nutrition'])
     nutrients=(n['per_portion'] or n['totals']) if n['complete'] else None
+    screened=dietary.assess(r,goals,n['per_portion'] if n['complete'] else None,portions)
+    if screened['blocked']:raise ValueError(' '.join(screened['blocked']))
     with db_session.create_session() as s:
         s.execute(text('BEGIN IMMEDIATE'));row=s.scalar(select(NutritionMenu).where(NutritionMenu.owner_id==owner,NutritionMenu.day==day,NutritionMenu.meal==meal))
         if str(row.revision if row else 0)!=str(form.get('revision','0')):raise ValueError('В этом приёме пищи уже есть план. Обновите страницу перед заменой.')
@@ -306,6 +312,8 @@ def auto_menu(owner,form):
     start=day_value(form.get('day'),future=True)
     days=int(number(form.get('days','1'),'Дни',1,7))
     goals,_=profile(owner)
+    restrictions=dietary.DEFAULTS|goals.get('dietary',{})
+    if dietary.active(goals):raise ValueError('При ограничениях питания выбирайте блюда вручную после проверки состава в разделе «Ограничения». Автоматический рацион не составляется.')
     if not goals['calories']:raise ValueError('Сначала укажите дневную норму в «Мои цели».')
     candidates=[];seen=set()
     snapshot=matching.stock_snapshot(owner,{}) if form.get('use_stock')=='1' else None
@@ -352,3 +360,38 @@ def search_recipes(owner,q=''):
     for row in [*saved,*catalog_rows]:
         if row['key'] not in combined:combined[row['key']]=row
     return list(combined.values())[:24]
+
+
+def save_dietary(owner,form):
+    values=dietary.validate(form)
+    with db_session.create_session() as s:
+        s.execute(text('BEGIN IMMEDIATE'));row=s.get(NutritionProfile,owner)
+        if str(row.revision if row else 0)!=str(form.get('revision','')):
+            raise ValueError('Настройки изменились в другой вкладке. Обновите страницу.')
+        merged=DEFAULTS|((row.values or {}) if row else {})
+        merged['dietary']=values
+        if values['audience']!='adult' or values['condition']!='none':
+            if merged.get('mode')=='auto':
+                merged.update(mode='manual',calories='',protein='',fat='',carbs='')
+        if row:row.values=merged;row.revision+=1
+        else:s.add(NutritionProfile(owner_id=owner,values=merged))
+        event(s,owner,'dietary','Ограничения питания обновлены');s.commit()
+
+
+def dietary_results(owner,args):
+    goals,_=profile(owner)
+    data=catalog.browse(dict(q=str(args.get('q',''))[:120],page=args.get('page','1'),content='complete'))
+    results=[];excluded=0
+    for card in data['recipes']:
+        r=library.recipe(owner,card['key'])
+        if not r:continue
+        n=None
+        if goals.get('dietary',{}).get('carb_limit'):
+            info=library.nutrition(owner,r,library.state(owner,r['key'])['nutrition'])
+            n=info['per_portion'] if info['complete'] else None
+        report=dietary.assess(r,goals,n)
+        try:check_exclusions(r,goals['excluded'])
+        except ValueError:report['blocked'].append('Есть исключённый ингредиент.');report['eligible']=False
+        if report['eligible']:results.append(dict(recipe=r,report=report))
+        else:excluded+=1
+    return dict(results=results,excluded=excluded,page=data['page'],pages=data['pages'],scanned=len(data['recipes']))
