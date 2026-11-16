@@ -19,6 +19,7 @@ class RecipeGeneration(SqlAlchemyBase):
     __tablename__='recipe_generations'
     id=sa.Column(sa.String(32),primary_key=True)
     owner_id=sa.Column(sa.Integer,sa.ForeignKey('users.id'),nullable=False,index=True)
+    ai_mode=sa.Column(sa.String(16),nullable=False,default='standard',server_default='standard')
     period_start=sa.Column(sa.Float,nullable=False)
     status=sa.Column(sa.String(16),nullable=False)
     recipe_key=sa.Column(sa.String(24),nullable=True)

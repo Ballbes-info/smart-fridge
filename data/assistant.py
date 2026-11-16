@@ -6,7 +6,7 @@ from .db_session import SqlAlchemyBase
 class AssistantPreferences(SqlAlchemyBase):
     __tablename__='assistant_preferences'
     owner_id=sa.Column(sa.Integer,sa.ForeignKey('users.id'),primary_key=True)
-    pet_enabled=sa.Column(sa.Boolean,nullable=False,default=False)
+    pet_enabled=sa.Column(sa.Boolean,nullable=False,default=True)
     pet_roaming=sa.Column(sa.Boolean,nullable=False,default=True)
     pet_hints=sa.Column(sa.Boolean,nullable=False,default=True)
 
@@ -16,6 +16,7 @@ class AssistantExchange(SqlAlchemyBase):
     owner_id=sa.Column(sa.Integer,sa.ForeignKey('users.id'),nullable=False,index=True)
     nonce=sa.Column(sa.String(48),nullable=False)
     mode=sa.Column(sa.String(16),nullable=False)
+    ai_mode=sa.Column(sa.String(16),nullable=False,default='standard',server_default='standard')
     question=sa.Column(sa.Text,nullable=False)
     answer=sa.Column(sa.Text,nullable=False,default='')
     status=sa.Column(sa.String(16),nullable=False,default='pending')

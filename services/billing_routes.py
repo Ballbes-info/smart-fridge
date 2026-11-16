@@ -221,13 +221,13 @@ def renew():
 @billing.route('/settings/ai-limits')
 @verified
 def scan_limits():
-    from services import scan_credits,recipe_generation
+    from services import scan_credits,recipe_generation,assistant_service
     session.setdefault('storage_csrf',secrets.token_hex(32))
     from services.family_service import access_subscription
     sub=access_subscription(session['user_id'])
     premium=bool(service.active(sub) and service.PLANS[sub.plan]['premium'])
     return render_template('scan_limits.html',quotas={k:scan_credits.allowance(session['user_id'],k) for k in ['label','product']},
-                           packages=scan_credits.PACKAGES,kind_names=scan_credits.NAMES,premium=premium,recipe_quota=recipe_generation.quota(session['user_id']),
+                           packages=scan_credits.PACKAGES,kind_names=scan_credits.NAMES,premium=premium,recipe_quota=recipe_generation.quota(session['user_id']),recipe_quotas=recipe_generation.quotas(session['user_id']),assistant_quotas=assistant_service.quotas(session['user_id']),ai_modes=assistant_service.gigachat_models.MODES,
                            csrf=session['storage_csrf'],submission=secrets.token_hex(24),workspace_back_url=url_for('billing.settings'))
 
 

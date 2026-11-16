@@ -1,0 +1,8 @@
+{% macro picker(id, modes, selected, quota) %}
+<div class="ai-mode-picker">
+<label for="{{ id }}">Режим ИИ</label>
+<select id="{{ id }}" name="ai_mode" aria-describedby="{{ id }}-description {{ id }}-quota">{% for key,item in modes.items() %}<option value="{{ key }}" {% if key==selected %}selected{% endif %}>{{ item.name }} · {{ item.models }}</option>{% endfor %}</select>
+<p id="{{ id }}-description" data-ai-description>{{ modes[selected].description }}</p>
+<p id="{{ id }}-quota" class="ai-mode-quota" aria-live="polite">Осталось <strong data-ai-remaining>{{ quota.remaining }}</strong> из <span data-ai-limit>{{ quota.limit }}</span> за период. <span>Лимиты режимов раздельные.</span></p>
+</div>
+{% endmacro %}

@@ -1,5 +1,6 @@
 (() => {
   const root = document.querySelector('[data-assistant]'); if (!root) return;
+  const aiModes=window.SmartFridgeAIModes;
   const form = root.querySelector('[data-chat-form]'), log = root.querySelector('[role=log]');
   const question = form.elements.question, send = form.querySelector('[type=submit]');
   const status = root.querySelector('[data-chat-status]'), count = root.querySelector('[data-character-count]');
@@ -12,10 +13,11 @@
   function latest() { log.scrollTop = log.scrollHeight; jump.hidden = true; }
   function updateCount() { count.textContent = question.value.length.toLocaleString('ru-RU') + ' / 2 000'; }
   function lock(value) {
-    busy = value; question.disabled = value; form.elements.with_stock.disabled = value;
+    busy = value; form.elements.ai_mode.disabled=value; question.disabled = value; form.elements.with_stock.disabled = value;
     send.disabled = value || remaining <= 0; clearButton.disabled = (value && !root.dataset.blocked) || !log.querySelector('.is-user');
     log.setAttribute('aria-busy', value ? 'true' : 'false');
   }
+  root.addEventListener('sf-ai-mode-change',()=>{remaining=Number(aiModes.quota(root).remaining);lock(busy);});
   function nonce() {
     return [...crypto.getRandomValues(new Uint8Array(16))].map(n => n.toString(16).padStart(2,'0')).join('');
   }
@@ -25,6 +27,7 @@
       const response = await fetch(url, {...options, cache:'no-store', signal:controller.signal, headers:{Accept:'application/json', ...(options.headers || {})}});
       const data = await response.json().catch(() => ({}));
       if (!response.ok || response.redirected) {
+        if(data.quotas)aiModes.replace('assistant',data.quotas);
         const error = new Error(data.error || 'Не удалось выполнить запрос. Обновите страницу.');
         error.status = response.status; throw error;
       }
@@ -72,7 +75,7 @@
   }
   function addContext(article, data) {
     article.querySelectorAll('.assistant-message-context').forEach(node=>node.remove());
-    const texts=[];
+    const texts=[];if(data.ai_mode)texts.push(data.ai_mode==='advanced'?'Усиленный режим':'Обычный режим');
     if(data.recipe)texts.push('Рецепт: '+data.recipe.title+(data.recipe.step!=null?' · шаг '+(data.recipe.step+1):''));
     if(data.with_stock)texts.push('Учтены запасы: '+data.stock_count+' партий'+(data.stock_omitted?' · передана часть списка':''));
     for(const text of texts){const small=document.createElement('small');small.className='assistant-message-context';small.textContent=text;article.append(small);}
@@ -90,9 +93,10 @@
       if (data.status==='used') renderAnswer(responseNode,data.answer);
       else {responseNode.textContent=(data.error || 'Не удалось получить ответ.')+' Лимит не потрачен.';responseNode.closest('article').dataset.answerStatus='error';}
       const user=[...log.querySelectorAll('[data-exchange]')].find(node=>node.dataset.exchange===id);if(user)addContext(user,data);
-      remaining=Number(data.remaining);root.querySelector('[data-remaining]').textContent=remaining;
+      if(data.quotas)aiModes.replace('assistant',data.quotas);else aiModes.updateRemaining('assistant',data.ai_mode||form.elements.ai_mode.value,Number(data.remaining));
+      remaining=Number(aiModes.quota(root).remaining);
       status.textContent=data.status==='used'?'Ответ готов.':'Можно повторить вопрос.';
-      document.dispatchEvent(new CustomEvent('sf-assistant-job',{detail:{id,mode:form.elements.mode.value,status:data.status}}));
+      document.dispatchEvent(new CustomEvent('sf-assistant-job',{detail:{id,mode:form.elements.mode.value,ai_mode:data.ai_mode||form.elements.ai_mode.value,quotas:data.quotas,status:data.status}}));
       activeId='';reconnect.hidden=true;clearInterval(elapsedTimer);lock(false);
       if(data.status!=='used'){question.value=lastQuestion;updateCount();}
       if(shouldScroll)latest();else jump.hidden=false;
@@ -114,16 +118,17 @@
   form.addEventListener('submit', async event=>{
     event.preventDefault();if(busy||remaining<=0)return;
     if(!question.value.trim()){status.textContent='Напишите вопрос перед отправкой.';question.focus();return;}
-    const text=question.value.trim(),payload=new FormData(form);lock(true);status.textContent='Отправляю вопрос…';
+    const text=question.value.trim(),payload=new FormData(form),chosenMode=form.elements.ai_mode.value;lock(true);status.textContent='Отправляю вопрос…';
     try {
       const data=await jsonRequest(form.action,{method:'POST',body:payload});
       if(typeof data.id!=='string'||!data.id)throw new Error('Не получено подтверждение отправки. Повторите: вопрос не продублируется.');
       lastQuestion=text;activeId=data.id;
-      document.dispatchEvent(new CustomEvent('sf-assistant-job',{detail:{id:data.id,mode:form.elements.mode.value,status:'pending'}}));root.querySelector('.assistant-welcome')?.remove();
+      if(data.quotas)aiModes.replace('assistant',data.quotas);else aiModes.reserve('assistant',chosenMode);
+      document.dispatchEvent(new CustomEvent('sf-assistant-job',{detail:{id:data.id,mode:form.elements.mode.value,ai_mode:chosenMode,quotas:data.quotas,status:'pending'}}));root.querySelector('.assistant-welcome')?.remove();
       const existing=[...log.querySelectorAll('[data-answer-for]')].find(node=>node.dataset.answerFor===data.id);
       if(existing)responseNode=existing.querySelector('.assistant-answer');
-      else {const user=message(text,true,data.id),answer=message('Готовлю ответ…',false,data.id);log.append(user.article,answer.article);responseNode=answer.copy;}
-      remaining=Math.max(0,remaining-1);root.querySelector('[data-remaining]').textContent=remaining;
+      else {const user=message(text,true,data.id),answer=message('Готовлю ответ…',false,data.id);addContext(user.article,{ai_mode:chosenMode});log.append(user.article,answer.article);responseNode=answer.copy;}
+      remaining=Number(aiModes.quota(root).remaining);
       question.value='';updateCount();form.elements.nonce.value=nonce();latest();waiting();poll(data.id);
     } catch(error) {
       status.textContent=error.name==='AbortError'||error instanceof TypeError?'Не удалось подтвердить отправку. Повторите: один и тот же вопрос не будет списан дважды.':error.message;
@@ -158,7 +163,7 @@
     const detail=event.detail;if(!detail||detail.source!=='pet')return;
     if(detail.status==='pending'){
       lock(true);status.textContent='Клевер готовит ответ на ваш вопрос.';
-      if(typeof detail.remaining==='number'){remaining=detail.remaining;root.querySelector('[data-remaining]').textContent=remaining;}
+      if(detail.quotas)aiModes.replace('assistant',detail.quotas);else if(typeof detail.remaining==='number')aiModes.updateRemaining('assistant',detail.ai_mode||'standard',detail.remaining);remaining=Number(aiModes.quota(root).remaining);
       petExchange={id:detail.id,node:null};
       if(detail.mode===form.elements.mode.value){
         root.querySelector('.assistant-welcome')?.remove();const user=message(detail.question||'Вопрос Клеверу',true,detail.id),assistant=message('Готовлю ответ…',false,detail.id);
@@ -166,7 +171,7 @@
       }
     }else if(petExchange?.id===detail.id){
       if(petExchange.node){if(detail.status==='used')renderAnswer(petExchange.node,detail.data?.answer||'');else petExchange.node.textContent=(detail.data?.error||'Не удалось получить ответ.')+' Лимит не потрачен.';}
-      if(typeof detail.remaining==='number'){remaining=detail.remaining;root.querySelector('[data-remaining]').textContent=remaining;}
+      if(detail.quotas)aiModes.replace('assistant',detail.quotas);else if(typeof detail.remaining==='number')aiModes.updateRemaining('assistant',detail.ai_mode||'standard',detail.remaining);remaining=Number(aiModes.quota(root).remaining);
       lock(false);status.textContent=detail.status==='used'?'Ответ готов.':'Клеверу можно задать вопрос ещё раз.';petExchange=null;
     }
   });

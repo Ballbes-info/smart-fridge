@@ -141,7 +141,9 @@ def register_recipes(app,subscription_required):
             else:
                 try:job_id=generation.start(session['user_id'],request.form)
                 except ValueError as exc:error=str(exc)
-                else:return redirect(url_for('recipes.generate',job=job_id))
+                else:
+                    session['recipe_ai_mode']=request.form.get('ai_mode','standard')
+                    return redirect(url_for('recipes.generate',job=job_id))
         if not job_id:
             with db_session.create_session() as s:
                 pending=s.scalar(select(RecipeGeneration).where(RecipeGeneration.owner_id==session['user_id'],RecipeGeneration.status=='pending',RecipeGeneration.created_at>time.time()-600).order_by(RecipeGeneration.created_at.desc()))
@@ -153,8 +155,11 @@ def register_recipes(app,subscription_required):
                 if row and row.owner_id==session['user_id']:
                     if row.status=='used':return redirect(url_for('recipes.detail',recipe_key=row.recipe_key,return_to=url_for('recipes.generate')))
                     if row.status=='pending' and row.created_at<time.time()-600:row.status='failed';row.error='Запрос прерван. Повторите создание.';s.commit()
-                    job=dict(status=row.status,error=row.error,id=row.id)
-        return render_template('recipe_generate.html',**common('generate'),quota=generation.quota(session['user_id']),error=error,job=job,
+                    job=dict(status=row.status,error=row.error,id=row.id,ai_mode=row.ai_mode or 'standard')
+        ai_mode=(request.form.get('ai_mode','standard') if error else job['ai_mode'] if job else session.get('recipe_ai_mode','standard'))
+        if ai_mode not in generation.gigachat_models.MODES:ai_mode='standard'
+        quotas=generation.quotas(session['user_id'])
+        return render_template('recipe_generate.html',**common('generate'),quota=quotas[ai_mode],ai_quotas=quotas,ai_modes=generation.gigachat_models.MODES,selected_ai_mode=ai_mode,error=error,job=job,
             request_id=secrets.token_hex(16),values=request.form if error else nutrition_wishes() if request.args.get('nutrition')=='1' else {}),422 if error else 200
 
     @recipes.route('/recipes/generation/<job_id>')
@@ -166,7 +171,7 @@ def register_recipes(app,subscription_required):
             row=s.get(RecipeGeneration,job_id)
             if not row or row.owner_id!=session['user_id']:abort(404)
             if row.status=='pending' and row.created_at<time.time()-600:row.status='failed';row.error='Запрос прерван. Повторите создание.';s.commit()
-            return jsonify(status=row.status,error=row.error,url=url_for('recipes.detail',recipe_key=row.recipe_key,return_to=url_for('recipes.generate')) if row.status=='used' else None),200,{'Cache-Control':'no-store'}
+            return jsonify(status=row.status,error=row.error,ai_mode=row.ai_mode or 'standard',url=url_for('recipes.detail',recipe_key=row.recipe_key,return_to=url_for('recipes.generate')) if row.status=='used' else None),200,{'Cache-Control':'no-store'}
 
     @recipes.route('/home/recipes/item/<recipe_key>',methods=['GET','POST'])
     @subscription_required

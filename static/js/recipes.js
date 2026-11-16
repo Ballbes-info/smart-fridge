@@ -129,8 +129,9 @@
   }
   for(const root of document.querySelectorAll('[data-recipe-match][data-pending]'))pollMatching(root);
   for(const root of document.querySelectorAll('[data-recipe-generation]'))pollGeneration(root);
+  for(const form of document.querySelectorAll('[data-generation-form]'))form.addEventListener('sf-ai-mode-change',()=>{const button=form.querySelector('[type=submit]');if(!button.dataset.originalLabel)button.disabled=window.SmartFridgeAIModes.quota(form).remaining<=0;});
   for(const form of document.querySelectorAll('[data-generation-form]'))form.addEventListener('submit',()=>{const button=form.querySelector('[type=submit]');button.dataset.originalLabel=button.textContent;button.disabled=true;button.textContent='Отправляем…'});
-  window.addEventListener('pageshow',()=>document.querySelectorAll('[data-generation-form] [type=submit][data-original-label]').forEach(button=>{button.disabled=false;button.textContent=button.dataset.originalLabel;delete button.dataset.originalLabel}));
+  window.addEventListener('pageshow',()=>document.querySelectorAll('[data-generation-form] [type=submit][data-original-label]').forEach(button=>{button.disabled=window.SmartFridgeAIModes.quota(button.closest('[data-generation-form]')).remaining<=0;button.textContent=button.dataset.originalLabel;delete button.dataset.originalLabel}));
   document.addEventListener('click',event=>{if(event.target.closest('[data-recipe-print]'))window.print()});
   photos();cookingProgress();
 })();

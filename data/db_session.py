@@ -68,6 +68,13 @@ def global_init(db_file: str) -> None:
         for name in ('pet_roaming','pet_hints'):
             if name not in pet_columns:conn.exec_driver_sql('ALTER TABLE assistant_preferences ADD COLUMN '+name+' BOOLEAN NOT NULL DEFAULT 1')
     from services.activity_audit import install
+    # Previous generations belong to the ordinary quota; do not reset spending.
+    with engine.begin() as conn:
+        conn.exec_driver_sql('BEGIN IMMEDIATE')
+        for table in ('assistant_exchanges', 'recipe_generations'):
+            columns = {row[1] for row in conn.exec_driver_sql('PRAGMA table_info(' + table + ')')}
+            if 'ai_mode' not in columns:
+                conn.exec_driver_sql("ALTER TABLE " + table + " ADD COLUMN ai_mode VARCHAR(16) NOT NULL DEFAULT 'standard'")
     install()
 
 

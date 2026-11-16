@@ -14,7 +14,7 @@ from data import db_session
 from data.recipe import RecipeGeneration,RecipeState
 from data.billing import Subscription
 from data.activity import ActivityEvent
-from services import gigachat_label as giga,gigachat_tls,recipe_catalog as catalog,recipe_matching as matching
+from services import gigachat_label as giga,gigachat_tls,gigachat_models,recipe_catalog as catalog,recipe_matching as matching
 from services.billing_service import PLANS,active
 from services.scan_credits import period
 
@@ -26,18 +26,26 @@ SCHEMA={'type':'object','properties':{'title':{'type':'string'},'description':{'
  'steps':{'type':'array','items':{'type':'object','properties':{'title':{'type':'string'},'text':{'type':'string'}},'required':['title','text'],'additionalProperties':False}}},'required':['title','description','servings','minutes','ingredients','steps'],'additionalProperties':False}
 
 
-def quota(owner,s=None):
+def quota(owner,s=None,*,ai_mode='standard'):
+    gigachat_models.validate_mode(ai_mode)
     if s is None:
-        with db_session.create_session() as s:return quota(owner,s)
+        with db_session.create_session() as s:return quota(owner,s,ai_mode=ai_mode)
     from services.family_service import access_subscription
     sub=access_subscription(owner,s);allowed=bool(active(sub) and PLANS.get(sub.plan,{}).get('premium'))
-    start,end=period(sub,time.time());limit=100 if sub and sub.plan=='premium' else 300
-    try:limit=max(0,min(10000,int(os.environ.get('GIGACHAT_RECIPE_LIMIT_'+(sub.plan.upper() if sub else 'BASIC'),limit))))
+    start,end=period(sub,time.time());family=bool(sub and sub.plan=='family_premium')
+    limit=(30 if family else 10) if ai_mode=='advanced' else (300 if family else 100)
+    prefix='GIGACHAT_RECIPE_ADVANCED_LIMIT_' if ai_mode=='advanced' else 'GIGACHAT_RECIPE_LIMIT_'
+    try:limit=max(0,min(10000,int(os.environ.get(prefix+(sub.plan.upper() if sub else 'BASIC'),limit))))
     except ValueError:pass
     if not allowed:limit=0
-    used=s.scalar(select(func.count()).select_from(RecipeGeneration).where(RecipeGeneration.owner_id==owner,RecipeGeneration.period_start==start,
+    used=s.scalar(select(func.count()).select_from(RecipeGeneration).where(RecipeGeneration.owner_id==owner,RecipeGeneration.period_start==start,RecipeGeneration.ai_mode==ai_mode,
         (RecipeGeneration.status=='used') | ((RecipeGeneration.status=='pending') & (RecipeGeneration.created_at>time.time()-600))))
-    return dict(allowed=allowed,limit=limit,used=used,remaining=max(0,limit-used),resets_at=end,period_start=start)
+    return dict(ai_mode=ai_mode,allowed=allowed,limit=limit,used=used,remaining=max(0,limit-used),resets_at=end,period_start=start)
+
+
+def quotas(owner):
+    with db_session.create_session() as s:
+        return {mode:quota(owner,s,ai_mode=mode) for mode in gigachat_models.MODES}
 
 
 class RecipeReplyError(ValueError):
@@ -164,6 +172,7 @@ def ensure_pending(owner,nonce):
 
 
 def start(owner,form):
+    ai_mode=gigachat_models.validate_mode(form.get('ai_mode','standard'))
     prompt=form.get('wish','').strip();exclude=form.get('exclude','').strip()
     if not 1<=len(prompt)<=1500 or len(exclude)>500:raise ValueError('Опишите пожелания: 1–1500 символов; исключения — до 500.')
     try:
@@ -183,21 +192,20 @@ def start(owner,form):
         s.execute(text('BEGIN IMMEDIATE'))
         old=s.get(RecipeGeneration,nonce)
         if old:
-            if old.owner_id!=owner:raise ValueError('Обновите форму.')
+            if old.owner_id!=owner or (old.ai_mode or 'standard')!=ai_mode:raise ValueError('Обновите форму: запрос уже отправлен с другим режимом ИИ.')
             return old.id
-        q=quota(owner,s)
+        q=quota(owner,s,ai_mode=ai_mode)
         if not q['allowed']:raise ValueError('Генерация доступна в Премиум и Семейном премиуме.')
         if q['remaining']<=0:raise ValueError('Лимит создания рецептов исчерпан.')
         if s.scalar(select(func.count()).select_from(RecipeGeneration).where(RecipeGeneration.owner_id==owner,RecipeGeneration.status=='pending',RecipeGeneration.created_at>time.time()-600)):
             raise ValueError('Дождитесь завершения предыдущего рецепта.')
         if not _gate.acquire(blocking=False):raise ValueError('Создание рецептов занято. Попробуйте через несколько секунд.')
         try:
-            s.add(RecipeGeneration(id=nonce,owner_id=owner,period_start=q['period_start'],status='pending'));s.commit()
+            s.add(RecipeGeneration(id=nonce,owner_id=owner,ai_mode=ai_mode,period_start=q['period_start'],status='pending'));s.commit()
         except Exception:_gate.release();raise
     payload=dict(wish=prompt,exclude=exclude,servings=portions,max_minutes=minutes,stock=stock,goal=goal)
     def work():
-        usage={};calls=[];unreported=0;error='';result=None;reason='';last_issue=None
-        model=os.environ.get('GIGACHAT_RECIPE_MODEL',os.environ.get('GIGACHAT_MODEL','GigaChat-2-Pro'))
+        usage={};calls=[];unreported=0;error='';result=None;reason='';last_issue=None;previous_tier=''
         try:
             ensure_pending(owner,nonce)
             if use_stock:
@@ -213,17 +221,23 @@ def start(owner,form):
                     messages=[{'role':'system','content':PROMPT},{'role':'user','content':json.dumps(payload,ensure_ascii=False)}]
                     if last_issue:messages.append({'role':'user','content':'Исправь предыдущую попытку. '+last_issue.feedback+' Верни заново один завершённый JSON по схеме.'})
                     unreported+=1
-                    reply=giga.request_json(client,'POST',giga.API+'/chat/completions',json={
-                        'model':model,
+                    def before_send():
+                        ensure_pending(owner,nonce)
+                        if use_stock:
+                            payload['stock']=available_stock(owner)
+                            if not payload['stock']:raise ValueError('Выбранные запасы больше недоступны. Проверьте доступ и повторите создание.')
+                        messages[1]['content']=json.dumps(payload,ensure_ascii=False)
+                    reply=giga.request_completion(client,'recipe',ai_mode=ai_mode,attempt=attempt,previous_tier=previous_tier,before_send=before_send,**{
                         'messages':messages,
-                        'response_format':{'type':'json_schema','schema':SCHEMA,'strict':True},'max_tokens':5000 if attempt else 4000,'temperature':.4,'stream':False})
+                        'response_format':{'type':'json_schema','schema':SCHEMA,'strict':True},'max_tokens':(6000 if attempt else 5000) if ai_mode=='advanced' else (5000 if attempt else 4000),'temperature':.4,'stream':False})
                     unreported-=1
+                    previous_tier=reply.get('_routing',{}).get('selected_tier','')
                     u=reply.get('usage') or {};reported={}
                     if not isinstance(u,dict):u={}
                     for k in ['prompt_tokens','completion_tokens','total_tokens']:
                         if type(u.get(k)) is int and 0<=u[k]<=1000000:
                             usage[k]=usage.get(k,0)+u[k];reported[k]=u[k]
-                    calls.append({'tokens':reported,'model':str(reply.get('model') or model)[:120]})
+                    calls.append({'tokens':reported,'model':str(reply.get('model') or reply.get('_routing',{}).get('selected_model',''))[:120],'task':'recipe'})
                     try:
                         candidate=normalize(response_data(reply))
                         if candidate['servings']!=portions:
@@ -233,6 +247,7 @@ def start(owner,form):
                         excluded=[matching.identity(x.strip())[0] for x in re.split('[,;\n]',exclude) if x.strip()]
                         if any(matching.identity(i['name'])[0] in excluded for i in candidate['ingredients']):
                             raise reply_error('excluded','GigaChat добавил исключённый продукт. Повторите запрос.','Полностью исключи продукты из поля exclude, не заменяй их производными того же продукта.')
+                        candidate['ai_mode']=ai_mode;candidate['ai_model']=calls[-1]['model']
                         result=candidate;reason=''
                         break
                     except RecipeReplyError as exc:
@@ -253,7 +268,7 @@ def start(owner,form):
                     row.status='used' if result else 'failed';row.error=error;row.tokens=usage
                     if result:
                         row.recipe_key=result['key'];s.add(RecipeState(owner_id=owner,recipe_key=result['key'],snapshot=result,generated=True,favorite=True))
-                    s.add(ActivityEvent(owner_id=owner,category='ai',action='recipe_generated',after=dict(kind='recipe',status=row.status,name=result['title'] if result else '',error=error,reason=reason,
+                    s.add(ActivityEvent(owner_id=owner,category='ai',action='recipe_generated',after=dict(kind='recipe',ai_mode=ai_mode,status=row.status,name=result['title'] if result else '',error=error,reason=reason,
                         usage={'calls':calls,'unreported_attempts':unreported},source='recipe',limit=q['limit'])))
                     s.commit()
             finally:_gate.release()
@@ -266,7 +281,7 @@ def start(owner,form):
             row=s.get(RecipeGeneration,nonce)
             if row and row.status=='pending':
                 row.status='failed';row.error='Не удалось запустить создание рецепта. Повторите запрос. Лимит не потрачен.'
-                s.add(ActivityEvent(owner_id=owner,category='ai',action='recipe_generated',after=dict(kind='recipe',status='failed',error=row.error,reason='dispatch',usage={'calls':[],'unreported_attempts':0},source='recipe',limit=q['limit'])))
+                s.add(ActivityEvent(owner_id=owner,category='ai',action='recipe_generated',after=dict(kind='recipe',ai_mode=ai_mode,status='failed',error=row.error,reason='dispatch',usage={'calls':[],'unreported_attempts':0},source='recipe',limit=q['limit'])))
                 s.commit()
         raise ValueError('Не удалось запустить создание рецепта. Повторите запрос. Лимит не потрачен.') from None
     return nonce

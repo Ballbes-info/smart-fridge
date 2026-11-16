@@ -1,4 +1,4 @@
-"""Web-only assistant, private job polling and premium companion controls."""
+"""Web-only assistant, private job polling and account companion controls."""
 import secrets
 from pathlib import Path
 from urllib.parse import urlsplit,unquote
@@ -16,12 +16,14 @@ def register_assistant(app,login_required,subscription_required):
     def companion_context():
         owner=session.get('user_id')
         if not owner:return {}
-        q=ai.quota(owner);allowed=q['allowed'];prefs=ai.preferences(owner);saved=prefs['enabled']
-        pet=allowed and saved and not session.get('assistant_pet_snoozed')
-        job=ai.pending(owner) if pet else None
-        last=job or (ai.latest(owner) if pet else None)
+        quotas=ai.quotas(owner);ai_mode=session.get('assistant_ai_mode','standard')
+        if ai_mode not in ai.gigachat_models.MODES:ai_mode='standard'
+        q=quotas[ai_mode];allowed=q['allowed'];prefs=ai.preferences(owner);saved=prefs['enabled']
+        pet=saved and not session.get('assistant_pet_snoozed')
+        job=ai.pending(owner) if pet and allowed else None
+        last=job or (ai.latest(owner) if pet and allowed else None)
         recipe_key=(request.view_args or {}).get('recipe_key','') if request.endpoint=='recipes.detail' else ''
-        return dict(assistant_pet_rive=(Path(app.static_folder)/'pets/bunny/character.riv').is_file(),assistant_pet_options=prefs,assistant_pet_scope=str(owner),assistant_pet_quota=q,assistant_pet_recipe=dict(key=recipe_key,servings=request.args.get('servings','')) if recipe_key else None,assistant_pet_last=dict(id=last.id,mode=last.mode,status=last.status) if last else None,assistant_pet_pending=dict(id=job.id,mode=job.mode) if job else None,assistant_premium=allowed,assistant_pet_saved=saved,assistant_pet=pet,assistant_csrf=session.setdefault('storage_csrf',secrets.token_hex(32)))
+        return dict(assistant_pet_rive=(Path(app.static_folder)/'pets/bunny/character.riv').is_file(),assistant_pet_options=prefs,assistant_pet_scope=str(owner),assistant_pet_quota=q,assistant_ai_modes=ai.gigachat_models.MODES,assistant_ai_mode=ai_mode,assistant_ai_quotas=quotas,assistant_pet_recipe=dict(key=recipe_key,servings=request.args.get('servings','')) if recipe_key else None,assistant_pet_last=dict(id=last.id,mode=last.mode,status=last.status) if last else None,assistant_pet_pending=dict(id=job.id,mode=job.mode) if job else None,assistant_premium=allowed,assistant_pet_saved=saved,assistant_pet=pet,assistant_csrf=session.setdefault('storage_csrf',secrets.token_hex(32)))
 
     @assistant.after_request
     def private(response):
@@ -39,13 +41,16 @@ def register_assistant(app,login_required,subscription_required):
     def index(mode='chat'):
         if mode=='voice':return redirect(url_for('assistant.index',mode='guide'))
         if mode not in ai.MODES:abort(404)
-        q=ai.quota(session['user_id'])
+        ai_mode=request.args.get('ai_mode',session.get('assistant_ai_mode','standard'))
+        if ai_mode not in ai.gigachat_models.MODES:ai_mode='standard'
+        quotas=ai.quotas(session['user_id']);q=quotas[ai_mode]
         if mode!='guide' and not q['allowed']:
             from services.workspace import REQUIREMENTS
             return render_template('workspace_locked.html',active_section='assistant',access_title=ai.MODES[mode],requirement=REQUIREMENTS['premium']),403
         page=ai.history_page(session['user_id'],mode) if mode!='guide' else dict(rows=[],before=None)
         rows=page['rows'];active=ai.pending(session['user_id'])
         pending=active.id if active and active.mode==mode else None
+        if pending:ai_mode=active.ai_mode or 'standard';q=quotas[ai_mode]
         recipe=None;context_error=''
         if mode=='cooking' and request.args.get('recipe_key'):
             try:recipe=ai.recipe_context(session['user_id'],request.args['recipe_key'],request.args.get('servings'),request.args.get('step'))
@@ -62,15 +67,16 @@ def register_assistant(app,login_required,subscription_required):
                     decoded=unquote(raw);parts=urlsplit(decoded)
                     if not parts.scheme and not parts.netloc and parts.path==url_for('recipes.detail',recipe_key=recipe['key']) and '\\' not in decoded and not any(ord(c)<32 for c in decoded):recipe_return=raw
                 except ValueError:pass
-        return render_template('assistant.html',active_section='assistant',mode=mode,feature=dict(slug=mode,name=ai.MODES[mode]),modes=ai.MODES,guide=ai.GUIDE,rows=rows,pending=pending,other_pending=active.mode if active and active.mode!=mode else None,quota=q,nonce=secrets.token_hex(16),older=page['before'],recipe_context=recipe,context_error=context_error,recipe_return=recipe_return,workspace_back_url=recipe_return or url_for('workspace.home'))
+        return render_template('assistant.html',active_section='assistant',mode=mode,feature=dict(slug=mode,name=ai.MODES[mode]),modes=ai.MODES,guide=ai.GUIDE,rows=rows,pending=pending,other_pending=active.mode if active and active.mode!=mode else None,quota=q,ai_quotas=quotas,ai_modes=ai.gigachat_models.MODES,selected_ai_mode=ai_mode,nonce=secrets.token_hex(16),older=page['before'],recipe_context=recipe,context_error=context_error,recipe_return=recipe_return,workspace_back_url=recipe_return or url_for('workspace.home'))
 
     @assistant.post('/assistant/send')
     @subscription_required
     def send():
         check_form()
-        try:ident=ai.start(session['user_id'],request.form.get('mode'),request.form.get('question',''),request.form.get('nonce'),request.form.get('with_stock')=='1',request.form.get('recipe_key',''),request.form.get('servings'),request.form.get('step'))
-        except ValueError as exc:return jsonify(error=str(exc)),422
-        return jsonify(id=ident),202
+        try:ident=ai.start(session['user_id'],request.form.get('mode'),request.form.get('question',''),request.form.get('nonce'),request.form.get('with_stock')=='1',request.form.get('recipe_key',''),request.form.get('servings'),request.form.get('step'),ai_mode=request.form.get('ai_mode','standard'))
+        except ValueError as exc:return jsonify(error=str(exc),quotas=ai.quotas(session['user_id'])),422
+        session['assistant_ai_mode']=request.form.get('ai_mode','standard')
+        return jsonify(id=ident,ai_mode=session['assistant_ai_mode'],quotas=ai.quotas(session['user_id'])),202
 
     @assistant.get('/assistant/jobs/<ident>')
     @subscription_required
@@ -80,7 +86,8 @@ def register_assistant(app,login_required,subscription_required):
             row=s.get(AssistantExchange,ident)
             if not row or row.owner_id!=session['user_id'] or row.hidden:abort(404)
             context=s.get(AssistantContext,row.id);row.context_info=context.data if context else {}
-            return jsonify(**ai.serialize(row),remaining=ai.quota(session['user_id'],s)['remaining'])
+            quotas={mode:ai.quota(session['user_id'],s,ai_mode=mode) for mode in ai.gigachat_models.MODES}
+            return jsonify(**ai.serialize(row),remaining=quotas[row.ai_mode or 'standard']['remaining'],quotas=quotas)
 
     @assistant.get('/assistant/history/<mode>')
     @subscription_required

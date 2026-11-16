@@ -93,10 +93,14 @@
  }
  function nonce(){return [...crypto.getRandomValues(new Uint8Array(16))].map(x=>x.toString(16).padStart(2,'0')).join('');}
  form.elements.nonce.value=nonce();
- function lock(value){busy=value;question.disabled=value;form.elements.mode.disabled=value;form.elements.with_stock.disabled=value;send.disabled=value||remaining<=0;}
+ const aiAllowed=pet.dataset.aiAllowed==='1';
+ const aiModes=window.SmartFridgeAIModes;
+ const openLabel=aiAllowed?'Спросить Клевера':'Открыть Клевера';
+ function lock(value){busy=value;form.elements.ai_mode.disabled=value||!aiAllowed;question.disabled=value||!aiAllowed;form.elements.mode.disabled=value||!aiAllowed;form.elements.with_stock.disabled=value||!aiAllowed;send.disabled=value||!aiAllowed||remaining<=0;}
+ pet.addEventListener('sf-ai-mode-change',()=>{remaining=Number(aiModes.quota(pet).remaining);lock(busy);});
  async function jsonRequest(url,options={}){
   const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),15000);
-  try{const response=await fetch(url,{...options,cache:'no-store',signal:controller.signal,headers:{Accept:'application/json',...(options.headers||{})}});const data=await response.json().catch(()=>({}));if(!response.ok||response.redirected){const e=new Error(data.error||'Не удалось выполнить запрос. Обновите страницу.');e.status=response.status;throw e;}return data;}
+  try{const response=await fetch(url,{...options,cache:'no-store',signal:controller.signal,headers:{Accept:'application/json',...(options.headers||{})}});const data=await response.json().catch(()=>({}));if(!response.ok||response.redirected){if(data.quotas)aiModes.replace('assistant',data.quotas);const e=new Error(data.error||'Не удалось выполнить запрос. Обновите страницу.');e.status=response.status;throw e;}return data;}
   finally{clearTimeout(timeout);}
  }
  function format(text){
@@ -106,15 +110,15 @@
  }
  function updateState(value){
   pet.dataset.state=value;
-  copy.textContent=value==='pending'?'Готовлю ответ. Можно продолжать работу на сайте.':value==='used'?'Ответ готов.':value==='error'?'Не получилось ответить. Можно повторить вопрос.':'Спросите о продуктах или приготовлении.';
-  dot.hidden=value!=='used'||!panel.hidden;chatButton.setAttribute('aria-label',value==='used'?'Спросить Клевера. Ответ готов.':'Спросить Клевера');if(value==='used')act('wave','proud',1600);else if(value==='error')act('look','worried',1400);
+  copy.textContent=value==='pending'?'Готовлю ответ. Можно продолжать работу на сайте.':value==='used'?'Ответ готов.':value==='error'?'Не получилось ответить. Можно повторить вопрос.':aiAllowed?'Спросите о продуктах или приготовлении.':'Погладьте меня или выберите игру. Подсказки по приложению доступны без ИИ.';
+  dot.hidden=value!=='used'||!panel.hidden;chatButton.setAttribute('aria-label',value==='used'?'Спросить Клевера. Ответ готов.':openLabel);if(value==='used')act('wave','proud',1600);else if(value==='error')act('look','worried',1400);
  }
  function showReply(data){
   if(typeof data.question==='string')pet.querySelector('[data-pet-question]').textContent=data.question;
   reply.hidden=false;
   if(data.status==='used')format(data.answer||'');else answer.textContent=(data.error||'Запрос прерван.')+' Лимит не потрачен.';
   current.hidden=false;const mode=data.mode||activeMode;current.href=mode==='cooking'?panel.dataset.cookingUrl:panel.dataset.chatUrl;
-  if(typeof data.remaining==='number'){remaining=data.remaining;pet.querySelector('[data-pet-remaining]').textContent=remaining;}
+  if(data.quotas)aiModes.replace('assistant',data.quotas);else if(typeof data.remaining==='number')aiModes.updateRemaining('assistant',data.ai_mode||form.elements.ai_mode.value,data.remaining);remaining=Number(aiModes.quota(pet).remaining);
   if(data.status==='error'&&!question.value){question.value=data.question||lastQuestion;form.elements.with_stock.checked=!!data.with_stock;}
   positionBubble(panel);
  }
@@ -127,7 +131,7 @@
     lock(true);activeId=id;lastId=id;activeMode=data.mode||activeMode;
     pollTimer=setTimeout(()=>poll(id,panel.hidden),panel.hidden?8000:1800);return;
    }
-   activeId='';lastId=id;if(typeof data.remaining==='number'){remaining=data.remaining;pet.querySelector('[data-pet-remaining]').textContent=remaining;}lock(false);reconnect.hidden=true;
+   activeId='';lastId=id;if(data.quotas)aiModes.replace('assistant',data.quotas);else if(typeof data.remaining==='number')aiModes.updateRemaining('assistant',data.ai_mode||form.elements.ai_mode.value,data.remaining);remaining=Number(aiModes.quota(pet).remaining);lock(false);reconnect.hidden=true;
    if(!background||!panel.hidden)showReply(data);
    if(ownRequest){document.dispatchEvent(new CustomEvent('sf-assistant-job',{detail:{id,mode:activeMode,status:data.status,source:'pet',remaining:data.remaining,data}}));ownRequest=false;}
    status.textContent=data.status==='used'?'Ответ сохранён в истории разговора.':'Лимит не потрачен.';
@@ -142,25 +146,25 @@
  function close(focus=false){panel.hidden=true;chatButton.setAttribute('aria-expanded','false');if(focus)chatButton.focus({preventScroll:true});if(!keyboardMode)chatButton.blur();actionUntil=0;roamAt=Date.now()+700;}
  async function open(focus=false){
   dismissTip();speech.hidden=true;route=[];actionUntil=0;panel.hidden=false;chatButton.setAttribute('aria-expanded','true');sprite.set('alert');face('curious');positionBubble(panel);
-  if(focus)question.focus({preventScroll:true});
+  if(focus)(aiAllowed?question:pet.querySelector('[data-pet-close]')).focus({preventScroll:true});
   if(lastId&&!loading){loading=true;clearTimeout(pollTimer);await poll(lastId);loading=false;}
  }
  function watch(detail){
   if(!detail||detail.source==='pet'||!['chat','cooking'].includes(detail.mode))return;
-  activeMode=detail.mode;lastId=detail.id;activeId=detail.status==='pending'?detail.id:'';updateState(detail.status);lock(detail.status==='pending');
+  if(detail.quotas)aiModes.replace('assistant',detail.quotas);remaining=Number(aiModes.quota(pet).remaining);activeMode=detail.mode;lastId=detail.id;activeId=detail.status==='pending'?detail.id:'';updateState(detail.status);lock(detail.status==='pending');
   clearTimeout(pollTimer);if(activeId&&!document.querySelector('[data-assistant]'))pollTimer=setTimeout(()=>poll(activeId,true),4000);
   else if(!activeId&&!panel.hidden)poll(lastId);
  }
  form.addEventListener('submit',async event=>{
-  event.preventDefault();if(busy||remaining<=0)return;
+  event.preventDefault();if(!aiAllowed||busy||remaining<=0)return;
   if(!question.value.trim()){status.textContent='Напишите вопрос.';question.focus();return;}
-  const payload=new FormData(form),text=question.value.trim(),mode=form.elements.mode.value;
+  const payload=new FormData(form),text=question.value.trim(),mode=form.elements.mode.value,chosenMode=form.elements.ai_mode.value;
   lock(true);route=[];status.textContent='Отправляю вопрос…';
   try{
    const data=await jsonRequest(form.action,{method:'POST',body:payload});if(typeof data.id!=='string'||!data.id)throw new Error('Не подтверждена отправка. Повторите тот же вопрос.');
-   activeId=lastId=data.id;activeMode=mode;lastQuestion=text;ownRequest=true;remaining=Math.max(0,remaining-1);pet.querySelector('[data-pet-remaining]').textContent=remaining;
+   activeId=lastId=data.id;activeMode=mode;lastQuestion=text;ownRequest=true;if(data.quotas)aiModes.replace('assistant',data.quotas);else aiModes.reserve('assistant',chosenMode);remaining=Number(aiModes.quota(pet).remaining);
    question.value='';form.elements.nonce.value=nonce();reply.hidden=false;pet.querySelector('[data-pet-question]').textContent=text;answer.textContent='Готовлю ответ…';updateState('pending');status.textContent='';positionBubble(panel);
-   document.dispatchEvent(new CustomEvent('sf-assistant-job',{detail:{id:data.id,mode,status:'pending',source:'pet',question:text,remaining}}));clearTimeout(pollTimer);failures=0;poll(data.id);
+   document.dispatchEvent(new CustomEvent('sf-assistant-job',{detail:{id:data.id,mode,status:'pending',source:'pet',ai_mode:chosenMode,quotas:data.quotas,question:text,remaining}}));clearTimeout(pollTimer);failures=0;poll(data.id);
   }catch(error){
    status.textContent=error.name==='AbortError'||error instanceof TypeError?'Не удалось подтвердить отправку. Повторите: вопрос не будет списан дважды.':error.message;
    if(error.status===422)form.elements.nonce.value=nonce();lock(false);
@@ -216,6 +220,7 @@
   if(empty&&['Продуктов пока нет','Сначала создайте место хранения'].includes(heading)){
    const action=empty.querySelector('a[href]');if(action){const url=new URL(action.href,location.href);if(url.origin===location.origin)return {text:heading==='Продуктов пока нет'?'Можно начать с одного продукта: укажите название, количество и срок, если он известен.':'Сначала выберите, где будут храниться продукты. После создания места можно наполнить его.',url:url.pathname+url.search,label:heading==='Продуктов пока нет'?'Добавить продукт →':'Создать место →'};}
   }
+  if(!aiAllowed)return {text:'В справке есть подсказки: как добавить продукты, выбрать рецепт и составить покупки.',url:'/home/assistant/guide',label:'Открыть справку →'};
   if(form.elements.recipe_key.value)return {text:'Если шаг приготовления непонятен, можете спросить меня об открытом рецепте.',label:'Задать вопрос →',ask:true};
   const error=[...document.querySelectorAll('.product-error,[aria-invalid=true]')].find(n=>!pet.contains(n)&&n.getClientRects().length);
   if(error)return {text:'На странице есть отмеченные поля. Можно проверить их или открыть справку по приложению.',url:'/home/assistant/guide',label:'Открыть справку →'};
@@ -226,7 +231,7 @@
   let shared={};try{shared=JSON.parse(localStorage.getItem(storageKey)||'{}')||{};}catch(_){}
   if(Number(shared.lastHint)>lastHint)lastHint=Number(shared.lastHint);if(Number(shared.hintDay)===Math.floor(now/86400000))hintCount=Math.max(hintCount,Number(shared.hintCount)||0);if(now-lastHint<180000)return;
   const day=Math.floor(now/86400000);if(day!==hintDay){hintDay=day;hintCount=0;}if(hintCount>=8)return;
-  const item=greeted?contextualHint():{text:'Привет! Я Клевер. Погладьте меня или нажмите несколько раз — покажу танец. А ещё меня можно поднять и отпустить.',label:'Спросить Клевера →',ask:true};if(!item)return;
+  const item=greeted?contextualHint():{text:'Привет! Я Клевер. Погладьте меня или нажмите несколько раз — покажу танец. А ещё меня можно поднять и отпустить.',label:openLabel+' →',ask:true};if(!item)return;
   pet.querySelector('[data-tip-text]').textContent=item.text;const link=pet.querySelector('[data-tip-link]');link.textContent=item.label;link.href=item.url||'#companion-panel';link.dataset.ask=item.ask?'1':'';
   lastHint=now;hintCount++;greeted=true;ambientCount++;save();tip.hidden=false;act('wave','happy',1700);positionBubble(tip);tipTimer=setTimeout(dismissTip,12000);
  }
@@ -252,7 +257,7 @@
  function motionPreference(){
   const limited=motionReduced();sprite.reduce(limited);pet.dataset.reduced=String(limited);route=[];actionUntil=0;sprite.set('idle');face('content');
   const choice=pet.querySelector('[data-pet-motion-choice]'),note=pet.querySelector('[data-pet-motion-note]');choice.hidden=!reduced.matches;note.hidden=!limited&&pet.dataset.roaming==='1';note.textContent=limited?'На устройстве включено уменьшение движения.':'Самостоятельные прогулки выключены в настройках питомца.';
-  chatButton.title=limited?'Движения ограничены устройством. Открыть Клевера':'Спросить Клевера';
+  chatButton.title=limited?'Движения ограничены устройством. Открыть Клевера':openLabel;
   choice.textContent=motionOverride?'Учитывать настройку устройства':'Разрешить движения питомца';choice.setAttribute('aria-pressed',String(motionOverride));roamAt=Date.now()+400;
  }
  pet.querySelector('[data-pet-motion-choice]').addEventListener('click',()=>{motionOverride=!motionOverride;save();motionPreference();});

@@ -59,6 +59,8 @@
   <link rel="preload" href="{{ url_for('static', filename='fonts/onest-variable.ttf') }}" as="font" type="font/ttf" crossorigin>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/interface.css') }}">
   {% if current_user %}<link rel="stylesheet" href="{{ url_for('static', filename='css/workspace.css') }}">{% endif %}
+  <link rel="stylesheet" href="{{ url_for('static',filename='css/ai-modes.css') }}">
+  <script src="{{ url_for('static',filename='js/ai-modes.js') }}" defer></script>
   {% block head %}{% endblock %}
 </head>
 <body{% if current_user %} class="is-authenticated{% if workspace_error|default(false) or request.blueprint in ['account', 'storage', 'products', 'product_import', 'activity', 'recipes', 'family', 'shopping', 'statistics', 'assistant', 'nutrition'] or request.endpoint in ['workspace.home', 'workspace.section', 'workspace.feature', 'workspace.settings', 'profile', 'billing.settings', 'billing.scan_limits'] %} has-workspace{% endif %}"{% endif %}>
@@ -108,7 +110,7 @@
   </footer>
 {% if current_user %}<script src="{{ url_for('static', filename='js/workspace.js') }}" defer></script>{% endif %}
 <script src="{{ url_for('static',filename='js/auth.js') }}" defer></script>
-{% if current_user and assistant_pet and (request.blueprint in ['workspace','storage','products','product_import','activity','recipes','family','shopping','statistics','assistant','nutrition'] or request.endpoint=='profile') %}
+{% if current_user and current_user.is_verified and assistant_pet and (request.blueprint in ['workspace','storage','products','product_import','activity','recipes','family','shopping','statistics','assistant','nutrition'] or request.endpoint in ['profile','billing.plans','billing.settings','billing.scan_limits']) %}
 <link rel="stylesheet" href="{{ url_for('static',filename='css/companion.css') }}">{% include 'assistant_pet.html' %}
 {% endif %}
 </body>

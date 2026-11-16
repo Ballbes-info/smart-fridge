@@ -175,6 +175,7 @@ def hydrate(ses,items,owner):
             v['summary']=f'Списано распознаваний: {charged}'
             v['details']=[('Источник лимита','Докупленный пакет' if a.get('credit_pack_id') else 'Включено в подписку'),('Списано распознаваний',str(charged)),('Режим',KINDS.get(kind,'Не сохранён в старой версии'))]
             t=v['tokens'];v['details'].append(('Токены GigaChat',str(t['total']) if t['total'] is not None else f"Не менее {t['known']} (неполные данные)" if t['partial'] else 'Нет данных о фактическом расходе'))
+            if a.get('ai_mode') in ('standard','advanced'):v['details'].append(('Режим ИИ','Усиленный' if a['ai_mode']=='advanced' else 'Обычный'))
             if t['calls']:v['details'].append(('Получено ответов модели',str(t['calls'])))
             for i,call in enumerate(usage.get('calls',[]),1):
                 if call.get('model'):v['details'].append((f'Ответ {i} · модель',call['model']))
